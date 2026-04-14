@@ -13,12 +13,7 @@ dist
 dist-ssr
 *.local
 
-# Variables de entorno (¡MUY IMPORTANTE!)
-.env
-.env.local
-.env.production
-.env.development
-.env.test
+
 
 # Archivos de construcción
 build
