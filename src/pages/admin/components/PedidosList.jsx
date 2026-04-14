@@ -258,7 +258,7 @@ const DetallePedidoModal = ({ pedido, isOpen, onClose }) => {
                                     <MapPin size={16} className="text-green-400 mt-0.5" />
                                     <div>
                                         <p className="text-xs text-green-600 uppercase">Dirección de tienda</p>
-                                        <p className="font-medium text-green-900">Av. Principal 123, Lima - Perú</p>
+                                        <p className="font-medium text-green-900">Amazonas, Písac 08106- Cusco - Perú</p>
                                     </div>
                                 </div>
                                 <div className="flex items-start gap-2">

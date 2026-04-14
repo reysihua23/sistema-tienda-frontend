@@ -2,6 +2,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Bell, Check, X, Circle, BellRing } from "lucide-react";
 import { useNotifications } from "../context/NotificationContext";
+
 import { useNavigate } from "react-router-dom";
 
 export default function NotificationBell() {
