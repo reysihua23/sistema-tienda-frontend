@@ -54,11 +54,11 @@ export default function PayPalCheckout({
         }
       });
 
-      console.log("Orden creada - ID:", order);
+      console.log("✅ Orden creada - ID:", order);
       return order;
 
     } catch (err) {
-      console.error("Error creando orden:", err);
+      console.error("❌ Error creando orden:", err);
       setError(err.message);
       throw err;
     }
@@ -70,11 +70,11 @@ export default function PayPalCheckout({
     setError(null);
 
     try {
-      console.log("Pago aprobado, capturando...");
+      console.log("🔄 Pago aprobado, capturando...");
 
       const captureData = await actions.order.capture();
 
-      console.log("Captura exitosa:", captureData);
+      console.log("✅ Captura exitosa:", captureData);
 
       if (captureData.status !== "COMPLETED") {
         throw new Error(`Pago no completado. Estado: ${captureData.status}`);
@@ -88,17 +88,44 @@ export default function PayPalCheckout({
         throw new Error("No hay sesión activa. Por favor, inicia sesión nuevamente.");
       }
 
+      // ✅ LOGS DE VALIDACIÓN DE DATOS
+      console.log("═══════════════════════════════════════");
+      console.log("📋 VALIDANDO DATOS DEL PEDIDO");
+      console.log("═══════════════════════════════════════");
+      console.log("clienteId:", clienteId, "| Tipo:", typeof clienteId);
+      console.log("clienteNombre:", clienteNombre);
+      console.log("clienteEmail:", clienteEmail);
+      console.log("metodoEnvio:", metodoEnvio);
+      console.log("direccionEnvio:", direccionEnvio);
+      console.log("cartItems:", cartItems);
+      console.log("montoUSD:", montoUSDCapturado);
+      console.log("montoPEN:", montoPENCalculado);
+      console.log("───────────────────────────────────────");
+
+      // ✅ VALIDAR CAMPOS OBLIGATORIOS
+      const errores = [];
+      if (!clienteId) errores.push("clienteId es requerido");
+      if (!cartItems || cartItems.length === 0) errores.push("No hay productos en el carrito");
+      if (isNaN(montoUSDCapturado) || montoUSDCapturado <= 0) errores.push("Monto inválido");
+
+      if (errores.length > 0) {
+        console.error("❌ Errores de validación:", errores);
+        throw new Error(`Datos inválidos: ${errores.join(", ")}`);
+      }
+
+      // ✅ CONSTRUIR DATOS DEL PEDIDO
       const pedidoData = {
         clienteId: clienteId,
         metodoPago: "PAYPAL",
-        metodoEnvio: metodoEnvio,
+        metodoEnvio: metodoEnvio || "RECOJO_EN_TIENDA",
         direccionEnvio: metodoEnvio === "ENVIO_DOMICILIO" ? direccionEnvio : null,
-        emailComprobante: emailCliente, 
-        clienteEmail: clienteEmail,     
+        emailComprobante: emailCliente || clienteEmail,
+        clienteEmail: clienteEmail || emailCliente,
+        clienteNombre: clienteNombre || "Cliente",
         productos: cartItems.map(item => ({
-          productoId: item.id,
-          cantidad: item.cantidad,
-          precioUnitario: item.precio
+          productoId: parseInt(item.id) || item.id,
+          cantidad: parseInt(item.cantidad) || item.cantidad,
+          precioUnitario: parseFloat(item.precio) || item.precio
         })),
         paypalData: {
           orderId: captureData.id,
@@ -106,14 +133,21 @@ export default function PayPalCheckout({
           payerEmail: captureData.payer.email_address || clienteEmail,
           status: captureData.status,
           amount: montoUSDCapturado,
-          currency: "USD"
+          currency: "USD",
+          captureId: captureData.id
         },
         montoUSD: montoUSDCapturado,
-        montoPEN: montoPENCalculado
+        montoPEN: montoPENCalculado,
+        estado: "PENDIENTE",
+        fechaPedido: new Date().toISOString()
       };
 
-      console.log("📦 Creando pedido en backend...", pedidoData);
+      console.log("📦 Datos a enviar al backend:");
+      console.log(JSON.stringify(pedidoData, null, 2));
 
+      // ✅ ENVIAR AL BACKEND CON MANEJO DE ERRORES DETALLADO
+      console.log("🚀 Enviando petición al backend...");
+      
       const response = await fetch(`${API_BASE_URL}/pedidos`, {
         method: "POST",
         headers: {
@@ -123,35 +157,89 @@ export default function PayPalCheckout({
         body: JSON.stringify(pedidoData)
       });
 
-      const result = await response.json();
+      // ✅ LEER LA RESPUESTA COMPLETA
+      console.log(`📡 Respuesta del servidor: ${response.status} ${response.statusText}`);
 
-      if (!response.ok) {
-        throw new Error(result.message || "Error al crear el pedido");
+      // Leer la respuesta como texto primero
+      const responseText = await response.text();
+      console.log("📄 Texto de respuesta:", responseText);
+
+      // Intentar parsear como JSON
+      let result;
+      try {
+        result = JSON.parse(responseText);
+        console.log("✅ JSON parseado:", result);
+      } catch (parseError) {
+        console.error("❌ Error parseando JSON:", parseError);
+        throw new Error(`Error del servidor: ${response.status} - ${responseText || response.statusText}`);
       }
 
-      console.log("Pedido creado:", result);
+      // ✅ VERIFICAR SI HAY ERROR EN LA RESPUESTA
+      if (!response.ok) {
+        const errorMsg = result.error || result.message || result.detail || JSON.stringify(result);
+        console.error("❌ Error del backend:", {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorMsg,
+          fullResponse: result
+        });
+        throw new Error(`Error del servidor (${response.status}): ${errorMsg}`);
+      }
+
+      console.log("✅ Pedido creado exitosamente:", result);
 
       setPaymentCompleted(true);
 
       setTimeout(() => {
         onSuccess?.({
           ...result,
-          pedidoId: result.pedidoId,
+          pedidoId: result.pedidoId || result.id,
           captureData,
           mensaje: "¡Pago completado exitosamente! Redirigiendo..."
         });
       }, 1500);
 
     } catch (err) {
-      console.error("Error:", err);
-      setError(err.message);
-      onError?.(err.message);
+      // ✅ LOG DE ERROR COMPLETO
+      console.error("═══════════════════════════════════════");
+      console.error("❌ ERROR EN EL PROCESO DE PAGO");
+      console.error("═══════════════════════════════════════");
+      console.error("Mensaje:", err.message);
+      console.error("Stack trace:", err.stack);
+      console.error("Nombre del error:", err.name);
+      
+      // Si hay respuesta del servidor
+      if (err.response) {
+        console.error("Respuesta del servidor:", err.response);
+        console.error("Status:", err.response.status);
+        console.error("Headers:", err.response.headers);
+        console.error("Data:", err.response.data);
+      }
+      
+      console.error("═══════════════════════════════════════");
+
+      // ✅ MOSTRAR ERROR EN EL FRONTEND
+      let errorMessage = err.message || "Ocurrió un error al procesar el pago";
+      
+      // Limpiar mensajes de error si son demasiado técnicos
+      if (errorMessage.includes("could not execute statement")) {
+        errorMessage = "Error en la base de datos al crear el pedido. Por favor, intenta nuevamente.";
+      } else if (errorMessage.includes("Unknown column")) {
+        errorMessage = "Error en la estructura de la base de datos. Contacta al administrador.";
+      } else if (errorMessage.includes("clienteId")) {
+        errorMessage = "No se pudo identificar al cliente. Por favor, inicia sesión nuevamente.";
+      } else if (errorMessage.includes("stock")) {
+        errorMessage = "Stock insuficiente para algunos productos. Por favor, revisa tu carrito.";
+      }
+
+      setError(errorMessage);
+      onError?.(errorMessage);
       setLoading(false);
     }
   };
 
   const handleError = (err) => {
-    console.error("PayPal error:", err);
+    console.error("❌ PayPal error:", err);
     setError("Ocurrió un error con PayPal. Intenta nuevamente.");
     onError?.(err);
   };
@@ -250,7 +338,7 @@ export default function PayPalCheckout({
                   onApprove={onApprove}
                   onError={handleError}
                   onCancel={() => {
-                    console.log("Usuario canceló el pago");
+                    console.log("👤 Usuario canceló el pago");
                     onClose?.();
                   }}
                   style={{

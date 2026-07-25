@@ -36,7 +36,7 @@ import PoliticasPrivacidad from "./pages/legal/PoliticasPrivacidad";
 import RecuperarPassword from "./pages/auth/RecuperarPassword";
 import Notificaciones from "./pages/notificaciones/Notificaciones";
 
-const PAYPAL_CLIENT_ID = "Aeoc0QcGciCLKk4SQ51PjRq2hHaAeZghGSvvFqrtvTbs_pi0JChUC__wtAJULK36LvOBJADX9dFNGjJJ";
+const PAYPAL_CLIENT_ID = "AdDS_NWdSZlLid9nJXduRqgzB6qej9M2mtnVhpTfi-G0QzZmbh0QXiNeWFgohS9ZHFdYLdhqY3XWIACS";
 const paypalOptions = {
   "client-id": PAYPAL_CLIENT_ID,
   currency: "USD",
