@@ -36,6 +36,10 @@ import PoliticasPrivacidad from "./pages/legal/PoliticasPrivacidad";
 import RecuperarPassword from "./pages/auth/RecuperarPassword";
 import Notificaciones from "./pages/notificaciones/Notificaciones";
 
+// Cierre de seción por inactividad
+import { useInactivityLogout } from "./hooks/useInactivityLogout";
+
+
 const PAYPAL_CLIENT_ID = "AdDS_NWdSZlLid9nJXduRqgzB6qej9M2mtnVhpTfi-G0QzZmbh0QXiNeWFgohS9ZHFdYLdhqY3XWIACS";
 const paypalOptions = {
   "client-id": PAYPAL_CLIENT_ID,
@@ -147,7 +151,28 @@ function AppContent() {
 
 // Componente principal
 export default function App() {
+  // cierre de sesión por inactividad
+  useInactivityLogout();
   return (
+    <>
+    {/* Modal de advertencia */}
+      {showWarning && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full">
+            <h3 className="text-xl font-bold text-amber-600 mb-3">⚠️ Sesión por expirar</h3>
+            <p className="text-gray-600 mb-4">
+              Por inactividad, tu sesión se cerrará en 1 minuto. 
+              Haz clic en "Continuar" para mantenerla activa.
+            </p>
+            <button 
+              onClick={() => window.dispatchEvent(new Event('click'))}
+              className="w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            >
+              Continuar sesión
+            </button>
+          </div>
+        </div>
+      )}
     <Router>
       <PayPalScriptProvider options={paypalOptions}>
         <NotificationProvider>
@@ -157,5 +182,6 @@ export default function App() {
         </NotificationProvider>
       </PayPalScriptProvider>
     </Router>
+    </>
   );
 }

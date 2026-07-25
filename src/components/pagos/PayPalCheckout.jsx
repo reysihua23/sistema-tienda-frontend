@@ -5,6 +5,24 @@ import { Shield, Lock, AlertCircle, X, CheckCircle, Loader } from 'lucide-react'
 
 const API_BASE_URL = "http://localhost:8080/api";
 
+const token = localStorage.getItem("token");
+const user = JSON.parse(localStorage.getItem("usuario") || "{}");
+
+if (!token) {
+    throw new Error("No hay sesión activa. Inicia sesión nuevamente.");
+}
+
+// Opcional: verificar si el token está expirado
+try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    const exp = payload.exp * 1000; // Convertir a milisegundos
+    if (Date.now() >= exp) {
+        throw new Error("Token expirado. Inicia sesión nuevamente.");
+    }
+} catch (error) {
+    throw new Error("Token inválido. Inicia sesión nuevamente.");
+}
+
 export default function PayPalCheckout({
   monto,
   montoPEN,
