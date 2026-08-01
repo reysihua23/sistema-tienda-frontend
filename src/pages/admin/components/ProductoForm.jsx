@@ -1,13 +1,19 @@
+// src/pages/admin/components/ProductoForm.jsx
 import React, { useState, useEffect, useRef } from "react";
+import ImageAnalysis from './ImageAnalysis';
 import { productoService, stockService } from "../../../services/api";
-import { 
-    X, Package, DollarSign, Box, AlertTriangle, 
+import {
+    X, Package, DollarSign, Box, AlertTriangle,
     Image, Upload, Trash2, Star, Plus, CheckCircle,
     AlertCircle, Info, Loader2, Edit, Save, Camera,
-    Shield, Zap, ShoppingBag, Layers
+    Shield
 } from "lucide-react";
 
 export default function ProductoForm({ editingProduct, onClose, onRefresh }) {
+    // Estado para el análisis
+    const [showAnalysis, setShowAnalysis] = useState(false);
+    const [pendingImage, setPendingImage] = useState(null);
+
     const [loading, setLoading] = useState(false);
     const [notification, setNotification] = useState(null);
     const [uploadedImages, setUploadedImages] = useState([]);
@@ -69,7 +75,6 @@ export default function ProductoForm({ editingProduct, onClose, onRefresh }) {
         }
     };
 
-    // ✅ Validación completa del formulario
     const validateForm = () => {
         const newErrors = {};
 
@@ -150,53 +155,90 @@ export default function ProductoForm({ editingProduct, onClose, onRefresh }) {
         };
     };
 
+    // src/pages/admin/components/ProductoForm.jsx
+    // ✅ MODIFICAR handleAddImage - SOLO 1 IMAGEN A LA VEZ
     const handleAddImage = (e) => {
         const files = Array.from(e.target.files);
         if (files.length === 0) return;
 
-        const totalImages = uploadedImages.length + files.length;
+        // ✅ Restringir a UNA sola imagen
+        if (files.length > 1) {
+            showNotification(
+                "warning",
+                "Múltiples imágenes",
+                "Solo puedes agregar UNA imagen a la vez para análisis.",
+                "Selecciona una imagen por vez"
+            );
+            if (fileInputRef.current) {
+                fileInputRef.current.value = "";
+            }
+            return;
+        }
 
+        const file = files[0];
+
+        // Validar límite total
+        const totalImages = uploadedImages.length + 1;
         if (totalImages > 10) {
-            showNotification("warning", "Límite excedido", `Máximo 10 imágenes por producto. Actualmente tienes ${uploadedImages.length} y estás agregando ${files.length}.`);
+            showNotification("warning", "Límite excedido", `Máximo 10 imágenes por producto. Actualmente tienes ${uploadedImages.length}.`);
             if (fileInputRef.current) {
                 fileInputRef.current.value = "";
             }
             return;
         }
 
+        // Validar tamaño
         const maxSize = 5 * 1024 * 1024;
-        const oversizedFiles = files.filter(file => file.size > maxSize);
-        if (oversizedFiles.length > 0) {
-            showNotification("warning", "Archivo muy grande", `${oversizedFiles.map(f => f.name).join(", ")} excede el límite de 5MB`);
+        if (file.size > maxSize) {
+            showNotification("warning", "Archivo muy grande", `${file.name} excede el límite de 5MB`);
             if (fileInputRef.current) {
                 fileInputRef.current.value = "";
             }
             return;
         }
 
+        // Validar formato
         const validTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
-        const invalidFiles = files.filter(file => !validTypes.includes(file.type));
-        if (invalidFiles.length > 0) {
-            showNotification("warning", "Formato no válido", `${invalidFiles.map(f => f.name).join(", ")} no es una imagen válida. Formatos permitidos: JPG, PNG, WEBP`);
+        if (!validTypes.includes(file.type)) {
+            showNotification("warning", "Formato no válido", `${file.name} no es una imagen válida. Formatos: JPG, PNG, WEBP`);
             if (fileInputRef.current) {
                 fileInputRef.current.value = "";
             }
             return;
         }
 
-        setUploadedImages(prev => [...prev, ...files]);
-        const urls = files.map(file => URL.createObjectURL(file));
-        setPreviewUrls(prev => [...prev, ...urls]);
+        // ✅ Abrir análisis para la imagen
+        setPendingImage(file);
+        setShowAnalysis(true);
+
+        if (fileInputRef.current) {
+            fileInputRef.current.value = "";
+        }
+    };
+
+    // ✅ Función para manejar imagen aceptada
+    const handleImageAccepted = (processedImage) => {
+        const file = processedImage || pendingImage;
+
+        setUploadedImages(prev => [...prev, file]);
+        const url = URL.createObjectURL(file);
+        setPreviewUrls(prev => [...prev, url]);
+
+        setShowAnalysis(false);
+        setPendingImage(null);
 
         if (errors.imagenes) {
             setErrors({ ...errors, imagenes: "" });
         }
 
-        if (fileInputRef.current) {
-            fileInputRef.current.value = "";
-        }
+        showNotification("success", "Imagen aprobada", "La imagen ha sido procesada y agregada correctamente");
+    };
 
-        showNotification("success", "Imágenes agregadas", `Se agregaron ${files.length} imagen(es). Total: ${totalImages} imagen(es)`);
+    // ✅ Función para cancelar análisis
+    const handleAnalysisCancel = () => {
+        setShowAnalysis(false);
+        setPendingImage(null);
+        showNotification("info", "Análisis cancelado", "La imagen no fue agregada");
     };
 
     const removeImage = (index) => {
@@ -398,6 +440,37 @@ export default function ProductoForm({ editingProduct, onClose, onRefresh }) {
                 </div>
             )}
 
+            {/* ✅ MODAL DE ANÁLISIS DE IMAGEN - DENTRO DEL FRAGMENTO PRINCIPAL */}
+            {showAnalysis && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[9999] p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6">
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+                                <Shield size={20} /> Análisis de imagen
+                            </h3>
+                            <button
+                                onClick={handleAnalysisCancel}
+                                className="text-gray-400 hover:text-gray-600 transition-colors"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        <ImageAnalysis
+                            image={pendingImage}
+                            onImageProcessed={handleImageAccepted}
+                            onCancel={handleAnalysisCancel}
+                            onAccept={handleImageAccepted}
+                        />
+
+                        <p className="text-xs text-gray-400 mt-4 text-center">
+                            La imagen será analizada para garantizar calidad publicitaria
+                        </p>
+                    </div>
+                </div>
+            )}
+
+            {/* FORMULARIO PRINCIPAL */}
             <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
                 <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
                     <div className="sticky top-0 bg-white px-6 pt-6 pb-3 border-b border-gray-100 rounded-t-2xl">
@@ -544,7 +617,7 @@ export default function ProductoForm({ editingProduct, onClose, onRefresh }) {
                                 </div>
                             </div>
 
-                            {/* Imágenes - SOLO PARA PRODUCTOS NUEVOS */}
+                            {/* Imágenes */}
                             {!editingProduct && (
                                 <div>
                                     <label className="block text-xs font-black text-gray-500 uppercase tracking-wider mb-1.5 flex items-center gap-1">
@@ -678,12 +751,12 @@ export default function ProductoForm({ editingProduct, onClose, onRefresh }) {
     );
 }
 
-// Componente FileText para la descripción (agregar si no existe en lucide-react)
+// Componente FileText
 const FileText = ({ size, className }) => (
     <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-        <polyline points="14 2 14 8 20 8"/>
-        <line x1="8" y1="13" x2="16" y2="13"/>
-        <line x1="8" y1="17" x2="16" y2="17"/>
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+        <polyline points="14 2 14 8 20 8" />
+        <line x1="8" y1="13" x2="16" y2="13" />
+        <line x1="8" y1="17" x2="16" y2="17" />
     </svg>
 );

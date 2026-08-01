@@ -400,6 +400,16 @@ export default function AuthPage() {
     }
   };
 
+  // pages/auth/AuthPage.jsx - Agregar para mostrar mensaje de sesión expirada
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const mensaje = params.get('mensaje');
+
+    if (mensaje === 'sesion-expirada') {
+      setError('🔒 Tu sesión expiró por inactividad. Vuelve a iniciar sesión.');
+    }
+  }, []);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-6">
       <div className="max-w-[480px] w-full animate-fade-in">
@@ -617,8 +627,8 @@ export default function AuthPage() {
               type="submit"
               disabled={loading}
               className={`w-full py-3 rounded-xl font-bold text-white transition-all flex items-center justify-center gap-2 ${loading
-                  ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-gradient-to-r from-[#5b4eff] to-[#4a3dcc] hover:shadow-lg hover:scale-[1.02]"
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-gradient-to-r from-[#5b4eff] to-[#4a3dcc] hover:shadow-lg hover:scale-[1.02]"
                 }`}
             >
               {loading ? (

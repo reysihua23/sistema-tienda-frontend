@@ -1,9 +1,17 @@
 // pages/vendedor/Vendedor.jsx
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import {
+    LogOut, Bell, Store, ShoppingBag,
+    Package, TrendingUp, AlertTriangle,
+    Home, Users, Settings, CreditCard,
+    BarChart3, ClipboardList, User,
+    ShoppingCart, DollarSign, Calendar, CircleOff
+} from "lucide-react";
 import { authService, pedidoService, productoService, clienteService, stockService, detallePedidoService, productoImagenService } from "../../services/api";
 import VentasPresencial from "./components/VentasPresencial";
 import ListaPedidos from "./components/ListaPedidos";
+import ListaVentasPresencial from "./components/ListaVentasPresencial";
 
 export default function Vendedor() {
     const navigate = useNavigate();
@@ -21,7 +29,8 @@ export default function Vendedor() {
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(null);
     const [imagenesCache, setImagenesCache] = useState({});
-    const [stats, setStats] = useState({ ventasHoy: 0, pedidosPendientes: 0, productosStockBajo: 0 });
+    const [stats, setStats] = useState({ ventasHoy: 0, pedidosPendientes: 0, productosStockBajo: 0, productosAgotados: 0 });
+    const [ventaActual, setVentaActual] = useState(null);
 
     useEffect(() => {
         const usuario = authService.getCurrentUser();
@@ -49,7 +58,6 @@ export default function Vendedor() {
             const data = await productoService.listar();
             const productosActivos = data.filter(p => p.activo);
             setProductos(productosActivos);
-            // Cargar imágenes de productos
             cargarImagenesProductos(productosActivos);
         } catch (error) {
             console.error("Error cargando productos:", error);
@@ -90,8 +98,32 @@ export default function Vendedor() {
             const hoy = new Date().toDateString();
             const ventasHoy = pedidos.filter(p => new Date(p.fecha).toDateString() === hoy && p.estado === "PAGADO").reduce((sum, p) => sum + p.total, 0);
             const pendientes = pedidos.filter(p => p.estado === "PENDIENTE" || p.estado === "PAGADO").length;
-            const productosBajo = productos.filter(p => p.stock <= (p.stockMinimo || 5)).length;
-            setStats({ ventasHoy, pedidosPendientes: pendientes, productosStockBajo: productosBajo });
+
+            // Calcular productos con stock bajo usando productos del estado actual
+            // Primero, asegurarse de tener los productos actualizados
+            const productosActualizados = await productoService.listar();
+            const productosActivos = productosActualizados.filter(p => p.activo);
+
+            // Contar productos con stock bajo (stock <= stockMinimo o <= 5)
+            const productosBajo = productosActivos.filter(p => {
+                const stock = p.stock || 0;
+                const minimo = p.stockMinimo || 5;
+                return stock <= minimo && stock > 0;
+            }).length;
+
+            // Contar productos agotados (stock === 0)
+            const productosAgotados = productosActivos.filter(p => (p.stock || 0) === 0).length;
+
+            setStats({
+                ventasHoy,
+                pedidosPendientes: pendientes,
+                productosStockBajo: productosBajo,
+                productosAgotados: productosAgotados
+            });
+
+            // Actualizar la lista de productos en el estado
+            setProductos(productosActivos);
+
         } catch (error) {
             console.error("Error cargando estadísticas:", error);
         }
@@ -153,8 +185,6 @@ export default function Vendedor() {
 
     const totalVenta = carrito.reduce((sum, item) => sum + item.subtotal, 0);
 
-    // En Vendedor.jsx - Modificar la función crearCliente
-    // En Vendedor.jsx - Modificar la función crearCliente para que lance el error correctamente
     const crearCliente = async () => {
         if (!nuevoCliente.nombre.trim()) {
             throw new Error("El nombre completo es obligatorio");
@@ -183,7 +213,7 @@ export default function Vendedor() {
         }
     };
 
-    // En Vendedor.jsx - Modifica realizarVenta
+    // ✅ MODIFICAR realizarVenta - Ahora redirige al comprobante
     const realizarVenta = async () => {
         if (!selectedCliente) {
             setError("Debes seleccionar o crear un cliente");
@@ -204,14 +234,14 @@ export default function Vendedor() {
                 }
             }
 
-            // ✅ Crear pedido con todos los campos requeridos
+            // Crear pedido
             const pedidoData = {
                 clienteId: selectedCliente.id,
                 total: totalVenta,
                 estado: "PAGADO",
                 metodoPago: metodoPago,
-                origen: "TIENDA_FISICA",           // ✅ Campo requerido
-                metodoEnvio: "RECOJO_EN_TIENDA",    // ✅ Campo requerido
+                origen: "TIENDA_FISICA",
+                metodoEnvio: "RECOJO_EN_TIENDA",
                 productos: carrito.map(item => ({
                     productoId: item.id,
                     cantidad: item.cantidad,
@@ -225,19 +255,64 @@ export default function Vendedor() {
 
             console.log("Respuesta:", response);
 
-            // Limpiar carrito y selección
+            // ✅ GUARDAR DATOS DE LA VENTA
+            setVentaActual({
+                pedidoId: response.pedidoId,
+                comprobanteId: response.comprobanteId,
+                total: response.total,
+                metodoPago: metodoPago,
+                clienteNombre: selectedCliente.nombre,
+                numeroComprobante: response.numeroComprobante,
+                codigoSeguimiento: response.codigoSeguimiento,
+                fecha: response.fecha,
+                estado: response.estado
+            });
+
+            if (response && response.comprobanteId) {
+                console.log("✅ Comprobante ID:", response.comprobanteId);
+
+                // ✅ Redirigir al comprobante con TODOS los datos
+                navigate(`/comprobante/${response.comprobanteId}`, {
+                    state: {
+                        // ✅ Datos del comprobante
+                        comprobanteId: response.comprobanteId,
+                        pedidoId: response.pedidoId,
+                        numeroComprobante: response.numeroComprobante,
+                        total: response.total,
+                        subtotal: response.subtotal,
+                        igv: response.igv,
+                        costoEnvio: response.costoEnvio,
+                        fecha: response.fecha,
+                        estado: response.estado,
+                        codigoSeguimiento: response.codigoSeguimiento,
+
+                        // ✅ Datos del cliente (COMPLETOS)
+                        clienteNombre: selectedCliente.nombre || 'Cliente',
+                        clienteDocumento: selectedCliente.documento || 'Sin documento',
+                        clienteTelefono: selectedCliente.telefono || 'No especificado',
+                        clienteDireccion: selectedCliente.direccion || 'No especificada',
+                        clienteEmail: selectedCliente.email || 'No especificado',
+
+                        // ✅ Datos de la venta
+                        metodoPago: metodoPago,
+                        fromVentas: true, // ✅ Bandera para identificar origen
+                        productos: carrito.map(item => ({
+                            productoNombre: item.nombre,
+                            cantidad: item.cantidad,
+                            precioUnitario: item.precio,
+                            totalItem: item.cantidad * item.precio
+                        }))
+                    }
+                });
+            }
+
+            // ✅ Limpiar carrito después de la venta
             setCarrito([]);
             setSelectedCliente(null);
             setSuccess("✅ Venta realizada exitosamente");
 
             // Recargar datos actualizados
             await Promise.all([cargarProductos(), cargarEstadisticas()]);
-
-            // Mostrar comprobante
-            if (response && response.comprobanteId) {
-                console.log("Comprobante ID:", response.comprobanteId);
-                // Aquí puedes abrir el modal del comprobante
-            }
 
             return { success: true, venta: response };
 
@@ -267,59 +342,133 @@ export default function Vendedor() {
 
     return (
         <div className="min-h-screen bg-gray-100">
+            {/* Header */}
             <div className="bg-white shadow-sm border-b sticky top-0 z-10">
                 <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
                     <div>
-                        <h1 className="text-2xl font-black text-[#0d0c1e]">Panel de Vendedor</h1>
+                        <h1 className="text-2xl font-black text-[#0d0c1e] flex items-center gap-2">
+                            <Store className="text-[#5b4eff]" size={24} />
+                            Panel de Vendedor
+                        </h1>
                         <p className="text-sm text-gray-500 mt-1">Gestiona ventas presenciales y pedidos online</p>
                     </div>
                     <div className="flex items-center gap-4">
-                        <button onClick={() => navigate("/notificaciones")} className="relative p-2 hover:bg-gray-100 rounded-full">
-                            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                            </svg>
+                        <button
+                            onClick={() => navigate("/notificaciones")}
+                            className="relative p-2 hover:bg-gray-100 rounded-full transition-colors"
+                        >
+                            <Bell size={20} className="text-gray-600" />
                             <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse"></span>
                         </button>
+                        
                         <div className="text-right">
-                            <p className="text-sm font-bold text-gray-800">{user.nombre || user.correo}</p>
+                            <p className="text-sm font-bold text-gray-800 flex items-center gap-1">
+                                <User size={14} className="text-gray-400" />
+                                {user.nombre || user.correo}
+                            </p>
                             <p className="text-xs text-gray-400">Vendedor</p>
                         </div>
-                        <button onClick={handleLogout} className="px-4 py-2 bg-red-500 text-white rounded-lg text-sm font-bold hover:bg-red-600 transition">
+                        <button
+                            onClick={handleLogout}
+                            className="px-4 py-2 bg-red-500 text-white rounded-lg text-sm font-bold hover:bg-red-600 transition flex items-center gap-2"
+                        >
+                            <LogOut size={16} />
                             Cerrar Sesión
                         </button>
                     </div>
                 </div>
             </div>
 
+            {/* Tabs */}
             <div className="bg-white border-b">
                 <div className="max-w-7xl mx-auto px-6">
                     <div className="flex gap-1">
-                        <button onClick={() => setActiveTab("ventas")} className={`px-6 py-3 text-sm font-medium transition-all ${activeTab === "ventas" ? "text-[#5b4eff] border-b-2 border-[#5b4eff]" : "text-gray-500 hover:text-gray-700"}`}>
-                            🛒 Venta Presencial
+                        <button
+                            onClick={() => setActiveTab("ventas")}
+                            className={`px-6 py-3 text-sm font-medium transition-all flex items-center gap-2 ${activeTab === "ventas"
+                                ? "text-[#5b4eff] border-b-2 border-[#5b4eff]"
+                                : "text-gray-500 hover:text-gray-700"
+                                }`}
+                        >
+                            <ShoppingBag size={16} />
+                            Venta Presencial
                         </button>
-                        <button onClick={() => setActiveTab("pedidos")} className={`px-6 py-3 text-sm font-medium transition-all ${activeTab === "pedidos" ? "text-[#5b4eff] border-b-2 border-[#5b4eff]" : "text-gray-500 hover:text-gray-700"}`}>
-                            📦 Pedidos Online
+                        <button
+                            onClick={() => setActiveTab("pedidos")}
+                            className={`px-6 py-3 text-sm font-medium transition-all flex items-center gap-2 ${activeTab === "pedidos"
+                                ? "text-[#5b4eff] border-b-2 border-[#5b4eff]"
+                                : "text-gray-500 hover:text-gray-700"
+                                }`}
+                        >
+                            <Package size={16} />
+                            Pedidos Online
                         </button>
+
+                        <button
+                            onClick={() => setActiveTab("historial")}
+                            className={`px-6 py-3 text-sm font-medium transition-all flex items-center gap-2 ${activeTab === "historial"
+                                    ? "text-[#5b4eff] border-b-2 border-[#5b4eff]"
+                                    : "text-gray-500 hover:text-gray-700"
+                                }`}
+                        >
+                            <Store size={16} />
+                            Ventas Presenciales
+                        </button>
+
                     </div>
                 </div>
             </div>
 
+            {/* Main Content */}
             <div className="max-w-7xl mx-auto px-6 py-8">
-                <div className="grid grid-cols-3 gap-4 mb-6">
-                    <div className="bg-white rounded-xl p-4 shadow-sm">
-                        <p className="text-xs text-gray-500">Ventas de hoy</p>
-                        <p className="text-2xl font-bold text-[#5b4eff]">{formatPrice(stats.ventasHoy)}</p>
+                <div className="grid grid-cols-4 gap-4 mb-6">
+                    <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-xs text-gray-500">Ventas de hoy</p>
+                                <p className="text-2xl font-bold text-[#5b4eff]">{formatPrice(stats.ventasHoy)}</p>
+                            </div>
+                            <div className="w-10 h-10 bg-[#5b4eff]/10 rounded-full flex items-center justify-center">
+                                <DollarSign size={20} className="text-[#5b4eff]" />
+                            </div>
+                        </div>
                     </div>
-                    <div className="bg-white rounded-xl p-4 shadow-sm">
-                        <p className="text-xs text-gray-500">Pedidos pendientes</p>
-                        <p className="text-2xl font-bold text-amber-600">{stats.pedidosPendientes}</p>
+                    <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-xs text-gray-500">Pedidos pendientes</p>
+                                <p className="text-2xl font-bold text-amber-600">{stats.pedidosPendientes}</p>
+                            </div>
+                            <div className="w-10 h-10 bg-amber-500/10 rounded-full flex items-center justify-center">
+                                <ClipboardList size={20} className="text-amber-500" />
+                            </div>
+                        </div>
                     </div>
-                    <div className="bg-white rounded-xl p-4 shadow-sm">
-                        <p className="text-xs text-gray-500">Productos con stock bajo</p>
-                        <p className="text-2xl font-bold text-red-500">{stats.productosStockBajo}</p>
+                    <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-xs text-gray-500">Stock bajo</p>
+                                <p className="text-2xl font-bold text-orange-500">{stats.productosStockBajo}</p>
+                            </div>
+                            <div className="w-10 h-10 bg-orange-500/10 rounded-full flex items-center justify-center">
+                                <AlertTriangle size={20} className="text-orange-500" />
+                            </div>
+                        </div>
+                    </div>
+                    <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-xs text-gray-500">Productos agotados</p>
+                                <p className="text-2xl font-bold text-red-500">{stats.productosAgotados || 0}</p>
+                            </div>
+                            <div className="w-10 h-10 bg-red-500/10 rounded-full flex items-center justify-center">
+                                <CircleOff size={20} className="text-red-500" />
+                            </div>
+                        </div>
                     </div>
                 </div>
 
+                {/* Content */}
                 {activeTab === "ventas" && (
                     <VentasPresencial
                         productos={productosFiltrados}
@@ -349,6 +498,10 @@ export default function Vendedor() {
                     />
                 )}
                 {activeTab === "pedidos" && <ListaPedidos onRefresh={cargarEstadisticas} />}
+
+                {activeTab === "historial" && (
+                    <ListaVentasPresencial onRefresh={cargarEstadisticas} />
+                )}
             </div>
         </div>
     );

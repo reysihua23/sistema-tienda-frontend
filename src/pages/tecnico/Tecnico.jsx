@@ -59,6 +59,7 @@ export default function Tecnico() {
                             </svg>
                             <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
                         </button>
+                        
                         <div className="text-right">
                             <p className="text-sm font-bold text-gray-800">{user.nombre || user.correo}</p>
                             <p className="text-xs text-gray-400">Técnico</p>

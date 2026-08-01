@@ -131,7 +131,7 @@ export default function ListaPedidos({ onRefresh }) {
                         <tbody className="divide-y divide-gray-100">
                             {pedidos.map(pedido => (
                                 <tr key={pedido.id} className="hover:bg-gray-50">
-                                    <td className="px-6 py-4 text-sm font-medium">#{pedido.id}</td>
+                                    <td className="px-6 py-4 text-sm font-medium">{pedido.id}</td>
                                     <td className="px-6 py-4 text-sm">{pedido.clienteNombre || `Cliente #${pedido.clienteId}`}</td>
                                     <td className="px-6 py-4 text-sm">{formatDate(pedido.fecha)}</td>
                                     <td className="px-6 py-4 text-sm font-bold text-[#5b4eff]">{formatPrice(pedido.total)}</td>
@@ -173,7 +173,7 @@ export default function ListaPedidos({ onRefresh }) {
                         {/* Header */}
                         <div className="sticky top-0 bg-white p-6 border-b flex justify-between items-center">
                             <div>
-                                <h3 className="text-xl font-bold">Pedido #{selectedPedido.id}</h3>
+                                <h3 className="text-xl font-bold">Pedido {selectedPedido.id}</h3>
                                 <p className="text-sm text-gray-500 mt-1">{formatDate(selectedPedido.fecha)}</p>
                             </div>
                             <button onClick={() => setShowDetalleModal(false)} className="text-gray-400 hover:text-gray-600 transition text-2xl">✕</button>
@@ -197,7 +197,7 @@ export default function ListaPedidos({ onRefresh }) {
                                     <p className="font-bold text-xl text-[#5b4eff]">{formatPrice(selectedPedido.total)}</p>
                                 </div>
                                 <div className="bg-gray-50 rounded-lg p-3">
-                                    <p className="text-xs text-gray-500 uppercase">Productos</p>
+                                    <p className="text-xs text-gray-500 uppercase">Productos {selectedPedido.detalles?.length || 0}</p>
                                     <p className="font-medium">{selectedPedido.detalles?.length || 0} Productos</p>
                                 </div>
                             </div>

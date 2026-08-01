@@ -1,5 +1,5 @@
 // App.jsx
-import React, { useState,useEffect  } from "react";
+import React, { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 import { PayPalScriptProvider } from '@paypal/react-paypal-js';
 import { CarritoProvider } from "./context/CarritoContext";
@@ -37,7 +37,7 @@ import RecuperarPassword from "./pages/auth/RecuperarPassword";
 import Notificaciones from "./pages/notificaciones/Notificaciones";
 
 // Cierre de seción por inactividad
-import { useInactivityLogout } from "./hooks/useInactivityLogout";
+// import { useInactivityLogout } from "./hooks/useInactivityLogout";
 
 
 const PAYPAL_CLIENT_ID = "AdDS_NWdSZlLid9nJXduRqgzB6qej9M2mtnVhpTfi-G0QzZmbh0QXiNeWFgohS9ZHFdYLdhqY3XWIACS";
@@ -152,36 +152,46 @@ function AppContent() {
 // Componente principal
 export default function App() {
   // cierre de sesión por inactividad
-  useInactivityLogout();
+  // const { showWarning } = useInactivityLogout();
+
   return (
     <>
-    {/* Modal de advertencia */}
-      {showWarning && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full">
-            <h3 className="text-xl font-bold text-amber-600 mb-3">⚠️ Sesión por expirar</h3>
-            <p className="text-gray-600 mb-4">
-              Por inactividad, tu sesión se cerrará en 1 minuto. 
-              Haz clic en "Continuar" para mantenerla activa.
-            </p>
-            <button 
-              onClick={() => window.dispatchEvent(new Event('click'))}
-              className="w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-            >
-              Continuar sesión
-            </button>
+
+      <Router>
+
+        {/* Modal controlado por showWarning 
+        {showWarning && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full mx-4">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-bold text-amber-600">⚠️ Sesión por expirar</h3>
+                <span className="text-sm text-gray-500">⏰ 1:00</span>
+              </div>
+              <p className="text-gray-600 mb-4">
+                Por inactividad, tu sesión se cerrará en <strong>1 minuto</strong>. 
+                Haz clic en "Continuar" para mantenerla activa.
+              </p>
+              <button 
+                onClick={() => {
+                  // Disparar evento click para resetear el timer
+                  window.dispatchEvent(new Event('click'));
+                }}
+                className="w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Continuar sesión
+              </button>
+            </div>
           </div>
-        </div>
-      )}
-    <Router>
-      <PayPalScriptProvider options={paypalOptions}>
-        <NotificationProvider>
-          <CarritoProvider>
-            <AppContent />
-          </CarritoProvider>
-        </NotificationProvider>
-      </PayPalScriptProvider>
-    </Router>
+        )}*/}
+
+        <PayPalScriptProvider options={paypalOptions}>
+          <NotificationProvider>
+            <CarritoProvider>
+              <AppContent />
+            </CarritoProvider>
+          </NotificationProvider>
+        </PayPalScriptProvider>
+      </Router>
     </>
   );
 }
