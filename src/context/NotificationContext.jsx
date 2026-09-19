@@ -1,157 +1,158 @@
-// context/NotificationContext.jsx
-import React, { createContext, useState, useContext, useEffect, useCallback } from "react";
-import { connectSocket, disconnectSocket, getSocket } from "../services/socket";
-import { notificacionService } from "../services/api";
+// src/context/NotificationContext.jsx
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { notificacionService } from '../services/api';
+import { useWebSocket } from '../hooks/useWebSocket'; // ✅ Importar el hook
 
 const NotificationContext = createContext();
 
 export const useNotifications = () => {
   const context = useContext(NotificationContext);
   if (!context) {
-    throw new Error("useNotifications must be used within NotificationProvider");
+    throw new Error('useNotifications debe usarse dentro de NotificationProvider');
   }
   return context;
 };
 
 export const NotificationProvider = ({ children }) => {
+  console.log('📢 NotificationProvider montado');
+
   const [notificaciones, setNotificaciones] = useState([]);
-  const [notificacionesNoLeidas, setNotificacionesNoLeidas] = useState(0);
-  const [socketConnected, setSocketConnected] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [usuarioId, setUsuarioId] = useState(null);
 
-  const user = JSON.parse(localStorage.getItem("usuario") || "{}");
-  const token = localStorage.getItem("token");
-
-  // Cargar notificaciones guardadas
-  const cargarNotificaciones = useCallback(async () => {
-    if (!user?.id) {
-      setLoading(false);
-      return;
-    }
-    
-    try {
-      // Verificar si el servicio existe antes de llamarlo
-      if (notificacionService && typeof notificacionService.listarPorUsuario === 'function') {
-        const data = await notificacionService.listarPorUsuario(user.id);
-        const notificacionesLista = Array.isArray(data) ? data : [];
-        setNotificaciones(notificacionesLista);
-        setNotificacionesNoLeidas(notificacionesLista.filter(n => !n.leida).length);
-      } else {
-        console.warn("notificacionService.listarPorUsuario no está disponible");
-        setNotificaciones([]);
-        setNotificacionesNoLeidas(0);
+  // Obtener usuarioId del localStorage
+  useEffect(() => {
+    const usuario = localStorage.getItem('usuario');
+    if (usuario) {
+      try {
+        const userData = JSON.parse(usuario);
+        setUsuarioId(userData.id || userData.usuarioId);
+        console.log('👤 Usuario ID obtenido:', userData.id || userData.usuarioId);
+      } catch (e) {
+        console.error('Error al obtener usuarioId:', e);
       }
-    } catch (error) {
-      console.error("Error cargando notificaciones:", error);
+    }
+  }, []);
+
+  const notificacionesNoLeidas = notificaciones.filter(n => !n.leido).length;
+
+  // ✅ Cargar desde el backend
+  const cargarNotificaciones = useCallback(async () => {
+    console.log('🔄 Cargando notificaciones...');
+    setLoading(true);
+    setError(null);
+
+    try {
+      const data = await notificacionService.obtenerMisNotificaciones();
+      if (data && Array.isArray(data)) {
+        setNotificaciones(data);
+        console.log('✅ Notificaciones cargadas:', data.length);
+      } else {
+        setNotificaciones([]);
+      }
+    } catch (err) {
+      console.error('❌ Error cargando notificaciones:', err);
+      setError('Error al cargar notificaciones');
       setNotificaciones([]);
     } finally {
       setLoading(false);
     }
-  }, [user?.id]);
+  }, []);
 
-  // Conectar WebSocket (solo si el backend lo soporta)
+  // ✅ Manejar notificación en tiempo real
+  const handleNewNotification = useCallback((nuevaNotificacion) => {
+    console.log('📩 Nueva notificación recibida en tiempo real:', nuevaNotificacion);
+    
+    // ✅ Verificar que la notificación no esté duplicada
+    setNotificaciones(prev => {
+      // Evitar duplicados por ID
+      const existe = prev.some(n => n.id === nuevaNotificacion.id);
+      if (existe) {
+        console.log('⏳ Notificación ya existe, no se duplica');
+        return prev;
+      }
+      return [nuevaNotificacion, ...prev];
+    });
+
+    // ✅ Opcional: Mostrar toast o alerta
+    // showToast(nuevaNotificacion.mensaje, 'info');
+
+  }, []);
+
+  // ✅ Conectar WebSocket cuando tengamos usuarioId
+  const { connected } = useWebSocket(usuarioId, handleNewNotification);
+
+  // ✅ Mostrar estado de conexión
   useEffect(() => {
-    // Solo conectar si hay token y usuario, y si el servicio de socket está disponible
-    if (token && user?.id && connectSocket) {
-      try {
-        const socket = connectSocket(token, user.id, user.rol);
-        
-        if (socket) {
-          socket.on("connect", () => {
-            console.log("✅ Conectado al servidor de notificaciones");
-            setSocketConnected(true);
-          });
-          
-          socket.on("disconnect", () => {
-            console.log("❌ Desconectado del servidor de notificaciones");
-            setSocketConnected(false);
-          });
-          
-          socket.on("connect_error", (error) => {
-            console.error("Error de conexión WebSocket:", error);
-            setSocketConnected(false);
-          });
-          
-          socket.on("nueva-notificacion", (notificacion) => {
-            setNotificaciones(prev => [notificacion, ...prev]);
-            setNotificacionesNoLeidas(prev => prev + 1);
-          });
-        }
-      } catch (error) {
-        console.error("Error configurando WebSocket:", error);
-      }
+    if (usuarioId) {
+      console.log(`🔌 WebSocket ${connected ? 'conectado' : 'desconectado'} para usuario ${usuarioId}`);
     }
-    
-    cargarNotificaciones();
-    
-    return () => {
-      if (disconnectSocket) {
-        disconnectSocket();
-      }
-    };
-  }, [token, user?.id, user?.rol, cargarNotificaciones]);
+  }, [connected, usuarioId]);
 
-  // Marcar como leída
-  const marcarComoLeida = async (notificacionId) => {
+  // Cargar notificaciones iniciales
+  useEffect(() => {
+    cargarNotificaciones();
+  }, [cargarNotificaciones]);
+
+  // ✅ Marcar como leída
+  const marcarComoLeida = async (id) => {
     try {
-      if (notificacionService && typeof notificacionService.marcarComoLeida === 'function') {
-        await notificacionService.marcarComoLeida(notificacionId);
-      }
+      await notificacionService.marcarComoLeida(id);
       setNotificaciones(prev =>
-        prev.map(n =>
-          n.id === notificacionId ? { ...n, leida: true } : n
-        )
+        prev.map(n => n.id === id ? { ...n, leido: true } : n)
       );
-      setNotificacionesNoLeidas(prev => Math.max(0, prev - 1));
-    } catch (error) {
-      console.error("Error al marcar como leída:", error);
+    } catch (err) {
+      console.error('Error marcando como leída:', err);
     }
   };
 
-  // Marcar todas como leídas
+  // ✅ Marcar todas como leídas
   const marcarTodasComoLeidas = async () => {
     try {
-      if (notificacionService && typeof notificacionService.marcarTodasComoLeidas === 'function') {
-        await notificacionService.marcarTodasComoLeidas(user.id);
-      }
+      await notificacionService.marcarTodasComoLeidas();
       setNotificaciones(prev =>
-        prev.map(n => ({ ...n, leida: true }))
+        prev.map(n => ({ ...n, leido: true }))
       );
-      setNotificacionesNoLeidas(0);
-    } catch (error) {
-      console.error("Error al marcar todas como leídas:", error);
+    } catch (err) {
+      console.error('Error marcando todas como leídas:', err);
     }
   };
 
-  // Eliminar notificación
-  const eliminarNotificacion = async (notificacionId) => {
+  // ✅ Eliminar notificación
+  const eliminarNotificacion = async (id) => {
     try {
-      if (notificacionService && typeof notificacionService.eliminar === 'function') {
-        await notificacionService.eliminar(notificacionId);
-      }
-      const notificacionEliminada = notificaciones.find(n => n.id === notificacionId);
-      setNotificaciones(prev => prev.filter(n => n.id !== notificacionId));
-      if (!notificacionEliminada?.leida) {
-        setNotificacionesNoLeidas(prev => Math.max(0, prev - 1));
-      }
-    } catch (error) {
-      console.error("Error al eliminar notificación:", error);
+      await notificacionService.eliminar(id);
+      setNotificaciones(prev => prev.filter(n => n.id !== id));
+    } catch (err) {
+      console.error('Error eliminando notificación:', err);
     }
+  };
+
+  // ✅ Recargar
+  const recargarNotificaciones = () => {
+    cargarNotificaciones();
+  };
+
+  // Cargar al montar
+  useEffect(() => {
+    cargarNotificaciones();
+  }, [cargarNotificaciones]);
+
+  const value = {
+    notificaciones,
+    notificacionesNoLeidas,
+    loading,
+    error,
+    cargarNotificaciones,
+    recargarNotificaciones: recargarNotificaciones,
+    marcarComoLeida,
+    marcarTodasComoLeidas,
+    eliminarNotificacion,
   };
 
   return (
-    <NotificationContext.Provider
-      value={{
-        notificaciones,
-        notificacionesNoLeidas,
-        socketConnected,
-        loading,
-        marcarComoLeida,
-        marcarTodasComoLeidas,
-        eliminarNotificacion,
-        recargarNotificaciones: cargarNotificaciones
-      }}
-    >
+    <NotificationContext.Provider value={value}>
       {children}
     </NotificationContext.Provider>
   );

@@ -5,6 +5,10 @@ import { PayPalScriptProvider } from '@paypal/react-paypal-js';
 import { CarritoProvider } from "./context/CarritoContext";
 import { NotificationProvider } from "./context/NotificationContext";
 
+//import NotificationBadge from './components/NotificationBadge';  // ✅ Sin llaves {}
+
+import NotificationBell from "./components/NotificationBell";
+
 // Componentes de navegación
 import NavBar from "./components/Navbar";
 
@@ -33,8 +37,11 @@ import ClienteServicioDetalle from "./pages/cliente/ClienteServicioDetalle";
 import Comprobante from "./pages/comprobante/Comprobante";
 import TerminosCondiciones from "./pages/legal/TerminosCondiciones";
 import PoliticasPrivacidad from "./pages/legal/PoliticasPrivacidad";
-import RecuperarPassword from "./pages/auth/RecuperarPassword";
 import Notificaciones from "./pages/notificaciones/Notificaciones";
+
+// Servicios para restauración de contraseña
+import ForgotPassword from "./pages/auth/ForgotPassword";
+import ResetPassword from "./pages/auth/ResetPassword";
 
 // Cierre de seción por inactividad
 // import { useInactivityLogout } from "./hooks/useInactivityLogout";
@@ -121,7 +128,7 @@ function AppContent() {
         <Route path="/nosotros" element={<Nosotros />} />
         <Route path="/servicioTec" element={<ServicioTec />} />
         <Route path="/login" element={<AuthPage />} />
-        <Route path="/recuperar-password" element={<RecuperarPassword />} />
+        
         <Route path="/perfil" element={<Perfil />} />
 
         <Route path="/cliente/pedido/:id" element={<ClientePedidoDetalle />} />
@@ -141,6 +148,10 @@ function AppContent() {
 
         {/* RUTA DE NOTIFICACIONES */}
         <Route path="/notificaciones" element={<Notificaciones />} />
+
+        {/* RUTAS DE RESTABLECIMIENTO DE CONTRASEÑA */}
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
 
         {/* CAPTURADOR DE ERRORES 404 */}
         <Route path="*" element={<PageNotFound />} />
@@ -183,14 +194,15 @@ export default function App() {
             </div>
           </div>
         )}*/}
+        <NotificationProvider>
+          <PayPalScriptProvider options={paypalOptions}>
 
-        <PayPalScriptProvider options={paypalOptions}>
-          <NotificationProvider>
             <CarritoProvider>
               <AppContent />
             </CarritoProvider>
-          </NotificationProvider>
-        </PayPalScriptProvider>
+
+          </PayPalScriptProvider>
+        </NotificationProvider>
       </Router>
     </>
   );

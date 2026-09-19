@@ -1,6 +1,8 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
+// ✅ POLYFILL para 'global' (para WebSocket)
+import 'global';
 import App from './App.jsx'
 
 
