@@ -6,7 +6,7 @@ import {
     X, Package, DollarSign, Box, AlertTriangle,
     Image, Upload, Trash2, Star, Plus, CheckCircle,
     AlertCircle, Info, Loader2, Edit, Save, Camera,
-    Shield
+    Shield, Percent, Calendar, Clock, Tag, FolderOpen
 } from "lucide-react";
 
 export default function ProductoForm({ editingProduct, onClose, onRefresh }) {
@@ -21,13 +21,21 @@ export default function ProductoForm({ editingProduct, onClose, onRefresh }) {
     const [uploadingImages, setUploadingImages] = useState(false);
     const [errors, setErrors] = useState({});
     const [touched, setTouched] = useState({});
+
     const [productForm, setProductForm] = useState({
         nombre: editingProduct?.nombre || "",
         descripcion: editingProduct?.descripcion || "",
         precio: editingProduct?.precio || "",
         stock: editingProduct?.stock || 0,
         stockMinimo: editingProduct?.stockMinimo || 5,
-        activo: editingProduct?.activo !== undefined ? editingProduct.activo : true
+        activo: editingProduct?.activo !== undefined ? editingProduct.activo : true,
+        categoria: editingProduct?.categoria || "otros",
+        // ✅ Campos de descuento
+        porcentajeDescuento: editingProduct?.porcentajeDescuento || 0,
+        precioDescuento: editingProduct?.precioDescuento || 0,
+        descuentoActivo: editingProduct?.descuentoActivo || false,
+        fechaInicioDescuento: editingProduct?.fechaInicioDescuento || '',
+        fechaFinDescuento: editingProduct?.fechaFinDescuento || ''
     });
 
     const fileInputRef = useRef(null);
@@ -50,6 +58,12 @@ export default function ProductoForm({ editingProduct, onClose, onRefresh }) {
         setNotification({ type, title, message, suggestion });
     };
 
+    // ✅ Función para calcular precio con descuento
+    const calcularPrecioConDescuento = (precio, porcentaje) => {
+        if (!precio || !porcentaje || porcentaje <= 0) return 0;
+        return parseFloat((precio - (precio * (porcentaje / 100))).toFixed(2));
+    };
+
     // Funciones de validación
     const validateField = (name, value) => {
         switch (name) {
@@ -70,6 +84,11 @@ export default function ProductoForm({ editingProduct, onClose, onRefresh }) {
             case "stockMinimo":
                 if (value && parseInt(value) < 0) return "El stock mínimo no puede ser negativo";
                 return "";
+            case "porcentajeDescuento":
+                if (value && (parseFloat(value) < 0 || parseFloat(value) > 100)) {
+                    return "El descuento debe estar entre 0% y 100%";
+                }
+                return "";
             default:
                 return "";
         }
@@ -82,6 +101,22 @@ export default function ProductoForm({ editingProduct, onClose, onRefresh }) {
         newErrors.precio = validateField("precio", productForm.precio);
         newErrors.stock = validateField("stock", productForm.stock);
         newErrors.stockMinimo = validateField("stockMinimo", productForm.stockMinimo);
+        newErrors.porcentajeDescuento = validateField("porcentajeDescuento", productForm.porcentajeDescuento);
+
+        // Validar fechas de descuento
+        if (productForm.descuentoActivo && productForm.porcentajeDescuento > 0) {
+            if (!productForm.fechaInicioDescuento) {
+                newErrors.fechaInicioDescuento = "La fecha de inicio es obligatoria";
+            }
+            if (!productForm.fechaFinDescuento) {
+                newErrors.fechaFinDescuento = "La fecha de fin es obligatoria";
+            }
+            if (productForm.fechaInicioDescuento && productForm.fechaFinDescuento) {
+                if (new Date(productForm.fechaInicioDescuento) > new Date(productForm.fechaFinDescuento)) {
+                    newErrors.fechaFinDescuento = "La fecha de fin debe ser posterior a la fecha de inicio";
+                }
+            }
+        }
 
         if (!editingProduct) {
             if (uploadedImages.length === 0) {
@@ -112,6 +147,58 @@ export default function ProductoForm({ editingProduct, onClose, onRefresh }) {
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
+
+        // ✅ Si es precio, recalcular descuento si está activo
+        if (name === "precio" && productForm.descuentoActivo && productForm.porcentajeDescuento > 0) {
+            const nuevoPrecio = parseFloat(value) || 0;
+            const descuentoCalc = calcularPrecioConDescuento(nuevoPrecio, productForm.porcentajeDescuento);
+            setProductForm(prev => ({
+                ...prev,
+                precio: value,
+                precioDescuento: descuentoCalc
+            }));
+            if (errors[name]) {
+                setErrors({ ...errors, [name]: "" });
+            }
+            return;
+        }
+
+        // ✅ Si es descuento, recalcular precio
+        if (name === "porcentajeDescuento" && productForm.descuentoActivo) {
+            const porcentaje = parseFloat(value) || 0;
+            const precioOriginal = parseFloat(productForm.precio) || 0;
+            const precioConDescuento = calcularPrecioConDescuento(precioOriginal, porcentaje);
+            setProductForm(prev => ({
+                ...prev,
+                porcentajeDescuento: porcentaje,
+                precioDescuento: precioConDescuento
+            }));
+            if (errors[name]) {
+                setErrors({ ...errors, [name]: "" });
+            }
+            return;
+        }
+
+        // ✅ Si se activa/desactiva descuento
+        if (name === "descuentoActivo") {
+            if (!checked) {
+                setProductForm(prev => ({
+                    ...prev,
+                    descuentoActivo: false,
+                    porcentajeDescuento: 0,
+                    precioDescuento: 0,
+                    fechaInicioDescuento: '',
+                    fechaFinDescuento: ''
+                }));
+            } else {
+                setProductForm(prev => ({
+                    ...prev,
+                    descuentoActivo: true
+                }));
+            }
+            return;
+        }
+
         setProductForm(prev => ({
             ...prev,
             [name]: type === "checkbox" ? checked : value
@@ -155,8 +242,7 @@ export default function ProductoForm({ editingProduct, onClose, onRefresh }) {
         };
     };
 
-    // src/pages/admin/components/ProductoForm.jsx
-    // ✅ MODIFICAR handleAddImage - SOLO 1 IMAGEN A LA VEZ
+    // ✅ handleAddImage - SOLO 1 IMAGEN A LA VEZ
     const handleAddImage = (e) => {
         const files = Array.from(e.target.files);
         if (files.length === 0) return;
@@ -281,7 +367,7 @@ export default function ProductoForm({ editingProduct, onClose, onRefresh }) {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        const allFields = ["nombre", "precio", "stock", "stockMinimo"];
+        const allFields = ["nombre", "precio", "stock", "stockMinimo", "porcentajeDescuento"];
         const touchedFields = {};
         allFields.forEach(field => { touchedFields[field] = true; });
         setTouched(touchedFields);
@@ -302,7 +388,14 @@ export default function ProductoForm({ editingProduct, onClose, onRefresh }) {
                 precio: parseFloat(productForm.precio),
                 stockMinimo: parseInt(productForm.stockMinimo),
                 activo: productForm.activo,
-                stock: parseInt(productForm.stock) || 0
+                stock: parseInt(productForm.stock) || 0,
+                categoria: productForm.categoria || "otros",
+                // ✅ Campos de descuento
+                porcentajeDescuento: productForm.descuentoActivo ? parseFloat(productForm.porcentajeDescuento) : 0,
+                precioDescuento: productForm.descuentoActivo ? parseFloat(productForm.precioDescuento) : 0,
+                descuentoActivo: productForm.descuentoActivo,
+                fechaInicioDescuento: productForm.descuentoActivo ? productForm.fechaInicioDescuento : null,
+                fechaFinDescuento: productForm.descuentoActivo ? productForm.fechaFinDescuento : null
             };
 
             if (editingProduct) {
@@ -440,7 +533,7 @@ export default function ProductoForm({ editingProduct, onClose, onRefresh }) {
                 </div>
             )}
 
-            {/* ✅ MODAL DE ANÁLISIS DE IMAGEN - DENTRO DEL FRAGMENTO PRINCIPAL */}
+            {/* ✅ MODAL DE ANÁLISIS DE IMAGEN */}
             {showAnalysis && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[9999] p-4">
                     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6">
@@ -525,6 +618,26 @@ export default function ProductoForm({ editingProduct, onClose, onRefresh }) {
                                     onChange={handleChange}
                                     placeholder="Describe las características del producto..."
                                 />
+                            </div>
+                            {/* Categoría */}
+                            <div>
+                                <label className="block text-xs font-black text-gray-500 uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                                    <FolderOpen size={12} />
+                                    Categoría <span className="text-rose-500">*</span>
+                                </label>
+                                <select
+                                    name="categoria"
+                                    value={productForm.categoria}
+                                    onChange={handleChange}
+                                    className="w-full p-3 bg-gray-50 border-2 border-gray-100 rounded-xl focus:outline-none focus:border-[#5b4eff] focus:ring-2 focus:ring-[#5b4eff]/20 transition-all"
+                                >
+                                    <option value="celulares"> Celulares</option>
+                                    <option value="tablets"> Tablets</option>
+                                    <option value="audifonos"> Audífonos</option>
+                                    <option value="cargadores"> Cargadores</option>
+                                    <option value="accesorios"> Accesorios</option>
+                                    <option value="otros"> Otros</option>
+                                </select>
                             </div>
 
                             {/* Precio y Stock */}
@@ -615,6 +728,130 @@ export default function ProductoForm({ editingProduct, onClose, onRefresh }) {
                                         </span>
                                     </label>
                                 </div>
+                            </div>
+
+                            {/* ✅ SECCIÓN DE DESCUENTO */}
+                            <div className="border-t border-gray-200 pt-4 mt-2">
+                                <div className="flex items-center gap-2 mb-3">
+                                    <Tag size={16} className="text-[#5b4eff]" />
+                                    <h4 className="font-bold text-sm text-gray-700">Oferta / Descuento</h4>
+                                </div>
+
+                                {/* Activar descuento */}
+                                <label className="flex items-center gap-2 cursor-pointer p-2 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
+                                    <input
+                                        type="checkbox"
+                                        name="descuentoActivo"
+                                        checked={productForm.descuentoActivo}
+                                        onChange={handleChange}
+                                        className="w-4 h-4 rounded text-[#5b4eff] focus:ring-[#5b4eff]"
+                                    />
+                                    <span className="text-sm font-medium text-gray-700 flex items-center gap-1">
+                                        <Percent size={14} /> Activar descuento para este producto
+                                    </span>
+                                </label>
+
+                                {productForm.descuentoActivo && (
+                                    <div className="mt-3 space-y-3 bg-amber-50 p-3 rounded-xl border border-amber-200">
+                                        {/* Porcentaje de descuento */}
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 flex items-center gap-1">
+                                                <Percent size={12} /> Porcentaje de descuento (%)
+                                            </label>
+                                            <div className="flex items-center gap-3">
+                                                <input
+                                                    type="number"
+                                                    name="porcentajeDescuento"
+                                                    min="0"
+                                                    max="100"
+                                                    step="1"
+                                                    className={`w-full p-2.5 bg-white border-2 rounded-xl focus:outline-none focus:border-[#5b4eff] focus:ring-2 focus:ring-[#5b4eff]/20 transition-all ${touched.porcentajeDescuento && errors.porcentajeDescuento
+                                                            ? "border-rose-500 bg-rose-50"
+                                                            : "border-gray-200"
+                                                        }`}
+                                                    value={productForm.porcentajeDescuento}
+                                                    onChange={handleChange}
+                                                    onBlur={() => handleBlur("porcentajeDescuento")}
+                                                    placeholder="Ej: 20"
+                                                />
+                                                <span className="text-sm font-bold text-gray-500">%</span>
+                                            </div>
+                                            {touched.porcentajeDescuento && errors.porcentajeDescuento && (
+                                                <p className="text-xs text-rose-500 mt-1 flex items-center gap-1">
+                                                    <AlertCircle size={10} /> {errors.porcentajeDescuento}
+                                                </p>
+                                            )}
+                                        </div>
+
+                                        {/* Precio con descuento (automático) */}
+                                        {productForm.porcentajeDescuento > 0 && (
+                                            <div className="bg-green-50 p-3 rounded-lg border border-green-200">
+                                                <div className="flex justify-between items-center">
+                                                    <span className="text-sm text-gray-600">Precio original:</span>
+                                                    <span className="text-sm font-bold text-gray-500 line-through">
+                                                        S/ {parseFloat(productForm.precio || 0).toFixed(2)}
+                                                    </span>
+                                                </div>
+                                                <div className="flex justify-between items-center mt-1">
+                                                    <span className="text-sm font-bold text-green-700 flex items-center gap-1">
+                                                        <Tag size={14} /> Precio con descuento:
+                                                    </span>
+                                                    <span className="text-lg font-bold text-green-600">
+                                                        S/ {productForm.precioDescuento.toFixed(2)}
+                                                    </span>
+                                                </div>
+                                                <p className="text-xs text-green-600 mt-1">
+                                                    Ahorro: S/ {(parseFloat(productForm.precio || 0) - productForm.precioDescuento).toFixed(2)} (
+                                                    {productForm.porcentajeDescuento}% de descuento)
+                                                </p>
+                                            </div>
+                                        )}
+
+                                        {/* Fechas del descuento */}
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div>
+                                                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 flex items-center gap-1">
+                                                    <Calendar size={12} /> Inicio
+                                                </label>
+                                                <input
+                                                    type="date"
+                                                    name="fechaInicioDescuento"
+                                                    className={`w-full p-2.5 bg-white border-2 rounded-xl focus:outline-none focus:border-[#5b4eff] focus:ring-2 focus:ring-[#5b4eff]/20 transition-all ${errors.fechaInicioDescuento
+                                                            ? "border-rose-500 bg-rose-50"
+                                                            : "border-gray-200"
+                                                        }`}
+                                                    value={productForm.fechaInicioDescuento}
+                                                    onChange={handleChange}
+                                                />
+                                                {errors.fechaInicioDescuento && (
+                                                    <p className="text-xs text-rose-500 mt-1 flex items-center gap-1">
+                                                        <AlertCircle size={10} /> {errors.fechaInicioDescuento}
+                                                    </p>
+                                                )}
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 flex items-center gap-1">
+                                                    <Clock size={12} /> Fin
+                                                </label>
+                                                <input
+                                                    type="date"
+                                                    name="fechaFinDescuento"
+                                                    className={`w-full p-2.5 bg-white border-2 rounded-xl focus:outline-none focus:border-[#5b4eff] focus:ring-2 focus:ring-[#5b4eff]/20 transition-all ${errors.fechaFinDescuento
+                                                            ? "border-rose-500 bg-rose-50"
+                                                            : "border-gray-200"
+                                                        }`}
+                                                    value={productForm.fechaFinDescuento}
+                                                    onChange={handleChange}
+                                                />
+                                                {errors.fechaFinDescuento && (
+                                                    <p className="text-xs text-rose-500 mt-1 flex items-center gap-1">
+                                                        <AlertCircle size={10} /> {errors.fechaFinDescuento}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Imágenes */}

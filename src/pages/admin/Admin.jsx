@@ -1,5 +1,6 @@
+// pages/admin/Admin.jsx
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { 
   LayoutDashboard, Package, TrendingDown, ShoppingBag, Users, 
   BarChart3, LogOut, RefreshCw, ShoppingCart, CheckCircle, AlertCircle,
@@ -12,9 +13,11 @@ import StockList from "./components/StockList";
 import PedidosList from "./components/PedidosList";
 import UsuariosList from "./components/UsuariosList";
 import Reportes from "./components/Reportes";
+import NotificationBell from "../../components/NotificationBell";
 
 export default function Admin({ user: propUser }) {
     const navigate = useNavigate();
+    const location = useLocation(); // ✅ NUEVO
     const [user, setUser] = useState(propUser || null);
     const [activeTab, setActiveTab] = useState("dashboard");
     const [loading, setLoading] = useState(true);
@@ -41,6 +44,13 @@ export default function Admin({ user: propUser }) {
         { id: "usuarios", label: "Usuarios", icon: Users },
         { id: "reportes", label: "Reportes", icon: BarChart3 }
     ];
+
+    // ✅ NUEVO: leer state.tab cuando llega desde una notificación
+    useEffect(() => {
+        if (location.state?.tab) {
+            setActiveTab(location.state.tab);
+        }
+    }, [location.state]);
 
     useEffect(() => {
         const initAdmin = () => {
@@ -186,15 +196,7 @@ export default function Admin({ user: propUser }) {
                         </h1>
                     </div>
                     <div className="flex items-center gap-4">
-                        <button 
-                            onClick={() => navigate("/notificaciones")} 
-                            className="relative p-2 hover:bg-gray-100 rounded-full"
-                        >
-                            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                            </svg>
-                            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
-                        </button>
+                        <NotificationBell />
                         <button 
                             onClick={handleRefresh}
                             className="p-2 text-gray-400 hover:text-[#5b4eff] hover:bg-gray-100 rounded-lg transition-all"
@@ -222,7 +224,7 @@ export default function Admin({ user: propUser }) {
                 </div>
             </div>
 
-            {/* Tabs con Lucide Icons */}
+            {/* Tabs */}
             <div className="border-b bg-white sticky top-[73px] z-10 overflow-x-auto shadow-sm">
                 <div className="max-w-7xl mx-auto px-6">
                     <div className="flex gap-2">
@@ -250,7 +252,6 @@ export default function Admin({ user: propUser }) {
 
             {/* Contenido */}
             <div className="max-w-7xl mx-auto px-6 py-8">
-                {/* Mensaje de notificación */}
                 {message.text && (
                     <div className={`mb-6 p-4 rounded-xl shadow-sm border-l-4 animate-in fade-in slide-in-from-top-2 ${
                         message.type === "success" 
@@ -268,7 +269,6 @@ export default function Admin({ user: propUser }) {
                     </div>
                 )}
 
-                {/* Loading */}
                 {loading ? (
                     <div className="text-center py-16">
                         <div className="relative w-16 h-16 mx-auto">
@@ -280,70 +280,30 @@ export default function Admin({ user: propUser }) {
                 ) : (
                     <>
                         {activeTab === "dashboard" && (
-                            <AdminDashboard 
-                                stats={stats} 
-                                user={user} 
-                                onRefresh={handleRefresh}
-                            />
+                            <AdminDashboard stats={stats} user={user} onRefresh={handleRefresh} />
                         )}
-
                         {activeTab === "productos" && (
-                            <ProductosList
-                                productos={productos}
-                                stock={stock}
-                                onRefresh={cargarDatos}
-                                showMessage={showMessage}
-                            />
+                            <ProductosList productos={productos} stock={stock} onRefresh={cargarDatos} showMessage={showMessage} />
                         )}
-
                         {activeTab === "stock" && (
-                            <StockList
-                                productos={productos}
-                                onRefresh={cargarDatos}
-                                showMessage={showMessage}
-                            />
+                            <StockList productos={productos} onRefresh={cargarDatos} showMessage={showMessage} />
                         )}
-
                         {activeTab === "pedidos" && (
-                            <PedidosList
-                                pedidos={pedidos}
-                                onRefresh={cargarDatos}
-                                showMessage={showMessage}
-                            />
+                            <PedidosList pedidos={pedidos} onRefresh={cargarDatos} showMessage={showMessage} />
                         )}
-
                         {activeTab === "usuarios" && (
-                            <UsuariosList
-                                usuarios={usuarios}
-                                roles={roles}
-                                onRefresh={cargarDatos}
-                                showMessage={showMessage}
-                            />
+                            <UsuariosList usuarios={usuarios} roles={roles} onRefresh={cargarDatos} showMessage={showMessage} />
                         )}
-
-                        {activeTab === "reportes" && (
-                            <Reportes />
-                        )}
+                        {activeTab === "reportes" && <Reportes />}
                     </>
                 )}
             </div>
 
-            {/* Estilos adicionales */}
             <style>{`
-                .animate-in {
-                    animation: fadeIn 0.3s ease-out;
-                }
-                .slide-in-from-top-2 {
-                    animation: slideDown 0.3s ease-out;
-                }
-                @keyframes fadeIn {
-                    from { opacity: 0; }
-                    to { opacity: 1; }
-                }
-                @keyframes slideDown {
-                    from { opacity: 0; transform: translateY(-10px); }
-                    to { opacity: 1; transform: translateY(0); }
-                }
+                .animate-in { animation: fadeIn 0.3s ease-out; }
+                .slide-in-from-top-2 { animation: slideDown 0.3s ease-out; }
+                @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+                @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
             `}</style>
         </div>
     );

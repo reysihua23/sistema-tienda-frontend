@@ -1,9 +1,9 @@
+// components/Navbar.jsx
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import Search from "../pages/search/Search";
 import { useCarrito } from "../context/CarritoContext";
-//import { useNotifications } from "../context/NotificationContext";
-//import NotificationBell from "./NotificationBell";
+import NotificationBell from "./NotificationBell"; // ✅ IMPORTAR
 
 function NavBar({ searchQuery, setSearchQuery }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -11,15 +11,13 @@ function NavBar({ searchQuery, setSearchQuery }) {
   const [animate, setAnimate] = useState(false);
   const [user, setUser] = useState(null);
   const [scrolled, setScrolled] = useState(false);
-  //const { notificacionesNoLeidas } = useNotifications();
 
   const navigate = useNavigate();
   const location = useLocation();
   const userMenuRef = useRef(null);
   const mobileMenuRef = useRef(null);
   const menuButtonRef = useRef(null);
-  
-  // ✅ Obtener itemsCount del contexto del carrito
+
   const { itemsCount } = useCarrito();
 
   // Detectar scroll
@@ -92,7 +90,7 @@ function NavBar({ searchQuery, setSearchQuery }) {
     };
   }, [isMenuOpen]);
 
-  // ✅ Animación del carrito cuando cambia la cantidad
+  // Animación del carrito
   useEffect(() => {
     if (itemsCount > 0) {
       setAnimate(true);
@@ -143,7 +141,7 @@ function NavBar({ searchQuery, setSearchQuery }) {
     { to: "/servicioTec", label: "Servicios", exact: false }
   ];
 
-  // ✅ Componente del icono del carrito (usa itemsCount del contexto)
+  // Componente del icono del carrito
   const CartIcon = () => (
     <Link
       to="/carrito"
@@ -168,9 +166,8 @@ function NavBar({ searchQuery, setSearchQuery }) {
       </svg>
       {itemsCount > 0 && (
         <span
-          className={`absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-black min-w-[20px] h-5 flex items-center justify-center rounded-full shadow-sm transition-all duration-300 px-1 ${
-            animate ? "scale-125" : "scale-100"
-          }`}
+          className={`absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-black min-w-[20px] h-5 flex items-center justify-center rounded-full shadow-sm transition-all duration-300 px-1 ${animate ? "scale-125" : "scale-100"
+            }`}
         >
           {itemsCount > 99 ? "99+" : itemsCount}
         </span>
@@ -185,16 +182,13 @@ function NavBar({ searchQuery, setSearchQuery }) {
 
   return (
     <>
-      {/* Espaciador para compensar navbar fijo */}
       <div className="h-20 md:h-24" />
 
-      {/* Navbar principal */}
       <nav
-        className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${
-          scrolled
+        className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${scrolled
             ? "py-2 bg-white/95 backdrop-blur-xl shadow-lg"
             : "py-4 bg-white/80 backdrop-blur-md"
-        }`}
+          }`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between gap-4">
@@ -210,23 +204,25 @@ function NavBar({ searchQuery, setSearchQuery }) {
               <Search searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
             </div>
 
-            {/* Desktop Navigation */}
+            {/* ✅ Desktop Navigation CON NotificationBell */}
             <div className="hidden md:flex items-center gap-1">
               {navLinks.map((link) => (
                 <Link
                   key={link.to}
                   to={link.to}
-                  className={`px-4 py-2 text-[11px] font-black uppercase tracking-widest transition-all rounded-full ${
-                    isActive(link.to, link.exact)
+                  className={`px-4 py-2 text-[11px] font-black uppercase tracking-widest transition-all rounded-full ${isActive(link.to, link.exact)
                       ? "text-[#5b4eff] bg-[#5b4eff]/10"
                       : "text-gray-500 hover:text-[#5b4eff] hover:bg-gray-50"
-                  }`}
+                    }`}
                 >
                   {link.label}
                 </Link>
               ))}
 
               <div className="w-px h-6 bg-gray-200 mx-2" />
+
+              {/* ✅ NOTIFICATION BADGE - SOLO abre el panel */}
+              <NotificationBell />
 
               {/* Icono del carrito */}
               <CartIcon />
@@ -299,7 +295,7 @@ function NavBar({ searchQuery, setSearchQuery }) {
               </div>
             </div>
 
-            {/* Mobile Menu Button - Hamburguesa */}
+            {/* Mobile Menu Button */}
             <div className="flex md:hidden items-center gap-2">
               <CartIcon />
               <button
@@ -309,25 +305,22 @@ function NavBar({ searchQuery, setSearchQuery }) {
                 aria-label="Abrir menú"
               >
                 <span
-                  className={`block w-5 h-0.5 bg-black rounded-full transition-all duration-300 ${
-                    isMenuOpen ? "rotate-45 translate-y-2" : ""
-                  }`}
+                  className={`block w-5 h-0.5 bg-black rounded-full transition-all duration-300 ${isMenuOpen ? "rotate-45 translate-y-2" : ""
+                    }`}
                 />
                 <span
-                  className={`block w-5 h-0.5 bg-black rounded-full transition-all duration-300 ${
-                    isMenuOpen ? "opacity-0" : ""
-                  }`}
+                  className={`block w-5 h-0.5 bg-black rounded-full transition-all duration-300 ${isMenuOpen ? "opacity-0" : ""
+                    }`}
                 />
                 <span
-                  className={`block w-5 h-0.5 bg-black rounded-full transition-all duration-300 ${
-                    isMenuOpen ? "-rotate-45 -translate-y-2" : ""
-                  }`}
+                  className={`block w-5 h-0.5 bg-black rounded-full transition-all duration-300 ${isMenuOpen ? "-rotate-45 -translate-y-2" : ""
+                    }`}
                 />
               </button>
             </div>
           </div>
 
-          {/* Search - Mobile - Se oculta cuando el menú está abierto */}
+          {/* Search - Mobile */}
           {!isMenuOpen && (
             <div className="md:hidden mt-3">
               <Search searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
@@ -336,16 +329,14 @@ function NavBar({ searchQuery, setSearchQuery }) {
         </div>
       </nav>
 
-      {/* Mobile Menu Overlay y Menú Lateral */}
+      {/* ✅ Mobile Menu con NotificationBell */}
       {isMenuOpen && (
         <div className="fixed inset-0 z-40 md:hidden">
-          {/* Overlay oscuro */}
           <div
             className="absolute inset-0 bg-black/50 transition-opacity duration-300"
             onClick={() => setIsMenuOpen(false)}
           />
-          
-          {/* Menú lateral */}
+
           <div
             ref={mobileMenuRef}
             className="absolute top-0 right-0 w-80 h-full bg-white shadow-2xl transform transition-transform duration-300 ease-out translate-x-0 overflow-y-auto"
@@ -366,7 +357,7 @@ function NavBar({ searchQuery, setSearchQuery }) {
                   </button>
                 </div>
 
-                {/* Info del usuario en móvil */}
+                {/* Info del usuario con NotificationBell */}
                 {user && (
                   <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-[#f8f9fb] to-white rounded-xl">
                     <div className="w-12 h-12 bg-gradient-to-r from-[#0d0c1e] to-[#2a293e] text-white rounded-full flex items-center justify-center text-lg font-bold">
@@ -376,6 +367,8 @@ function NavBar({ searchQuery, setSearchQuery }) {
                       <p className="text-[10px] font-bold text-[#5b4eff] uppercase">{getRoleName()}</p>
                       <p className="text-sm font-black text-[#0d0c1e] truncate">{user.correo}</p>
                     </div>
+                    {/* ✅ NOTIFICATION BADGE EN MÓVIL */}
+                    <NotificationBell />
                   </div>
                 )}
               </div>
@@ -387,17 +380,15 @@ function NavBar({ searchQuery, setSearchQuery }) {
                     key={link.to}
                     to={link.to}
                     onClick={() => setIsMenuOpen(false)}
-                    className={`flex items-center px-6 py-4 text-sm font-bold transition-colors ${
-                      isActive(link.to, link.exact)
+                    className={`flex items-center px-6 py-4 text-sm font-bold transition-colors ${isActive(link.to, link.exact)
                         ? "text-[#5b4eff] bg-[#5b4eff]/5 border-r-4 border-[#5b4eff]"
                         : "text-gray-700 hover:bg-gray-50"
-                    }`}
+                      }`}
                   >
                     {link.label}
                   </Link>
                 ))}
-                
-                {/* Enlace a Mis Pedidos en móvil */}
+
                 {user && (
                   <Link
                     to="/mis-pedidos"
@@ -451,7 +442,6 @@ function NavBar({ searchQuery, setSearchQuery }) {
         </div>
       )}
 
-      {/* Estilos globales para animaciones */}
       <style>{`
         @keyframes fadeIn {
           from { opacity: 0; }
@@ -467,14 +457,10 @@ function NavBar({ searchQuery, setSearchQuery }) {
         .slide-in {
           animation: slideIn 0.3s ease-out;
         }
-        
-        /* Mejoras de accesibilidad */
         button:focus-visible {
           outline: 2px solid #5b4eff;
           outline-offset: 2px;
         }
-        
-        /* Transiciones suaves */
         .transition-all {
           transition-property: all;
           transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);

@@ -1,17 +1,26 @@
 // pages/tecnico/Tecnico.jsx
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { authService } from "../../services/api";
 import DashboardTecnico from "./components/DashboardTecnico";
 import ListaServicios from "./components/ListaServicios";
 import NuevoServicio from "./components/NuevoServicio";
 import HistorialServicios from "./components/HistorialServicios";
+import NotificationBell from "../../components/NotificationBell";
 
 export default function Tecnico() {
     const navigate = useNavigate();
+    const location = useLocation(); // ✅ NUEVO
     const [user, setUser] = useState(null);
     const [activeTab, setActiveTab] = useState("dashboard");
     const [loading, setLoading] = useState(true);
+
+    // ✅ NUEVO: leer state.tab cuando llega desde una notificación
+    useEffect(() => {
+        if (location.state?.tab) {
+            setActiveTab(location.state.tab);
+        }
+    }, [location.state]);
 
     useEffect(() => {
         const usuario = authService.getCurrentUser();
@@ -38,28 +47,14 @@ export default function Tecnico() {
 
     return (
         <div className="min-h-screen bg-gray-100">
-            {/* Header */}
             <div className="bg-white shadow-sm border-b sticky top-0 z-10">
                 <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
                     <div>
-                        <h1 className="text-2xl font-black text-[#0d0c1e]">
-                            Panel de Técnico
-                        </h1>
-                        <p className="text-sm text-gray-500 mt-1">
-                            Gestiona servicios técnicos y reparaciones
-                        </p>
+                        <h1 className="text-2xl font-black text-[#0d0c1e]">Panel de Técnico</h1>
+                        <p className="text-sm text-gray-500 mt-1">Gestiona servicios técnicos y reparaciones</p>
                     </div>
                     <div className="flex items-center gap-4">
-                        <button 
-                            onClick={() => navigate("/notificaciones")} 
-                            className="relative p-2 hover:bg-gray-100 rounded-full"
-                        >
-                            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                            </svg>
-                            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
-                        </button>
-                        
+                        <NotificationBell />
                         <div className="text-right">
                             <p className="text-sm font-bold text-gray-800">{user.nombre || user.correo}</p>
                             <p className="text-xs text-gray-400">Técnico</p>
@@ -74,7 +69,6 @@ export default function Tecnico() {
                 </div>
             </div>
 
-            {/* Tabs */}
             <div className="bg-white border-b">
                 <div className="max-w-7xl mx-auto px-6">
                     <div className="flex gap-1 overflow-x-auto">
@@ -122,7 +116,6 @@ export default function Tecnico() {
                 </div>
             </div>
 
-            {/* Contenido */}
             <div className="max-w-7xl mx-auto px-6 py-8">
                 {activeTab === "dashboard" && <DashboardTecnico />}
                 {activeTab === "servicios" && <ListaServicios />}

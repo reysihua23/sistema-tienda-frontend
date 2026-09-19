@@ -1,6 +1,6 @@
 // pages/vendedor/Vendedor.jsx
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
     LogOut, Bell, Store, ShoppingBag,
     Package, TrendingUp, AlertTriangle,
@@ -12,9 +12,11 @@ import { authService, pedidoService, productoService, clienteService, stockServi
 import VentasPresencial from "./components/VentasPresencial";
 import ListaPedidos from "./components/ListaPedidos";
 import ListaVentasPresencial from "./components/ListaVentasPresencial";
+import NotificationBell from "../../components/NotificationBell";
 
 export default function Vendedor() {
     const navigate = useNavigate();
+    const location = useLocation(); // ✅ NUEVO
     const [user, setUser] = useState(null);
     const [activeTab, setActiveTab] = useState("ventas");
     const [productos, setProductos] = useState([]);
@@ -31,6 +33,13 @@ export default function Vendedor() {
     const [imagenesCache, setImagenesCache] = useState({});
     const [stats, setStats] = useState({ ventasHoy: 0, pedidosPendientes: 0, productosStockBajo: 0, productosAgotados: 0 });
     const [ventaActual, setVentaActual] = useState(null);
+
+    // ✅ NUEVO: leer state.tab cuando llega desde una notificación
+    useEffect(() => {
+        if (location.state?.tab) {
+            setActiveTab(location.state.tab);
+        }
+    }, [location.state]);
 
     useEffect(() => {
         const usuario = authService.getCurrentUser();
@@ -99,19 +108,15 @@ export default function Vendedor() {
             const ventasHoy = pedidos.filter(p => new Date(p.fecha).toDateString() === hoy && p.estado === "PAGADO").reduce((sum, p) => sum + p.total, 0);
             const pendientes = pedidos.filter(p => p.estado === "PENDIENTE" || p.estado === "PAGADO").length;
 
-            // Calcular productos con stock bajo usando productos del estado actual
-            // Primero, asegurarse de tener los productos actualizados
             const productosActualizados = await productoService.listar();
             const productosActivos = productosActualizados.filter(p => p.activo);
 
-            // Contar productos con stock bajo (stock <= stockMinimo o <= 5)
             const productosBajo = productosActivos.filter(p => {
                 const stock = p.stock || 0;
                 const minimo = p.stockMinimo || 5;
                 return stock <= minimo && stock > 0;
             }).length;
 
-            // Contar productos agotados (stock === 0)
             const productosAgotados = productosActivos.filter(p => (p.stock || 0) === 0).length;
 
             setStats({
@@ -121,7 +126,6 @@ export default function Vendedor() {
                 productosAgotados: productosAgotados
             });
 
-            // Actualizar la lista de productos en el estado
             setProductos(productosActivos);
 
         } catch (error) {
@@ -213,7 +217,6 @@ export default function Vendedor() {
         }
     };
 
-    // ✅ MODIFICAR realizarVenta - Ahora redirige al comprobante
     const realizarVenta = async () => {
         if (!selectedCliente) {
             setError("Debes seleccionar o crear un cliente");
@@ -226,7 +229,6 @@ export default function Vendedor() {
         setLoading(true);
         setError(null);
         try {
-            // Verificar stock
             for (const item of carrito) {
                 const productoActual = productos.find(p => p.id === item.id);
                 if (!productoActual || productoActual.stock < item.cantidad) {
@@ -234,7 +236,6 @@ export default function Vendedor() {
                 }
             }
 
-            // Crear pedido
             const pedidoData = {
                 clienteId: selectedCliente.id,
                 total: totalVenta,
@@ -249,13 +250,8 @@ export default function Vendedor() {
                 }))
             };
 
-            console.log("Enviando pedido (tienda física):", pedidoData);
-
             const response = await pedidoService.crear(pedidoData);
 
-            console.log("Respuesta:", response);
-
-            // ✅ GUARDAR DATOS DE LA VENTA
             setVentaActual({
                 pedidoId: response.pedidoId,
                 comprobanteId: response.comprobanteId,
@@ -269,12 +265,8 @@ export default function Vendedor() {
             });
 
             if (response && response.comprobanteId) {
-                console.log("✅ Comprobante ID:", response.comprobanteId);
-
-                // ✅ Redirigir al comprobante con TODOS los datos
                 navigate(`/comprobante/${response.comprobanteId}`, {
                     state: {
-                        // ✅ Datos del comprobante
                         comprobanteId: response.comprobanteId,
                         pedidoId: response.pedidoId,
                         numeroComprobante: response.numeroComprobante,
@@ -285,17 +277,13 @@ export default function Vendedor() {
                         fecha: response.fecha,
                         estado: response.estado,
                         codigoSeguimiento: response.codigoSeguimiento,
-
-                        // ✅ Datos del cliente (COMPLETOS)
                         clienteNombre: selectedCliente.nombre || 'Cliente',
                         clienteDocumento: selectedCliente.documento || 'Sin documento',
                         clienteTelefono: selectedCliente.telefono || 'No especificado',
                         clienteDireccion: selectedCliente.direccion || 'No especificada',
                         clienteEmail: selectedCliente.email || 'No especificado',
-
-                        // ✅ Datos de la venta
                         metodoPago: metodoPago,
-                        fromVentas: true, // ✅ Bandera para identificar origen
+                        fromVentas: true,
                         productos: carrito.map(item => ({
                             productoNombre: item.nombre,
                             cantidad: item.cantidad,
@@ -306,12 +294,10 @@ export default function Vendedor() {
                 });
             }
 
-            // ✅ Limpiar carrito después de la venta
             setCarrito([]);
             setSelectedCliente(null);
             setSuccess("✅ Venta realizada exitosamente");
 
-            // Recargar datos actualizados
             await Promise.all([cargarProductos(), cargarEstadisticas()]);
 
             return { success: true, venta: response };
@@ -342,7 +328,6 @@ export default function Vendedor() {
 
     return (
         <div className="min-h-screen bg-gray-100">
-            {/* Header */}
             <div className="bg-white shadow-sm border-b sticky top-0 z-10">
                 <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
                     <div>
@@ -353,14 +338,7 @@ export default function Vendedor() {
                         <p className="text-sm text-gray-500 mt-1">Gestiona ventas presenciales y pedidos online</p>
                     </div>
                     <div className="flex items-center gap-4">
-                        <button
-                            onClick={() => navigate("/notificaciones")}
-                            className="relative p-2 hover:bg-gray-100 rounded-full transition-colors"
-                        >
-                            <Bell size={20} className="text-gray-600" />
-                            <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse"></span>
-                        </button>
-                        
+                        <NotificationBell />
                         <div className="text-right">
                             <p className="text-sm font-bold text-gray-800 flex items-center gap-1">
                                 <User size={14} className="text-gray-400" />
@@ -379,7 +357,6 @@ export default function Vendedor() {
                 </div>
             </div>
 
-            {/* Tabs */}
             <div className="bg-white border-b">
                 <div className="max-w-7xl mx-auto px-6">
                     <div className="flex gap-1">
@@ -414,12 +391,10 @@ export default function Vendedor() {
                             <Store size={16} />
                             Ventas Presenciales
                         </button>
-
                     </div>
                 </div>
             </div>
 
-            {/* Main Content */}
             <div className="max-w-7xl mx-auto px-6 py-8">
                 <div className="grid grid-cols-4 gap-4 mb-6">
                     <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
@@ -468,7 +443,6 @@ export default function Vendedor() {
                     </div>
                 </div>
 
-                {/* Content */}
                 {activeTab === "ventas" && (
                     <VentasPresencial
                         productos={productosFiltrados}
