@@ -31,7 +31,33 @@ export const useProductos = () => {
                 stock: prod.stock || 0,
                 stockMinimo: prod.stockMinimo || 5,
                 activo: prod.activo,
-                imagen: prod.imagen || "https://placehold.co/400x400?text=Producto"
+                imagen: prod.imagen || "https://placehold.co/400x400?text=Producto",
+
+
+                // ✅ AGREGAR CAMPOS DE DESCUENTO
+                porcentajeDescuento: prod.porcentajeDescuento || 0,
+                precioDescuento: prod.precioDescuento || 0,
+                descuentoActivo: prod.descuentoActivo || false,
+                fechaInicioDescuento: prod.fechaInicioDescuento || null,
+                fechaFinDescuento: prod.fechaFinDescuento || null,
+                precioActual: prod.precioActual || prod.precio,  // ← Importante
+
+                // ✅ Función para saber si tiene descuento
+                tieneDescuento: () => {
+                    return prod.descuentoActivo && prod.porcentajeDescuento > 0;
+                },
+
+                // ✅ Función para obtener el precio actual
+                getPrecioActual: () => {
+                    if (prod.precioActual && prod.precioActual > 0) {
+                        return prod.precioActual;
+                    }
+                    if (prod.descuentoActivo && prod.porcentajeDescuento > 0) {
+                        return prod.precio - (prod.precio * prod.porcentajeDescuento / 100);
+                    }
+                    return prod.precio;
+                }
+
             }));
 
             setProductos(productosFormateados);
@@ -68,7 +94,30 @@ export const useProductos = () => {
                 stock: prod.stock || 0,
                 stockMinimo: prod.stockMinimo || 5,
                 activo: prod.activo,
-                imagen: prod.imagen || "/images/placeholder.jpg"
+                imagen: prod.imagen || "/images/placeholder.jpg",
+                categoria: prod.categoria || "otros",
+
+                // CAMPOS DE DESCUENTO
+                porcentajeDescuento: prod.porcentajeDescuento || 0,
+                precioDescuento: prod.precioDescuento || 0,
+                descuentoActivo: prod.descuentoActivo || false,
+                fechaInicioDescuento: prod.fechaInicioDescuento || null,
+                fechaFinDescuento: prod.fechaFinDescuento || null,
+                precioActual: prod.precioActual || prod.precio,
+
+                tieneDescuento: () => {
+                    return prod.descuentoActivo && prod.porcentajeDescuento > 0;
+                },
+                getPrecioActual: () => {
+                    if (prod.precioActual && prod.precioActual > 0) {
+                        return prod.precioActual;
+                    }
+                    if (prod.descuentoActivo && prod.porcentajeDescuento > 0) {
+                        return prod.precio - (prod.precio * prod.porcentajeDescuento / 100);
+                    }
+                    return prod.precio;
+                }
+
             }));
 
             setProductos(productosFormateados);
@@ -81,21 +130,65 @@ export const useProductos = () => {
     };
 
     // Determinar categoría
+    // hooks/useProductos.js - Función corregida
     const determinarCategoria = (nombre) => {
         const nombreLower = nombre.toLowerCase();
-        if (nombreLower.includes("iphone") || nombreLower.includes("samsung") ||
-            nombreLower.includes("celular") || nombreLower.includes("smartphone")) {
-            return "celulares";
+
+        // ✅ AUDÍFONOS - PRIMERO (más específico)
+        if (nombreLower.includes("audifono") || nombreLower.includes("audífono") ||
+            nombreLower.includes("auricular") || nombreLower.includes("headphone") ||
+            nombreLower.includes("earphone") || nombreLower.includes("airpods") ||
+            nombreLower.includes("earbuds") || nombreLower.includes("galaxy buds") ||
+            nombreLower.includes("xiaomi buds") || nombreLower.includes("samsung buds") ||
+            nombreLower.includes("jbl") || nombreLower.includes("sony") ||
+            nombreLower.includes("bose") || nombreLower.includes("audio")) {
+            return "audifonos";
         }
-        if (nombreLower.includes("ipad") || nombreLower.includes("tablet") ||
-            nombreLower.includes("pad")) {
-            return "tablets";
-        }
-        if (nombreLower.includes("airpods") || nombreLower.includes("cargador") ||
-            nombreLower.includes("teclado") || nombreLower.includes("case") ||
-            nombreLower.includes("mouse") || nombreLower.includes("funda")) {
+
+
+        // ✅ ACCESORIOS - TERCERO (antes que celulares)
+        if (nombreLower.includes("case") || nombreLower.includes("funda") ||
+            nombreLower.includes("protector") || nombreLower.includes("vidrio") ||
+            nombreLower.includes("teclado") || nombreLower.includes("mouse") ||
+            nombreLower.includes("webcam") || nombreLower.includes("memoria") ||
+            nombreLower.includes("usb") || nombreLower.includes("disco duro") ||
+            nombreLower.includes("ssd") ||
+            nombreLower.includes("cargador") || nombreLower.includes("cable") ||
+            nombreLower.includes("cable usb") || nombreLower.includes("cable tipo c") ||
+            nombreLower.includes("cable lightning") || nombreLower.includes("cargador usb") ||
+            nombreLower.includes("cargador tipo c") || nombreLower.includes("cargador lightning") ||
+            nombreLower.includes("cargador rápido") || nombreLower.includes("cargador inalámbrico") ||
+            nombreLower.includes("cargador de pared") || nombreLower.includes("cargador de auto") ||
+            nombreLower.includes("cargador portátil") || nombreLower.includes("power bank") ||
+            nombreLower.includes("batería") || nombreLower.includes("bateria") ||
+            nombreLower.includes("carga") || nombreLower.includes("adaptador") ||
+            nombreLower.includes("hub") || nombreLower.includes("dock") ||
+            nombreLower.includes("cargador 120w") || nombreLower.includes("cargador 67w") ||
+            nombreLower.includes("cargador 33w") || nombreLower.includes("cargador rápido")) {
             return "accesorios";
         }
+
+        // ✅ CELULARES - ÚLTIMO (menos específico)
+        if (nombreLower.includes("iphone") || nombreLower.includes("samsung") ||
+            nombreLower.includes("celular") || nombreLower.includes("smartphone") ||
+            nombreLower.includes("xiaomi") || nombreLower.includes("huawei") ||
+            nombreLower.includes("motorola") || nombreLower.includes("lg") ||
+            nombreLower.includes("oneplus") || nombreLower.includes("pixel") ||
+            nombreLower.includes("oppo") || nombreLower.includes("vivo") ||
+            nombreLower.includes("realme") || nombreLower.includes("nothing")) {
+            return "celulares";
+        }
+
+        // ✅ TABLETS - 3° (ANTES que celulares)
+        if (nombreLower.includes("tablet") || nombreLower.includes("tab") ||
+            nombreLower.includes("ipad") || nombreLower.includes("pad") ||
+            nombreLower.includes("galaxy tab") || nombreLower.includes("huawei mediapad") ||
+            nombreLower.includes("lenovo tab") || nombreLower.includes("xiaomi pad") ||
+            nombreLower.includes("samsung tab") || nombreLower.includes("tableta")) {
+            return "tablets";
+        }
+
+        // ✅ OTROS
         return "otros";
     };
 

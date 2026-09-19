@@ -27,6 +27,7 @@ export default function PayPalCheckout({
 
   const montoUSD = parseFloat(monto);
   const montoPENValue = parseFloat(montoPEN);
+  const productCount = cartItems?.length || 0;
 
   // Crear orden en PayPal
   const createOrder = async (data, actions) => {
@@ -64,6 +65,25 @@ export default function PayPalCheckout({
       throw err;
     }
   };
+
+  // En PayPalCheckout.jsx - antes de enviar el pedido
+  const token = localStorage.getItem("token");
+  if (token) {
+    try {
+      // Decodificar el token para verificar su expiración
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const exp = payload.exp * 1000; // Convertir a milisegundos
+      if (Date.now() >= exp) {
+        throw new Error("Token expirado");
+      }
+    } catch (e) {
+      // Token inválido o expirado
+      localStorage.removeItem("token");
+      localStorage.removeItem("usuario");
+      window.location.href = "/login?mensaje=sesion-expirada";
+      return;
+    }
+  }
 
   // Capturar pago y crear pedido
   const onApprove = async (data, actions) => {
@@ -148,7 +168,7 @@ export default function PayPalCheckout({
 
       // ✅ ENVIAR AL BACKEND CON MANEJO DE ERRORES DETALLADO
       console.log("🚀 Enviando petición al backend...");
-      
+
       const response = await fetch(`${API_BASE_URL}/pedidos`, {
         method: "POST",
         headers: {
@@ -208,7 +228,7 @@ export default function PayPalCheckout({
       console.error("Mensaje:", err.message);
       console.error("Stack trace:", err.stack);
       console.error("Nombre del error:", err.name);
-      
+
       // Si hay respuesta del servidor
       if (err.response) {
         console.error("Respuesta del servidor:", err.response);
@@ -216,12 +236,12 @@ export default function PayPalCheckout({
         console.error("Headers:", err.response.headers);
         console.error("Data:", err.response.data);
       }
-      
+
       console.error("═══════════════════════════════════════");
 
       // ✅ MOSTRAR ERROR EN EL FRONTEND
       let errorMessage = err.message || "Ocurrió un error al procesar el pago";
-      
+
       // Limpiar mensajes de error si son demasiado técnicos
       if (errorMessage.includes("could not execute statement")) {
         errorMessage = "Error en la base de datos al crear el pedido. Por favor, intenta nuevamente.";
@@ -298,8 +318,12 @@ export default function PayPalCheckout({
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-500 text-sm">Productos</span>
-                    <span className="font-medium text-gray-700">{cartItems?.length || 0} items</span>
+                    <span className="font-medium text-gray-700">
+                      {productCount} {productCount === 1 ? "producto" : "productos"}
+                    </span>
                   </div>
+
+
                   <div className="flex justify-between items-center">
                     <span className="text-gray-500 text-sm">Envío</span>
                     <span className="font-medium text-gray-700">
