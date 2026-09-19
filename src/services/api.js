@@ -27,6 +27,15 @@ export const apiService = {
         body: JSON.stringify(data),
       });
 
+      // ✅ Si el token expiró, redirigir al login
+      if (response.status === 403) {
+        console.warn("🔒 Token expirado o inválido. Redirigiendo al login...");
+        localStorage.removeItem("token");
+        localStorage.removeItem("usuario");
+        window.location.href = "/login?mensaje=sesion-expirada";
+        throw new Error("Sesión expirada. Por favor, inicia sesión nuevamente.");
+      }
+
       console.log(`🟢 Respuesta POST ${endpoint}: status ${response.status}`);
 
       const responseText = await response.text();
@@ -196,7 +205,7 @@ export const authService = {
 
     if (response.token) {
       // ✅ Guardar token
-       sessionStorage.setItem("token", response.token);
+      sessionStorage.setItem("token", response.token);
 
       // ✅ Guardar usuario con los campos correctos
       const usuario = {
@@ -639,23 +648,85 @@ export const servicioTecnicoService = {
 
 
 
-// =========================================================
-// NOTIFICACIONES
-// =========================================================
+// src/services/api.js
 export const notificacionService = {
-    obtenerMisNotificaciones: () => apiService.get('/notificaciones/mis-notificaciones'),
-    obtenerNoLeidas: () => apiService.get('/notificaciones/no-leidas'),
-    contarNoLeidas: async () => {
-        try {
-            const response = await apiService.get('/notificaciones/contar-no-leidas');
-            return response.count || 0;
-        } catch (error) {
-            return 0;
-        }
-    },
-    marcarComoLeida: (id) => apiService.patch(`/notificaciones/${id}/leer`, {}),
-    marcarTodasComoLeidas: () => apiService.patch('/notificaciones/marcar-todas', {}),
-    eliminar: (id) => apiService.delete(`/notificaciones/${id}`),
-    listarPorUsuario: (usuarioId) => apiService.get(`/notificaciones/usuario/${usuarioId}`)
+  obtenerMisNotificaciones: async () => {
+    try {
+      const response = await apiService.get('/notificaciones/mis-notificaciones');
+      return response;
+    } catch (error) {
+      console.error('Error obteniendo notificaciones:', error);
+      throw error;
+    }
+  },
+
+  obtenerNoLeidas: async () => {
+    try {
+      const response = await apiService.get('/notificaciones/no-leidas');
+      return response;
+    } catch (error) {
+      console.error('Error obteniendo no leídas:', error);
+      throw error;
+    }
+  },
+
+  contarNoLeidas: async () => {
+    try {
+      const response = await apiService.get('/notificaciones/contar-no-leidas');
+      return response?.count || 0;
+    } catch (error) {
+      console.error('Error contando no leídas:', error);
+      return 0;
+    }
+  },
+
+  marcarComoLeida: async (id) => {
+    try {
+      await apiService.patch(`/notificaciones/${id}/leer`, {});
+      return true;
+    } catch (error) {
+      console.error('Error marcando como leída:', error);
+      throw error;
+    }
+  },
+
+  marcarTodasComoLeidas: async () => {
+    try {
+      await apiService.patch('/notificaciones/marcar-todas', {});
+      return true;
+    } catch (error) {
+      console.error('Error marcando todas como leídas:', error);
+      throw error;
+    }
+  },
+
+  eliminar: async (id) => {
+    try {
+      await apiService.delete(`/notificaciones/${id}`);
+      return true;
+    } catch (error) {
+      console.error('Error eliminando notificación:', error);
+      throw error;
+    }
+  },
+
+  eliminarTodas: async () => {
+    try {
+      await apiService.delete('/notificaciones/eliminar-todas');
+      return true;
+    } catch (error) {
+      console.error('Error eliminando todas:', error);
+      throw error;
+    }
+  },
+
+  crear: async (notificacion) => {
+    try {
+      return await apiService.post('/notificaciones', notificacion);
+    } catch (error) {
+      console.error('Error creando notificación:', error);
+      throw error;
+    }
+  }
 };
 

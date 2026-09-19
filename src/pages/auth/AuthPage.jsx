@@ -6,7 +6,7 @@ import { authService } from "../../services/api";
 import {
   Mail, Lock, User, Phone, Eye, EyeOff,
   Shield, CheckCircle, AlertCircle, ArrowRight,
-  X, UserPlus, LogIn, Sparkles
+  X, UserPlus, LogIn, 
 } from "lucide-react";
 
 const styles = `
@@ -400,13 +400,12 @@ export default function AuthPage() {
     }
   };
 
-  // pages/auth/AuthPage.jsx - Agregar para mostrar mensaje de sesión expirada
+  // En AuthPage.jsx - mostrar mensaje si viene de sesión expirada
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const mensaje = params.get('mensaje');
-
     if (mensaje === 'sesion-expirada') {
-      setError('🔒 Tu sesión expiró por inactividad. Vuelve a iniciar sesión.');
+      setError('🔒 Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
     }
   }, []);
 
@@ -422,7 +421,7 @@ export default function AuthPage() {
             Jimenez<span className="text-[#5b4eff]"></span>
           </h1>
           <p className="text-sm text-gray-500 mt-2 flex items-center justify-center gap-2">
-            <Sparkles size={14} className="text-[#5b4eff]" />
+            
             {isLogin ? "Bienvenido de vuelta" : "Crea tu cuenta para empezar a comprar"}
           </p>
         </div>
@@ -612,11 +611,8 @@ export default function AuthPage() {
 
             {/* Olvidaste tu contraseña - solo en login */}
             {isLogin && (
-              <div className="flex justify-end">
-                <Link
-                  to="/recuperar-password"
-                  className="text-sm text-[#5b4eff] hover:text-[#4a3dcc] transition-colors font-medium"
-                >
+              <div className="text-center mt-4">
+                <Link to="/forgot-password" className="text-sm text-[#5b4eff] hover:underline">
                   ¿Olvidaste tu contraseña?
                 </Link>
               </div>
