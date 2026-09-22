@@ -5,7 +5,10 @@
 // services/api.js
 //import apiService from './api';
 
-const BASE_URL = "http://localhost:8080/api";
+//const BASE_URL = "http://localhost:8080/api";
+
+// local para que funcione en celular
+const BASE_URL = `http://${window.location.hostname}:8080/api`;
 
 export const apiService = {
   /**

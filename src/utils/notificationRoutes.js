@@ -1,70 +1,189 @@
 // src/utils/notificationRoutes.js
 
-/**
- * Configuración de rutas por tipo de notificación.
- * Cada tipo define a qué rol(es) pertenece y a dónde debe navegar cada uno.
- */
 const ROUTES = {
   STOCK: {
     roles: {
-      ADMIN: { label: "Ir a Stock", path: "/admin", state: { tab: "stock" } },
-      VENDEDOR: { label: "Ir a Stock", path: "/vendedor", state: { tab: "stock" } },
+      ADMIN: {
+        label: "Ir a Stock",
+        path: "/admin",
+        state: (notif) => ({
+          tab: "stock",
+          highlightId: notif.referenciaId ?? null,
+          openEditModal: true,
+        }),
+      },
+      VENDEDOR: {
+        label: "Ir a Stock",
+        path: "/vendedor",
+        state: (notif) => ({
+          tab: "stock",
+          highlightId: notif.referenciaId ?? null,
+          openEditModal: true,
+        }),
+      },
     },
   },
   PEDIDO: {
     roles: {
-      ADMIN: { label: "Ir a Pedidos", path: "/admin", state: { tab: "pedidos" } },
-      VENDEDOR: { label: "Ir a Pedidos", path: "/vendedor", state: { tab: "pedidos" } },
+      ADMIN: {
+        label: "Ir al Pedido",
+        path: "/admin",
+        state: (notif) => ({
+          tab: "pedidos",
+          highlightId: notif.referenciaId ?? null,
+          openDetailModal: true,
+        }),
+      },
+      VENDEDOR: {
+        label: "Ir al Pedido",
+        path: "/vendedor",
+        state: (notif) => ({
+          tab: "pedidos",
+          highlightId: notif.referenciaId ?? null,
+          openDetailModal: true,
+        }),
+      },
     },
   },
   PAGO: {
     roles: {
-      ADMIN: { label: "Ir a Pedidos", path: "/admin", state: { tab: "pedidos" } },
-      VENDEDOR: { label: "Ir a Pedidos", path: "/vendedor", state: { tab: "pedidos" } },
+      ADMIN: {
+        label: "Ir al Pedido",
+        path: "/admin",
+        state: (notif) => ({
+          tab: "pedidos",
+          highlightId: notif.referenciaId ?? null,
+          openDetailModal: true,
+        }),
+      },
+      VENDEDOR: {
+        label: "Ir al Pedido",
+        path: "/vendedor",
+        state: (notif) => ({
+          tab: "pedidos",
+          highlightId: notif.referenciaId ?? null,
+          openDetailModal: true,
+        }),
+      },
     },
   },
   ENVIO: {
     roles: {
-      ADMIN: { label: "Ir a Pedidos", path: "/admin", state: { tab: "pedidos" } },
-      VENDEDOR: { label: "Ir a Pedidos", path: "/vendedor", state: { tab: "pedidos" } },
+      ADMIN: {
+        label: "Ir al Pedido",
+        path: "/admin",
+        state: (notif) => ({
+          tab: "pedidos",
+          highlightId: notif.referenciaId ?? null,
+          openDetailModal: true,
+        }),
+      },
+      VENDEDOR: {
+        label: "Ir al Pedido",
+        path: "/vendedor",
+        state: (notif) => ({
+          tab: "pedidos",
+          highlightId: notif.referenciaId ?? null,
+          openDetailModal: true,
+        }),
+      },
     },
   },
   PRODUCTO: {
     roles: {
-      ADMIN: { label: "Ir a Productos", path: "/admin", state: { tab: "productos" } },
-      VENDEDOR: { label: "Ir a Productos", path: "/vendedor", state: { tab: "productos" } },
+      ADMIN: {
+        label: "Ir a Productos",
+        path: "/admin",
+        state: (notif) => ({
+          tab: "productos",
+          highlightId: notif.referenciaId ?? null,
+          openDetailModal: false,
+        }),
+      },
+      VENDEDOR: {
+        label: "Ir a Productos",
+        path: "/vendedor",
+        state: (notif) => ({
+          tab: "productos",
+          highlightId: notif.referenciaId ?? null,
+          openDetailModal: false,
+        }),
+      },
     },
   },
   SERVICIO: {
     roles: {
-      TECNICO: { label: "Ir a Servicios", path: "/tecnico", state: { tab: "servicios" } },
-      ADMIN:   { label: "Ir a Servicios", path: "/admin", state: { tab: "servicios" } },
+      TECNICO: {
+        label: "Ir al Servicio",
+        path: "/tecnico",
+        state: (notif) => ({
+          tab: "servicios",
+          highlightId: notif.referenciaId ?? null,
+          openDetailModal: true,
+        }),
+      },
+      ADMIN: {
+        label: "Ir al Servicio",
+        path: "/admin",
+        state: (notif) => ({
+          tab: "servicios",
+          highlightId: notif.referenciaId ?? null,
+          openDetailModal: true,
+        }),
+      },
     },
   },
   RECLAMO: {
     roles: {
-      ADMIN: { label: "Ir a Reclamos", path: "/admin", state: { tab: "reclamos" } },
-      VENDEDOR: { label: "Ir a Reclamos", path: "/vendedor", state: { tab: "reclamos" } },
+      ADMIN: {
+        label: "Ir al Reclamo",
+        path: "/admin",
+        state: (notif) => ({
+          tab: "reclamos",
+          highlightId: notif.referenciaId ?? null,
+          openDetailModal: true,
+        }),
+      },
+      VENDEDOR: {
+        label: "Ir al Reclamo",
+        path: "/vendedor",
+        state: (notif) => ({
+          tab: "reclamos",
+          highlightId: notif.referenciaId ?? null,
+          openDetailModal: true,
+        }),
+      },
     },
   },
 };
 
-/**
- * Devuelve la info de navegación para una notificación según el rol del usuario.
- * @param {string} tipo - Tipo de la notificación (STOCK, PEDIDO, etc.)
- * @param {string} userRol - Rol del usuario actual (ADMIN, VENDEDOR, TECNICO, CLIENTE)
- * @returns {{label: string, path: string, state: object} | null}
- */
-export function getNotificationRoute(tipo, userRol) {
-  if (!tipo || !userRol) return null;
+export function getNotificationRoute(notificacionOrTipo, userRol) {
+  if (!notificacionOrTipo || !userRol) return null;
+
+  const notif = typeof notificacionOrTipo === "string"
+    ? { tipo: notificacionOrTipo }
+    : notificacionOrTipo;
+
+  const tipo = notif.tipo;
+  if (!tipo) return null;
+
   const config = ROUTES[tipo.toUpperCase()];
   if (!config) return null;
-  return config.roles[userRol.toUpperCase()] || null;
+
+  const roleConfig = config.roles[userRol.toUpperCase()];
+  if (!roleConfig) return null;
+
+  const resolvedState = typeof roleConfig.state === "function"
+    ? roleConfig.state(notif)
+    : roleConfig.state || {};
+
+  return {
+    label: roleConfig.label,
+    path: roleConfig.path,
+    state: resolvedState,
+  };
 }
 
-/**
- * Devuelve el rol del usuario actual desde localStorage.
- */
 export function getCurrentUserRol() {
   try {
     const raw = localStorage.getItem("usuario");

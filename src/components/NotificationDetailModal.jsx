@@ -57,8 +57,7 @@ export default function NotificationDetailModal({ notificacion, onClose, onElimi
       hour: '2-digit', minute: '2-digit'
     });
 
-  // ✅ Ruta dinámica según tipo + rol
-  const route = getNotificationRoute(notificacion.tipo, userRol);
+  const route = getNotificationRoute(notificacion, userRol);
 
   const handleIrA = () => {
     if (!route) return;
@@ -67,17 +66,15 @@ export default function NotificationDetailModal({ notificacion, onClose, onElimi
   };
 
   return (
-
-    <div
-      data-modal-detalle    // ✅ marca para detectarlo desde el dropdown
-      className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100000] flex items-end sm:items-center justify-center sm:p-4">
       <div
-        className="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl"
+        data-modal-detalle
+        className="bg-white rounded-t-2xl sm:rounded-2xl max-w-lg w-full max-h-[92vh] sm:max-h-[90vh] overflow-y-auto shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="sticky top-0 bg-white border-b border-gray-100 p-5 rounded-t-2xl flex items-center justify-between z-10">
-          <h3 className="font-bold text-gray-800">Detalle de notificación</h3>
+        <div className="sticky top-0 bg-white border-b border-gray-100 p-4 sm:p-5 rounded-t-2xl flex items-center justify-between z-10">
+          <h3 className="font-bold text-gray-800 text-sm sm:text-base">Detalle de notificación</h3>
           <button
             onClick={onClose}
             className="p-2 hover:bg-gray-100 rounded-lg transition"
@@ -87,17 +84,17 @@ export default function NotificationDetailModal({ notificacion, onClose, onElimi
         </div>
 
         {/* Contenido */}
-        <div className="p-6">
-          <div className="flex items-center gap-4 mb-4">
-            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${getColor(notificacion.tipo)}`}>
+        <div className="p-4 sm:p-6">
+          <div className="flex items-center gap-3 sm:gap-4 mb-4">
+            <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center flex-shrink-0 ${getColor(notificacion.tipo)}`}>
               {getIcono(notificacion.tipo)}
             </div>
-            <div>
+            <div className="flex flex-wrap items-center gap-2 min-w-0">
               <span className={`text-xs font-bold px-3 py-1 rounded-full ${getColor(notificacion.tipo)}`}>
                 {getTipoLabel(notificacion.tipo)}
               </span>
               {notificacion.leido && (
-                <span className="ml-2 text-xs text-gray-400 flex items-center gap-1 inline-flex">
+                <span className="text-xs text-gray-400 flex items-center gap-1">
                   <CheckCircle size={12} /> Leída
                 </span>
               )}
@@ -105,29 +102,28 @@ export default function NotificationDetailModal({ notificacion, onClose, onElimi
           </div>
 
           <div className="bg-gray-50 rounded-xl p-4 mb-4 border border-gray-100">
-            <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">
+            <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap break-words">
               {notificacion.mensaje}
             </p>
           </div>
 
           <div className="space-y-2 text-sm bg-gray-50/50 rounded-xl p-4">
             <div className="flex items-center gap-3 text-gray-500">
-              <Calendar size={16} />
-              <span>{formatFecha(notificacion.fecha)}</span>
+              <Calendar size={16} className="flex-shrink-0" />
+              <span className="break-words">{formatFecha(notificacion.fecha)}</span>
             </div>
             <div className="flex items-center gap-3 text-gray-500">
-              <Tag size={16} />
+              <Tag size={16} className="flex-shrink-0" />
               <span>Tipo: {getTipoLabel(notificacion.tipo)}</span>
             </div>
             <div className="flex items-center gap-3 text-gray-500">
-              <Clock size={16} />
+              <Clock size={16} className="flex-shrink-0" />
               <span>ID: #{notificacion.id}</span>
             </div>
           </div>
 
           {/* Acciones */}
           <div className="mt-6 pt-4 border-t border-gray-100 space-y-3">
-            {/* ✅ Botón "Ir a..." SOLO si el rol tiene permiso */}
             {route && (
               <button
                 onClick={handleIrA}
@@ -138,7 +134,7 @@ export default function NotificationDetailModal({ notificacion, onClose, onElimi
               </button>
             )}
 
-            <div className="flex gap-3">
+            <div className="flex flex-col sm:flex-row gap-3">
               {!notificacion.leido && onMarcarLeida && (
                 <button
                   onClick={onMarcarLeida}

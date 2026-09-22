@@ -51,3 +51,5 @@ coverage
 # Archivos de sistema
 Thumbs.db
 Desktop.ini
+### Uploads (archivos subidos por usuarios) ###
+uploads/
