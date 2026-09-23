@@ -1,6 +1,7 @@
 // pages/reclamos/MisReclamos.jsx
 import React, { useState, useEffect } from "react";
 import { reclamoService, devolucionService, pedidoService } from "../../services/api";
+import { buildImageUrl } from "../../config/apiConfig";
 import { 
   FileText, AlertCircle, Package, Shield, XCircle, 
   Clock, CheckCircle, RefreshCw, Plus, X, Upload, 
@@ -762,7 +763,7 @@ export default function MisReclamos({ embedded = false }) {
                   {evidencias.map(evidencia => (
                     <div key={evidencia.id} className="relative group">
                       <img
-                        src={`http://localhost:8080${evidencia.urlImagen}`}
+                        src={buildImageUrl(evidencia.urlImagen)}
                         alt={`Evidencia ${evidencia.id}`}
                         className="w-full h-32 object-cover rounded-lg border border-gray-200"
                       />

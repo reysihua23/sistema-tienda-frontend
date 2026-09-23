@@ -2,9 +2,11 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { authService, usuarioService } from "../../services/api";
+import { API_URL } from "../../config/apiConfig";
 import MisPedidos from "../pedidos/MisPedidos";
 import MisServicios from "../servicios/MisServicios";
 //import MisDevoluciones from "../devoluciones/MisDevoluciones";
+
 import MisReclamos from "../reclamos/MisReclamos";
 import { User, Phone, FileText, MapPin, Mail, AlertCircle, CheckCircle, Lock, Eye, EyeOff, Shield, Key } from "lucide-react";
 
@@ -178,7 +180,7 @@ export default function Perfil() {
     setUpdating(true);
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch("http://localhost:8080/api/clientes/" + userData.id, {
+      const response = await fetch(`${API_URL}/clientes/${userData.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -274,7 +276,7 @@ export default function Perfil() {
     }
 
     try {
-      const response = await fetch("http://localhost:8080/api/usuarios/cambiar-password", {
+      const response = await fetch(`${API_URL}/usuarios/cambiar-password`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { pedidoService, productoImagenService } from "../../services/api";
+import { API_URL, buildImageUrl } from "../../config/apiConfig";
 import {
   ShoppingBag, Package, Truck, CheckCircle, XCircle, Clock,
   Eye, ChevronDown, ChevronUp, Copy, MapPin, CreditCard,
@@ -34,7 +35,7 @@ export default function MisPedidos() {
 
             if (!clienteId) {
                 const token = localStorage.getItem("token");
-                const response = await fetch("http://localhost:8080/api/usuarios/perfil", {
+                const response = await fetch(`${API_URL}/usuarios/perfil`, {
                     headers: { "Authorization": `Bearer ${token}` }
                 });
                 const perfil = await response.json();
@@ -68,7 +69,7 @@ export default function MisPedidos() {
                     const imagenPrincipal = imagenes?.find(img => img.principal) || imagenes?.[0];
                     setImagenesCache(prev => ({
                         ...prev,
-                        [productoId]: imagenPrincipal?.urlImagen ? `http://localhost:8080${imagenPrincipal.urlImagen}` : null
+                        [productoId]: buildImageUrl(imagenPrincipal?.urlImagen)
                     }));
                 } catch (error) {
                     console.error(`Error cargando imagen para producto ${productoId}:`, error);

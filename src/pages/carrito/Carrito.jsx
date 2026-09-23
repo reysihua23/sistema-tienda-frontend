@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useCarrito } from "../../context/CarritoContext";
 import PayPalCheckout from "../../components/pagos/PayPalCheckout";
+import { API_URL } from "../../config/apiConfig";
 import {
   ShoppingBag, Trash2, Plus, Minus, CreditCard,
   Truck, Store, CheckCircle, Shield, Clock, Tag,
@@ -73,7 +74,7 @@ export default function Carrito() {
         throw new Error("Debes iniciar sesión");
       }
 
-      const response = await fetch("http://localhost:8080/api/productos/validar-stock", {
+      const response = await fetch(`${API_URL}/productos/validar-stock`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -119,7 +120,7 @@ export default function Carrito() {
 
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch("http://localhost:8080/api/descuentos/validar", {
+      const response = await fetch(`${API_URL}/descuentos/validar`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -180,7 +181,7 @@ export default function Carrito() {
     let clienteId = usuario.clienteId;
 
     if (!clienteId) {
-      const perfilResponse = await fetch("http://localhost:8080/api/usuarios/perfil", {
+      const perfilResponse = await fetch(`${API_URL}/usuarios/perfil`, {
         headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
       });
 

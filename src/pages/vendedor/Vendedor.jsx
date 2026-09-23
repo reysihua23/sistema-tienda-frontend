@@ -9,6 +9,7 @@ import {
     ShoppingCart, DollarSign, Calendar, CircleOff
 } from "lucide-react";
 import { authService, pedidoService, productoService, clienteService, stockService, detallePedidoService, productoImagenService } from "../../services/api";
+import { buildImageUrl } from "../../config/apiConfig";
 import VentasPresencial from "./components/VentasPresencial";
 import ListaPedidos from "./components/ListaPedidos";
 import ListaVentasPresencial from "./components/ListaVentasPresencial";
@@ -81,7 +82,7 @@ export default function Vendedor() {
                     const imagenPrincipal = imagenes?.find(img => img.principal) || imagenes?.[0];
                     setImagenesCache(prev => ({
                         ...prev,
-                        [producto.id]: imagenPrincipal?.urlImagen ? `http://localhost:8080${imagenPrincipal.urlImagen}` : null
+                        [producto.id]: buildImageUrl(imagenPrincipal?.urlImagen)
                     }));
                 } catch (error) {
                     console.error(`Error cargando imagen para producto ${producto.id}:`, error);

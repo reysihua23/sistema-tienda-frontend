@@ -1,9 +1,11 @@
-// components/pagos/PayPalCheckout.jsx
+﻿// components/pagos/PayPalCheckout.jsx
 import React, { useState } from 'react';
 import { PayPalButtons, usePayPalScriptReducer } from '@paypal/react-paypal-js';
 import { Shield, Lock, AlertCircle, X, CheckCircle, Loader } from 'lucide-react';
+import { API_URL } from '../../config/apiConfig';
 
-const API_BASE_URL = "http://localhost:8080/api";
+const API_BASE_URL = API_URL;
+//const API_BASE_URL = "http://localhost:8080/api";
 
 
 export default function PayPalCheckout({

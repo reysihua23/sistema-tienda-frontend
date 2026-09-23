@@ -1,7 +1,9 @@
 // src/hooks/useWebSocket.js
 import { useEffect, useRef, useState } from 'react';
 import { Client } from '@stomp/stompjs';
+//import SockJS from 'sockjs-client/dist/sockjs.js';
 import SockJS from 'sockjs-client/dist/sockjs.js';
+import { WS_URL } from '../config/apiConfig';
 
 export const useWebSocket = (usuarioId, onMessageReceived) => {
     const [connected, setConnected] = useState(false);
@@ -34,7 +36,7 @@ export const useWebSocket = (usuarioId, onMessageReceived) => {
         console.log('🔌 Conectando WebSocket para usuario:', usuarioId);
 
         const stompClient = new Client({
-            webSocketFactory: () => new SockJS('http://localhost:8080/ws'),
+            webSocketFactory: () => new SockJS(WS_URL),
             connectHeaders: {
                 Authorization: `Bearer ${token}`
             },

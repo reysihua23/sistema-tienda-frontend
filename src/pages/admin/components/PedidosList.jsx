@@ -1,14 +1,15 @@
-// pages/admin/components/PedidosList.jsx
+﻿// pages/admin/components/PedidosList.jsx
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { pedidoService, detallePedidoService, productoImagenService } from "../../../services/api";
+import { buildImageUrl } from "../../../config/apiConfig";
 import {
-  X, User, Mail, Phone, FileText, Package, Truck,
-  Store, CreditCard, MapPin, Calendar, DollarSign,
-  Eye, RefreshCw, CheckCircle, Clock, Send,
-  XCircle, Gift, Image as ImageIcon, ShoppingBag,
-  Filter, ArrowUpDown, SlidersHorizontal,
-  ArrowUp, ArrowDown, Layers, AlertCircle, Circle, Hourglass
+    X, User, Mail, Phone, FileText, Package, Truck,
+    Store, CreditCard, MapPin, Calendar, DollarSign,
+    Eye, RefreshCw, CheckCircle, Clock, Send,
+    XCircle, Gift, Image as ImageIcon, ShoppingBag,
+    Filter, ArrowUpDown, SlidersHorizontal,
+    ArrowUp, ArrowDown, Layers, AlertCircle, Circle, Hourglass
 } from "lucide-react";
 
 // =====================================================
@@ -38,11 +39,10 @@ const CustomDropdown = ({ valor, onChange, opciones, iconoPrincipal, ancho = "w-
             <button
                 type="button"
                 onClick={() => setAbierto(!abierto)}
-                className={`w-full sm:w-auto flex items-center justify-between gap-2 pl-8 pr-8 py-1.5 text-sm border rounded-lg bg-white transition relative ${
-                    abierto
-                        ? "border-[#5b4eff] ring-2 ring-[#5b4eff]/20"
-                        : "border-gray-200 hover:border-gray-300"
-                }`}
+                className={`w-full sm:w-auto flex items-center justify-between gap-2 pl-8 pr-8 py-1.5 text-sm border rounded-lg bg-white transition relative ${abierto
+                    ? "border-[#5b4eff] ring-2 ring-[#5b4eff]/20"
+                    : "border-gray-200 hover:border-gray-300"
+                    }`}
             >
                 {iconoPrincipal && (
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
@@ -58,9 +58,8 @@ const CustomDropdown = ({ valor, onChange, opciones, iconoPrincipal, ancho = "w-
                 </span>
 
                 <svg
-                    className={`w-3 h-3 text-gray-400 absolute right-3 transition-transform flex-shrink-0 ${
-                        abierto ? "rotate-180" : ""
-                    }`}
+                    className={`w-3 h-3 text-gray-400 absolute right-3 transition-transform flex-shrink-0 ${abierto ? "rotate-180" : ""
+                        }`}
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -77,9 +76,8 @@ const CustomDropdown = ({ valor, onChange, opciones, iconoPrincipal, ancho = "w-
                             key={op.value}
                             type="button"
                             onClick={() => { onChange(op.value); setAbierto(false); }}
-                            className={`w-full flex items-center gap-2 px-3 py-2.5 text-sm hover:bg-gray-50 transition text-left ${
-                                valor === op.value ? "bg-[#5b4eff]/5 font-medium" : ""
-                            }`}
+                            className={`w-full flex items-center gap-2 px-3 py-2.5 text-sm hover:bg-gray-50 transition text-left ${valor === op.value ? "bg-[#5b4eff]/5 font-medium" : ""
+                                }`}
                         >
                             <span className={op.color || "text-gray-500"}>{op.icon}</span>
                             <span className="text-gray-700 flex-1">{op.label}</span>
@@ -128,7 +126,7 @@ const DetallePedidoModal = ({ pedido, isOpen, onClose }) => {
         try {
             const imagenes = await productoImagenService.buscarPorProducto(productoId);
             const imagenPrincipal = imagenes?.find(img => img.principal) || imagenes?.[0];
-            const url = imagenPrincipal?.urlImagen ? `http://localhost:8080${imagenPrincipal.urlImagen}` : null;
+            const url = buildImageUrl(imagenPrincipal?.urlImagen);
             setImagenesCache(prev => ({ ...prev, [productoId]: url }));
             return url;
         } catch { return null; }
@@ -360,17 +358,41 @@ export default function PedidosList({ pedidos, onRefresh, showMessage }) {
     ];
 
     // 🎯 Efecto del highlight al venir desde notif
+    // 🎯 Efecto del highlight al venir desde notif
+    // Si el pedido no está en la lista (race condition con WebSocket),
+    // recarga automáticamente hasta 3 veces antes de mostrar error.
     useEffect(() => {
         const { highlightId, openDetailModal } = location.state || {};
         if (!highlightId) return;
         if (!pedidos || pedidos.length === 0) return;
 
         const pedido = pedidos.find(p => p.id === highlightId);
+
         if (!pedido) {
+            // 🎯 El pedido no está en la lista actual.
+            // Puede ser una race condition: la notificación llegó
+            // antes de que se recargara la lista de pedidos.
+            // Estrategia: recargar la lista y reintentar (máx 3 veces).
+            const intentos = (window.__highlightRetries = (window.__highlightRetries || 0) + 1);
+
+            if (intentos <= 3) {
+                console.log(`⚠️ Pedido #${highlightId} no está en la lista. Recargando... (intento ${intentos}/3)`);
+                if (onRefresh) {
+                    onRefresh();   // ← recarga la lista desde el padre
+                }
+                return;   // ← NO muestra error, solo recarga
+            }
+
+            // Después de 3 intentos, sí mostrar error
+            console.warn(`❌ Pedido #${highlightId} no encontrado tras 3 intentos`);
             showMessage?.("warning", "El pedido ya no existe");
             navigate(location.pathname, { replace: true, state: {} });
+            window.__highlightRetries = 0;   // reset
             return;
         }
+
+        // ✅ Pedido encontrado: resetear contador de intentos
+        window.__highlightRetries = 0;
 
         const row = rowRefs.current[highlightId];
         if (!row) return;

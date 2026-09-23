@@ -1,6 +1,7 @@
 // components/tienda/ProductModal.jsx
 import React, { useState, useEffect } from "react";
 import { productoImagenService } from "../../../services/api";
+import { buildImageUrl } from "../../../config/apiConfig";
 import {
     X, ChevronLeft, ChevronRight, Flame,
     ShoppingBag, Minus, Plus, Package,
@@ -114,7 +115,7 @@ export default function ProductModal({ producto, isOpen, onClose, onAddToCart })
         const imagenPrincipal = imagenes.find(img => img.principal) || imagenes[0];
         const productoConImagen = {
             ...producto,
-            imagenUrl: imagenPrincipal && imagenPrincipal.urlImagen ? `http://localhost:8080${imagenPrincipal.urlImagen}` : null,
+            imagenUrl: buildImageUrl(imagenPrincipal?.urlImagen),
             precio: precioActual
         };
 
@@ -128,8 +129,7 @@ export default function ProductModal({ producto, isOpen, onClose, onAddToCart })
     const getCurrentImageUrl = () => {
         if (imagenes.length === 0 || !imagenes[currentImageIndex]) return null;
         const currentImage = imagenes[currentImageIndex];
-        if (!currentImage?.urlImagen) return null;
-        return `http://localhost:8080${currentImage.urlImagen}`;
+        return buildImageUrl(currentImage?.urlImagen) || null;
     };
 
     const formatPrice = (price) => {
@@ -234,8 +234,8 @@ export default function ProductModal({ producto, isOpen, onClose, onAddToCart })
                                                 key={idx}
                                                 onClick={() => setCurrentImageIndex(idx)}
                                                 className={`transition-all duration-300 rounded-full ${currentImageIndex === idx
-                                                        ? "w-8 h-1.5 bg-[#5b4eff]"
-                                                        : "w-2 h-1.5 bg-gray-300 hover:bg-gray-400"
+                                                    ? "w-8 h-1.5 bg-[#5b4eff]"
+                                                    : "w-2 h-1.5 bg-gray-300 hover:bg-gray-400"
                                                     }`}
                                             />
                                         ))}
@@ -343,8 +343,8 @@ export default function ProductModal({ producto, isOpen, onClose, onAddToCart })
                                             onClick={() => setQty(Math.max(1, qty - 1))}
                                             disabled={qty <= 1}
                                             className={`w-9 h-9 rounded-lg flex items-center justify-center transition-all ${qty <= 1
-                                                    ? "text-gray-300 cursor-not-allowed"
-                                                    : "text-gray-600 hover:bg-white hover:shadow-sm"
+                                                ? "text-gray-300 cursor-not-allowed"
+                                                : "text-gray-600 hover:bg-white hover:shadow-sm"
                                                 }`}
                                         >
                                             <Minus size={16} />
@@ -356,8 +356,8 @@ export default function ProductModal({ producto, isOpen, onClose, onAddToCart })
                                             onClick={() => setQty(Math.min(producto.stock, qty + 1))}
                                             disabled={qty >= producto.stock}
                                             className={`w-9 h-9 rounded-lg flex items-center justify-center transition-all ${qty >= producto.stock
-                                                    ? "text-gray-300 cursor-not-allowed"
-                                                    : "text-gray-600 hover:bg-white hover:shadow-sm"
+                                                ? "text-gray-300 cursor-not-allowed"
+                                                : "text-gray-600 hover:bg-white hover:shadow-sm"
                                                 }`}
                                         >
                                             <Plus size={16} />
@@ -374,10 +374,10 @@ export default function ProductModal({ producto, isOpen, onClose, onAddToCart })
                                 onClick={handleAdd}
                                 disabled={isOutOfStock}
                                 className={`w-full py-3.5 rounded-xl font-bold text-sm transition-all duration-300 flex items-center justify-center gap-2.5 ${isOutOfStock
-                                        ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                                        : adding
-                                            ? "bg-[#5b4eff] text-white scale-[0.98]"
-                                            : "bg-gradient-to-r from-[#0d0c1e] to-[#1a1932] text-white hover:from-[#5b4eff] hover:to-[#4a3dcc] hover:shadow-lg hover:shadow-[#5b4eff]/30"
+                                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                                    : adding
+                                        ? "bg-[#5b4eff] text-white scale-[0.98]"
+                                        : "bg-gradient-to-r from-[#0d0c1e] to-[#1a1932] text-white hover:from-[#5b4eff] hover:to-[#4a3dcc] hover:shadow-lg hover:shadow-[#5b4eff]/30"
                                     }`}
                             >
                                 {isOutOfStock ? (

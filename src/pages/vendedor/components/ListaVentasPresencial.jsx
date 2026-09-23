@@ -6,6 +6,7 @@ import {
     ClipboardList, Search, RefreshCw, TrendingUp
 } from "lucide-react";
 import { pedidoService, detallePedidoService, productoImagenService } from "../../../services/api";
+import { buildImageUrl } from "../../../config/apiConfig";
 
 export default function ListaVentasPresencial({ onRefresh }) {
     const [ventas, setVentas] = useState([]);
@@ -78,7 +79,7 @@ export default function ListaVentasPresencial({ onRefresh }) {
         try {
             const imagenes = await productoImagenService.buscarPorProducto(productoId);
             const imagenPrincipal = imagenes?.find(img => img.principal) || imagenes?.[0];
-            const url = imagenPrincipal?.urlImagen ? `http://localhost:8080${imagenPrincipal.urlImagen}` : null;
+            const url = buildImageUrl(imagenPrincipal?.urlImagen);
             setImagenesCache(prev => ({ ...prev, [productoId]: url }));
             return url;
         } catch (error) {

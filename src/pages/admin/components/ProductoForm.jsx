@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import ImageAnalysis from './ImageAnalysis';
 import { productoService, stockService } from "../../../services/api";
+import { API_URL } from "../../../config/apiConfig";
 import {
     X, Package, DollarSign, Box, AlertTriangle,
     Image, Upload, Trash2, Star, Plus, CheckCircle,
@@ -220,7 +221,7 @@ export default function ProductoForm({ editingProduct, onClose, onRefresh }) {
         files.forEach(file => formData.append("files", file));
         formData.append("productoId", productoId.toString());
 
-        const response = await fetch("http://localhost:8080/api/producto-imagenes/upload-multiple", {
+        const response = await fetch(`${API_URL}/producto-imagenes/upload-multiple`, {
             method: "POST",
             headers: { "Authorization": `Bearer ${token}` },
             body: formData

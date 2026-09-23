@@ -1,15 +1,15 @@
-/**
+﻿/**
  * SERVICIO CENTRALIZADO DE API - TIENDA VIRTUAL
  * Conexión directa con Backend Java Spring Boot
  */
 // services/api.js
-//import apiService from './api';
+import { API_URL } from '../config/apiConfig';
 
 //const BASE_URL = "http://localhost:8080/api";
 
 // local para que funcione en celular
-const BASE_URL = `http://${window.location.hostname}:8080/api`;
-
+//const BASE_URL = `http://${window.location.hostname}:8080/api`;
+const BASE_URL = API_URL;
 export const apiService = {
   /**
    * Método genérico para peticiones POST
@@ -350,7 +350,7 @@ export const stockService = {
   reducirStockCompra: async (productoId, cantidad) => {
     const token = localStorage.getItem("token");
 
-    const response = await fetch(`http://localhost:8080/api/stock/comprar/${productoId}?cantidad=${cantidad}`, {
+    const response = await fetch(`${API_URL}/stock/comprar/${productoId}?cantidad=${cantidad}`, {
       method: "PATCH",
       headers: {
         "Authorization": `Bearer ${token}`,
@@ -547,7 +547,7 @@ export const usuarioService = {
   // ✅ NUEVO: Obtener perfil del usuario autenticado
   getPerfil: async () => {
     const token = localStorage.getItem("token");
-    const response = await fetch(`http://localhost:8080/api/usuarios/perfil`, {
+    const response = await fetch(`${API_URL}/usuarios/perfil`, {
       method: "GET",
       headers: {
         "Authorization": `Bearer ${token}`,
