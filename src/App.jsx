@@ -46,8 +46,8 @@ import ResetPassword from "./pages/auth/ResetPassword";
 // Cierre de seción por inactividad
 // import { useInactivityLogout } from "./hooks/useInactivityLogout";
 
-
-const PAYPAL_CLIENT_ID = "AdDS_NWdSZlLid9nJXduRqgzB6qej9M2mtnVhpTfi-G0QzZmbh0QXiNeWFgohS9ZHFdYLdhqY3XWIACS";
+import { PAYPAL_CLIENT_ID } from './config/apiConfig';
+//const PAYPAL_CLIENT_ID = "AdDS_NWdSZlLid9nJXduRqgzB6qej9M2mtnVhpTfi-G0QzZmbh0QXiNeWFgohS9ZHFdYLdhqY3XWIACS";
 const paypalOptions = {
   "client-id": PAYPAL_CLIENT_ID,
   currency: "USD",
