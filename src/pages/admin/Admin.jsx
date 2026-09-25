@@ -1,5 +1,5 @@
 // pages/admin/Admin.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { 
   LayoutDashboard, Package, TrendingDown, ShoppingBag, Users, 
@@ -17,7 +17,7 @@ import NotificationBell from "../../components/NotificationBell";
 
 export default function Admin({ user: propUser }) {
     const navigate = useNavigate();
-    const location = useLocation(); // ✅ NUEVO
+    const location = useLocation();
     const [user, setUser] = useState(propUser || null);
     const [activeTab, setActiveTab] = useState("dashboard");
     const [loading, setLoading] = useState(true);
@@ -36,6 +36,25 @@ export default function Admin({ user: propUser }) {
     const [roles, setRoles] = useState([]);
     const [message, setMessage] = useState({ type: "", text: "" });
 
+    // 🎯 Nombre corto del usuario (prioriza user.nombre, si no, usa el correo)
+    const nombreCorto = useMemo(() => {
+        if (!user) return 'Admin';
+        
+        // Si tiene nombre, usarlo (primer nombre)
+        if (user.nombre && user.nombre.trim()) {
+            const primerNombre = user.nombre.trim().split(' ')[0];
+            return primerNombre.charAt(0).toUpperCase() + primerNombre.slice(1).toLowerCase();
+        }
+        
+        // Si no, usar la parte del correo antes del @
+        if (user.correo) {
+            const parte = user.correo.split('@')[0];
+            return parte.charAt(0).toUpperCase() + parte.slice(1).toLowerCase();
+        }
+        
+        return 'Admin';
+    }, [user]);
+
     const tabs = [
         { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
         { id: "productos", label: "Productos", icon: Package },
@@ -45,7 +64,7 @@ export default function Admin({ user: propUser }) {
         { id: "reportes", label: "Reportes", icon: BarChart3 }
     ];
 
-    // ✅ NUEVO: leer state.tab cuando llega desde una notificación
+    // ✅ Leer state.tab cuando llega desde una notificación
     useEffect(() => {
         if (location.state?.tab) {
             setActiveTab(location.state.tab);
@@ -205,12 +224,15 @@ export default function Admin({ user: propUser }) {
                             <RefreshCw size={18} />
                         </button>
                         <div className="flex items-center gap-3 bg-gray-50 rounded-xl px-4 py-2">
+                            {/* 🎯 Avatar con iniciales */}
                             <div className="w-8 h-8 bg-gradient-to-r from-[#5b4eff] to-[#4a3dcc] rounded-full flex items-center justify-center">
-                                <User size={14} className="text-white" />
+                                <span className="text-white text-xs font-bold">
+                                    {user?.nombre?.substring(0, 2).toUpperCase() || user?.correo?.substring(0, 2).toUpperCase() || 'AD'}
+                                </span>
                             </div>
                             <div className="text-left hidden sm:block">
                                 <p className="text-xs text-gray-400 font-medium">Administrador</p>
-                                <p className="text-sm font-bold text-gray-700">{user.correo?.split('@')[0]}</p>
+                                <p className="text-sm font-bold text-gray-700">{nombreCorto}</p>
                             </div>
                         </div>
                         <button 
