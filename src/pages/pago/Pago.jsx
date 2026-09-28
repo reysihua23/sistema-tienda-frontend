@@ -124,6 +124,7 @@ export default function Pago() {
                 clienteId: clienteId,  // ← Usar clienteId, no usuario.id
                 metodoPago: paymentMethod,  // ← "TARJETA", "YAPE", "PLIN"
                 metodoEnvio: metodoEnvio,   // ← "RECOJO_EN_TIENDA", "ENVIO_DOMICILIO"
+                origen: "TIENDA_ONLINE",
                 direccionEnvio: metodoEnvio === "ENVIO_DOMICILIO" ? direccionEnvio : null,
                 productos: cartItems.map(item => ({
                     productoId: item.id,

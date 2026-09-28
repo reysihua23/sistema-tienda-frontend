@@ -6,18 +6,20 @@ import {
     Package, TrendingUp, AlertTriangle,
     Home, Users, Settings, CreditCard,
     BarChart3, ClipboardList, User,
-    ShoppingCart, DollarSign, Calendar, CircleOff
+    ShoppingCart, Calendar, CircleOff, FileText
 } from "lucide-react";
+
 import { authService, pedidoService, productoService, clienteService, stockService, detallePedidoService, productoImagenService } from "../../services/api";
 import { buildImageUrl } from "../../config/apiConfig";
 import VentasPresencial from "./components/VentasPresencial";
 import ListaPedidos from "./components/ListaPedidos";
 import ListaVentasPresencial from "./components/ListaVentasPresencial";
 import NotificationBell from "../../components/NotificationBell";
+import Reclamos from "../../components/reclamos/Reclamos";
 
-export default function Vendedor() {
+export default function Vendedor({ childrenOverride }) {
     const navigate = useNavigate();
-    const location = useLocation(); // ✅ NUEVO
+    const location = useLocation();
     const [user, setUser] = useState(null);
     const [activeTab, setActiveTab] = useState("ventas");
     const [productos, setProductos] = useState([]);
@@ -26,16 +28,30 @@ export default function Vendedor() {
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedCliente, setSelectedCliente] = useState(null);
     const [showClienteModal, setShowClienteModal] = useState(false);
-    const [nuevoCliente, setNuevoCliente] = useState({ nombre: "", email: "", telefono: "", documento: "", direccion: "" });
+    const [nuevoCliente, setNuevoCliente] = useState({
+        nombre: "",
+        email: "",
+        telefono: "",
+        documento: "",
+        direccion: ""
+    });
+
     const [metodoPago, setMetodoPago] = useState("EFECTIVO");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(null);
     const [imagenesCache, setImagenesCache] = useState({});
-    const [stats, setStats] = useState({ ventasHoy: 0, pedidosPendientes: 0, productosStockBajo: 0, productosAgotados: 0 });
+    const [stats, setStats] = useState({
+        ventasHoy: 0,
+        ventasTotales: 0,
+        pedidosPendientes: 0,
+        productosStockBajo: 0,
+        productosAgotados: 0
+    });
+
     const [ventaActual, setVentaActual] = useState(null);
 
-    // ✅ NUEVO: leer state.tab cuando llega desde una notificación
+    // 🎯 Leer state.tab cuando llega desde una notificación
     useEffect(() => {
         if (location.state?.tab) {
             setActiveTab(location.state.tab);
@@ -49,8 +65,11 @@ export default function Vendedor() {
             return;
         }
         setUser(usuario);
-        cargarDatosIniciales();
-    }, []);
+        // 🎯 Si hay override, NO cargar datos del vendedor (ahorra red)
+        if (!childrenOverride) {
+            cargarDatosIniciales();
+        }
+    }, [childrenOverride]);
 
     const cargarDatosIniciales = async () => {
         setLoading(true);
@@ -106,8 +125,18 @@ export default function Vendedor() {
             const pedidosData = await pedidoService.listar();
             const pedidos = Array.isArray(pedidosData) ? pedidosData : [];
             const hoy = new Date().toDateString();
-            const ventasHoy = pedidos.filter(p => new Date(p.fecha).toDateString() === hoy && p.estado === "PAGADO").reduce((sum, p) => sum + p.total, 0);
-            const pendientes = pedidos.filter(p => p.estado === "PENDIENTE" || p.estado === "PAGADO").length;
+            // ✅ Ventas de hoy (PAGADO del día)
+            const ventasHoy = pedidos
+                .filter(p => new Date(p.fecha).toDateString() === hoy && p.estado === "PAGADO")
+                .reduce((sum, p) => sum + (p.total || 0), 0);
+
+            // ✅ Ventas totales (todos los PAGADOS o ENTREGADOS)
+            const ventasTotales = pedidos
+                .filter(p => p.estado === "PAGADO" || p.estado === "ENTREGADO")
+                .reduce((sum, p) => sum + (p.total || 0), 0);
+
+            const pendientes = pedidos
+                .filter(p => p.estado === "PENDIENTE" || p.estado === "PAGADO").length;
 
             const productosActualizados = await productoService.listar();
             const productosActivos = productosActualizados.filter(p => p.activo);
@@ -122,6 +151,7 @@ export default function Vendedor() {
 
             setStats({
                 ventasHoy,
+                ventasTotales,
                 pedidosPendientes: pendientes,
                 productosStockBajo: productosBajo,
                 productosAgotados: productosAgotados
@@ -358,124 +388,176 @@ export default function Vendedor() {
                 </div>
             </div>
 
-            <div className="bg-white border-b">
-                <div className="max-w-7xl mx-auto px-6">
-                    <div className="flex gap-1">
-                        <button
-                            onClick={() => setActiveTab("ventas")}
-                            className={`px-6 py-3 text-sm font-medium transition-all flex items-center gap-2 ${activeTab === "ventas"
-                                ? "text-[#5b4eff] border-b-2 border-[#5b4eff]"
-                                : "text-gray-500 hover:text-gray-700"
-                                }`}
-                        >
-                            <ShoppingBag size={16} />
-                            Venta Presencial
-                        </button>
-                        <button
-                            onClick={() => setActiveTab("pedidos")}
-                            className={`px-6 py-3 text-sm font-medium transition-all flex items-center gap-2 ${activeTab === "pedidos"
-                                ? "text-[#5b4eff] border-b-2 border-[#5b4eff]"
-                                : "text-gray-500 hover:text-gray-700"
-                                }`}
-                        >
-                            <Package size={16} />
-                            Pedidos Online
-                        </button>
-
-                        <button
-                            onClick={() => setActiveTab("historial")}
-                            className={`px-6 py-3 text-sm font-medium transition-all flex items-center gap-2 ${activeTab === "historial"
+            {/* 🎯 Tabs: ocultos cuando viene childrenOverride */}
+            {!childrenOverride && (
+                <div className="bg-white border-b">
+                    <div className="max-w-7xl mx-auto px-6">
+                        <div className="flex gap-1">
+                            <button
+                                onClick={() => setActiveTab("ventas")}
+                                className={`px-6 py-3 text-sm font-medium transition-all flex items-center gap-2 ${activeTab === "ventas"
                                     ? "text-[#5b4eff] border-b-2 border-[#5b4eff]"
                                     : "text-gray-500 hover:text-gray-700"
-                                }`}
-                        >
-                            <Store size={16} />
-                            Ventas Presenciales
-                        </button>
+                                    }`}
+                            >
+                                <ShoppingBag size={16} />
+                                Venta Presencial
+                            </button>
+                            <button
+                                onClick={() => setActiveTab("pedidos")}
+                                className={`px-6 py-3 text-sm font-medium transition-all flex items-center gap-2 ${activeTab === "pedidos"
+                                    ? "text-[#5b4eff] border-b-2 border-[#5b4eff]"
+                                    : "text-gray-500 hover:text-gray-700"
+                                    }`}
+                            >
+                                <Package size={16} />
+                                Pedidos Online
+                            </button>
+
+                            <button
+                                onClick={() => setActiveTab("reclamos")}
+                                className={`px-6 py-3 text-sm font-medium transition-all flex items-center gap-2 ${activeTab === "reclamos"
+                                    ? "text-[#5b4eff] border-b-2 border-[#5b4eff]"
+                                    : "text-gray-500 hover:text-gray-700"
+                                    }`}
+                            >
+                                <FileText size={16} />
+                                Reclamos
+                            </button>
+
+                            <button
+                                onClick={() => setActiveTab("historial")}
+                                className={`px-6 py-3 text-sm font-medium transition-all flex items-center gap-2 ${activeTab === "historial"
+                                    ? "text-[#5b4eff] border-b-2 border-[#5b4eff]"
+                                    : "text-gray-500 hover:text-gray-700"
+                                    }`}
+                            >
+                                <Store size={16} />
+                                Ventas Presenciales
+                            </button>
+                        </div>
                     </div>
                 </div>
-            </div>
+            )}
 
+            {/* 🎯 Contenido principal */}
             <div className="max-w-7xl mx-auto px-6 py-8">
-                <div className="grid grid-cols-4 gap-4 mb-6">
-                    <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-xs text-gray-500">Ventas de hoy</p>
-                                <p className="text-2xl font-bold text-[#5b4eff]">{formatPrice(stats.ventasHoy)}</p>
-                            </div>
-                            <div className="w-10 h-10 bg-[#5b4eff]/10 rounded-full flex items-center justify-center">
-                                <DollarSign size={20} className="text-[#5b4eff]" />
-                            </div>
-                        </div>
-                    </div>
-                    <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-xs text-gray-500">Pedidos pendientes</p>
-                                <p className="text-2xl font-bold text-amber-600">{stats.pedidosPendientes}</p>
-                            </div>
-                            <div className="w-10 h-10 bg-amber-500/10 rounded-full flex items-center justify-center">
-                                <ClipboardList size={20} className="text-amber-500" />
-                            </div>
-                        </div>
-                    </div>
-                    <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-xs text-gray-500">Stock bajo</p>
-                                <p className="text-2xl font-bold text-orange-500">{stats.productosStockBajo}</p>
-                            </div>
-                            <div className="w-10 h-10 bg-orange-500/10 rounded-full flex items-center justify-center">
-                                <AlertTriangle size={20} className="text-orange-500" />
-                            </div>
-                        </div>
-                    </div>
-                    <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-xs text-gray-500">Productos agotados</p>
-                                <p className="text-2xl font-bold text-red-500">{stats.productosAgotados || 0}</p>
-                            </div>
-                            <div className="w-10 h-10 bg-red-500/10 rounded-full flex items-center justify-center">
-                                <CircleOff size={20} className="text-red-500" />
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                {childrenOverride ? (
+                    childrenOverride
+                ) : (
+                    <>
+                        {/* ✅ Cards SOLO en "Venta Presencial" */}
+                        {activeTab === "ventas" && (
+                            <div className="grid grid-cols-5 gap-4 mb-6">
+                                {/* Card 1: Ventas totales */}
+                                <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <p className="text-xs text-gray-500">Ventas totales</p>
+                                            <p className="text-2xl font-bold text-[#5b4eff]">
+                                                {formatPrice(stats.ventasTotales)}
+                                            </p>
+                                        </div>
+                                        <div className="w-10 h-10 bg-[#5b4eff]/10 rounded-full flex items-center justify-center">
+                                            <TrendingUp size={20} className="text-[#5b4eff]" />
+                                        </div>
+                                    </div>
+                                </div>
 
-                {activeTab === "ventas" && (
-                    <VentasPresencial
-                        productos={productosFiltrados}
-                        carrito={carrito}
-                        selectedCliente={selectedCliente}
-                        setSelectedCliente={setSelectedCliente}
-                        clientes={clientes}
-                        metodoPago={metodoPago}
-                        setMetodoPago={setMetodoPago}
-                        loading={loading}
-                        error={error}
-                        success={success}
-                        searchTerm={searchTerm}
-                        setSearchTerm={setSearchTerm}
-                        agregarAlCarrito={agregarAlCarrito}
-                        actualizarCantidad={actualizarCantidad}
-                        eliminarDelCarrito={eliminarDelCarrito}
-                        realizarVenta={realizarVenta}
-                        showClienteModal={showClienteModal}
-                        setShowClienteModal={setShowClienteModal}
-                        nuevoCliente={nuevoCliente}
-                        setNuevoCliente={setNuevoCliente}
-                        crearCliente={crearCliente}
-                        totalVenta={totalVenta}
-                        formatPrice={formatPrice}
-                        imagenesCache={imagenesCache}
-                    />
-                )}
-                {activeTab === "pedidos" && <ListaPedidos onRefresh={cargarEstadisticas} />}
+                                {/* Card 2: Ventas de hoy */}
+                                <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <p className="text-xs text-gray-500">Ventas de hoy</p>
+                                            <p className="text-2xl font-bold text-[#5b4eff]">
+                                                {formatPrice(stats.ventasHoy)}
+                                            </p>
+                                        </div>
+                                        <div className="w-10 h-10 bg-[#5b4eff]/10 rounded-full flex items-center justify-center">
+                                            <Calendar size={20} className="text-[#5b4eff]" />
+                                        </div>
+                                    </div>
+                                </div>
 
-                {activeTab === "historial" && (
-                    <ListaVentasPresencial onRefresh={cargarEstadisticas} />
+                                {/* Card 3: Pedidos pendientes */}
+                                <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <p className="text-xs text-gray-500">Pedidos pendientes</p>
+                                            <p className="text-2xl font-bold text-amber-600">{stats.pedidosPendientes}</p>
+                                        </div>
+                                        <div className="w-10 h-10 bg-amber-500/10 rounded-full flex items-center justify-center">
+                                            <ClipboardList size={20} className="text-amber-500" />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Card 4: Stock bajo */}
+                                <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <p className="text-xs text-gray-500">Stock bajo</p>
+                                            <p className="text-2xl font-bold text-orange-500">{stats.productosStockBajo}</p>
+                                        </div>
+                                        <div className="w-10 h-10 bg-orange-500/10 rounded-full flex items-center justify-center">
+                                            <AlertTriangle size={20} className="text-orange-500" />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Card 5: Productos agotados */}
+                                <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <p className="text-xs text-gray-500">Productos agotados</p>
+                                            <p className="text-2xl font-bold text-red-500">{stats.productosAgotados || 0}</p>
+                                        </div>
+                                        <div className="w-10 h-10 bg-red-500/10 rounded-full flex items-center justify-center">
+                                            <CircleOff size={20} className="text-red-500" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Tabs */}
+                        {activeTab === "ventas" && (
+                            <VentasPresencial
+                                productos={productosFiltrados}
+                                carrito={carrito}
+                                selectedCliente={selectedCliente}
+                                setSelectedCliente={setSelectedCliente}
+                                clientes={clientes}
+                                metodoPago={metodoPago}
+                                setMetodoPago={setMetodoPago}
+                                loading={loading}
+                                error={error}
+                                success={success}
+                                searchTerm={searchTerm}
+                                setSearchTerm={setSearchTerm}
+                                agregarAlCarrito={agregarAlCarrito}
+                                actualizarCantidad={actualizarCantidad}
+                                eliminarDelCarrito={eliminarDelCarrito}
+                                realizarVenta={realizarVenta}
+                                showClienteModal={showClienteModal}
+                                setShowClienteModal={setShowClienteModal}
+                                nuevoCliente={nuevoCliente}
+                                setNuevoCliente={setNuevoCliente}
+                                crearCliente={crearCliente}
+                                totalVenta={totalVenta}
+                                formatPrice={formatPrice}
+                                imagenesCache={imagenesCache}
+                            />
+                        )}
+
+                        {activeTab === "pedidos" && <ListaPedidos onRefresh={cargarEstadisticas} />}
+
+                        {activeTab === "reclamos" && <Reclamos />}
+
+                        {activeTab === "historial" && (
+                            <ListaVentasPresencial onRefresh={cargarEstadisticas} />
+                        )}
+                    </>
                 )}
             </div>
         </div>

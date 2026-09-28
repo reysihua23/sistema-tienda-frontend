@@ -261,7 +261,7 @@ function NavBar({ searchQuery, setSearchQuery }) {
                           {user.rol === "ADMIN" ? "Panel de Control" : "Mi Perfil"}
                         </Link>
 
-                        <Link
+                        {/*<Link
                           to="/mis-pedidos"
                           onClick={() => setShowUserMenu(false)}
                           className="flex items-center w-full px-4 py-3 text-xs font-bold text-gray-700 hover:bg-gray-50 transition-colors"
@@ -270,7 +270,7 @@ function NavBar({ searchQuery, setSearchQuery }) {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                           </svg>
                           Mis Pedidos
-                        </Link>
+                        </Link>*/}
 
                         <button
                           onClick={handleLogout}

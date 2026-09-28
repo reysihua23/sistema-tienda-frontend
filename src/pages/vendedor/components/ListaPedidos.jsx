@@ -1,5 +1,10 @@
 // pages/vendedor/components/ListaPedidos.jsx
 import React, { useState, useEffect } from "react";
+import {
+    Package, User, Calendar, DollarSign, Eye,
+    Clock, CheckCircle, Truck, Award, XCircle,
+    ShoppingBag, Loader2, X, FileText
+} from "lucide-react";
 import { pedidoService, detallePedidoService, productoImagenService } from "../../../services/api";
 import { buildImageUrl } from "../../../config/apiConfig";
 
@@ -14,11 +19,19 @@ export default function ListaPedidos({ onRefresh }) {
         cargarPedidos();
     }, []);
 
+    // ✅ Cargar SOLO pedidos ONLINE
     const cargarPedidos = async () => {
         setLoading(true);
         try {
             const data = await pedidoService.listar();
-            setPedidos(Array.isArray(data) ? data.sort((a, b) => new Date(b.fecha) - new Date(a.fecha)) : []);
+
+            // ✅ FILTRAR SOLO PEDIDOS ONLINE
+            const pedidosOnline = Array.isArray(data)
+                ? data.filter(p => (p.origen || "").toUpperCase() === "TIENDA_ONLINE")
+                : [];
+
+            console.log("🛒 PEDIDOS ONLINE ENCONTRADOS:", pedidosOnline.length);
+            setPedidos(pedidosOnline.sort((a, b) => new Date(b.fecha) - new Date(a.fecha)));
         } catch (error) {
             console.error("Error cargando pedidos:", error);
         } finally {
@@ -33,7 +46,7 @@ export default function ListaPedidos({ onRefresh }) {
         try {
             const imagenes = await productoImagenService.buscarPorProducto(productoId);
             const imagenPrincipal = imagenes?.find(img => img.principal) || imagenes?.[0];
-           const url = buildImageUrl(imagenPrincipal?.urlImagen);
+            const url = buildImageUrl(imagenPrincipal?.urlImagen);
             setImagenesCache(prev => ({ ...prev, [productoId]: url }));
             return url;
         } catch (error) {
@@ -44,16 +57,14 @@ export default function ListaPedidos({ onRefresh }) {
     const verDetalles = async (pedido) => {
         setLoading(true);
         try {
-            // Ahora los detalles vienen con DTO sin recursión
             const detalles = await detallePedidoService.buscarPorPedido(pedido.id);
             console.log("Detalles recibidos (DTO):", detalles);
-            
-            // Cargar imágenes para cada producto
+
             const detallesConImagenes = await Promise.all(detalles.map(async (detalle) => ({
                 ...detalle,
                 imagenUrl: await cargarImagenProducto(detalle.productoId)
             })));
-            
+
             setSelectedPedido({ ...pedido, detalles: detallesConImagenes });
             setShowDetalleModal(true);
         } catch (error) {
@@ -97,16 +108,24 @@ export default function ListaPedidos({ onRefresh }) {
         "CANCELADO": "bg-red-100 text-red-700"
     }[estado] || "bg-gray-100 text-gray-700");
 
-    const getEstadoIcon = (estado) => ({ 
-        "PENDIENTE": "⏳", 
-        "PAGADO": "✅", 
-        "ENVIADO": "📦", 
-        "ENTREGADO": "🎉", 
-        "CANCELADO": "❌" 
-    }[estado] || "📋");
+    // ✅ Iconos por estado (Lucide)
+    const getEstadoIcon = (estado) => {
+        const icons = {
+            "PENDIENTE": <Clock size={12} />,
+            "PAGADO": <CheckCircle size={12} />,
+            "ENVIADO": <Truck size={12} />,
+            "ENTREGADO": <Award size={12} />,
+            "CANCELADO": <XCircle size={12} />
+        };
+        return icons[estado] || <FileText size={12} />;
+    };
 
     if (loading && pedidos.length === 0) {
-        return <div className="flex justify-center py-12"><div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#5b4eff]"></div></div>;
+        return (
+            <div className="flex justify-center py-12">
+                <Loader2 size={32} className="animate-spin text-[#5b4eff]" />
+            </div>
+        );
     }
 
     return (
@@ -132,7 +151,7 @@ export default function ListaPedidos({ onRefresh }) {
                         <tbody className="divide-y divide-gray-100">
                             {pedidos.map(pedido => (
                                 <tr key={pedido.id} className="hover:bg-gray-50">
-                                    <td className="px-6 py-4 text-sm font-medium">{pedido.id}</td>
+                                    <td className="px-6 py-4 text-sm font-medium">Nº {pedido.id}</td>
                                     <td className="px-6 py-4 text-sm">{pedido.clienteNombre || `Cliente #${pedido.clienteId}`}</td>
                                     <td className="px-6 py-4 text-sm">{formatDate(pedido.fecha)}</td>
                                     <td className="px-6 py-4 text-sm font-bold text-[#5b4eff]">{formatPrice(pedido.total)}</td>
@@ -142,15 +161,19 @@ export default function ListaPedidos({ onRefresh }) {
                                             onChange={(e) => cambiarEstado(pedido.id, e.target.value)}
                                             className={`px-3 py-1 rounded-full text-xs font-bold ${getEstadoColor(pedido.estado)} border-0 cursor-pointer`}
                                         >
-                                            <option value="PENDIENTE">{getEstadoIcon("PENDIENTE")} PENDIENTE</option>
-                                            <option value="PAGADO">{getEstadoIcon("PAGADO")} PAGADO</option>
-                                            <option value="ENVIADO">{getEstadoIcon("ENVIADO")} ENVIADO</option>
-                                            <option value="ENTREGADO">{getEstadoIcon("ENTREGADO")} ENTREGADO</option>
-                                            <option value="CANCELADO">{getEstadoIcon("CANCELADO")} CANCELADO</option>
+                                            <option value="PENDIENTE">PENDIENTE</option>
+                                            <option value="PAGADO">PAGADO</option>
+                                            <option value="ENVIADO">ENVIADO</option>
+                                            <option value="ENTREGADO">ENTREGADO</option>
+                                            <option value="CANCELADO">CANCELADO</option>
                                         </select>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <button onClick={() => verDetalles(pedido)} className="text-[#5b4eff] hover:underline text-sm font-medium">
+                                        <button
+                                            onClick={() => verDetalles(pedido)}
+                                            className="text-[#5b4eff] hover:underline text-sm font-medium inline-flex items-center gap-1"
+                                        >
+                                            <Eye size={14} />
                                             Ver detalles
                                         </button>
                                     </td>
@@ -161,8 +184,8 @@ export default function ListaPedidos({ onRefresh }) {
                 </div>
                 {pedidos.length === 0 && (
                     <div className="p-12 text-center text-gray-400">
-                        <span className="text-4xl block mb-2">📦</span>
-                        <p>No hay pedidos registrados</p>
+                        <ShoppingBag size={48} className="mx-auto mb-2 opacity-50" />
+                        <p>No hay pedidos online registrados</p>
                     </div>
                 )}
             </div>
@@ -171,17 +194,20 @@ export default function ListaPedidos({ onRefresh }) {
             {showDetalleModal && selectedPedido && (
                 <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowDetalleModal(false)}>
                     <div className="bg-white rounded-xl max-w-3xl w-full max-h-[85vh] overflow-y-auto shadow-2xl" onClick={(e) => e.stopPropagation()}>
-                        {/* Header */}
                         <div className="sticky top-0 bg-white p-6 border-b flex justify-between items-center">
                             <div>
                                 <h3 className="text-xl font-bold">Pedido {selectedPedido.id}</h3>
                                 <p className="text-sm text-gray-500 mt-1">{formatDate(selectedPedido.fecha)}</p>
                             </div>
-                            <button onClick={() => setShowDetalleModal(false)} className="text-gray-400 hover:text-gray-600 transition text-2xl">✕</button>
+                            <button
+                                onClick={() => setShowDetalleModal(false)}
+                                className="text-gray-400 hover:text-gray-600 transition p-2 hover:bg-gray-100 rounded-lg"
+                            >
+                                <X size={20} />
+                            </button>
                         </div>
 
                         <div className="p-6 space-y-6">
-                            {/* Información general */}
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                 <div className="bg-gray-50 rounded-lg p-3">
                                     <p className="text-xs text-gray-500 uppercase">Cliente</p>
@@ -189,7 +215,7 @@ export default function ListaPedidos({ onRefresh }) {
                                 </div>
                                 <div className="bg-gray-50 rounded-lg p-3">
                                     <p className="text-xs text-gray-500 uppercase">Estado</p>
-                                    <span className={`inline-block px-2 py-1 rounded-full text-xs font-bold ${getEstadoColor(selectedPedido.estado)}`}>
+                                    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold ${getEstadoColor(selectedPedido.estado)}`}>
                                         {getEstadoIcon(selectedPedido.estado)} {selectedPedido.estado}
                                     </span>
                                 </div>
@@ -198,15 +224,15 @@ export default function ListaPedidos({ onRefresh }) {
                                     <p className="font-bold text-xl text-[#5b4eff]">{formatPrice(selectedPedido.total)}</p>
                                 </div>
                                 <div className="bg-gray-50 rounded-lg p-3">
-                                    <p className="text-xs text-gray-500 uppercase">Productos {selectedPedido.detalles?.length || 0}</p>
+                                    <p className="text-xs text-gray-500 uppercase">Productos</p>
                                     <p className="font-medium">{selectedPedido.detalles?.length || 0} Productos</p>
                                 </div>
                             </div>
 
-                            {/* Productos */}
                             <div>
                                 <h4 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
-                                    <span className="text-lg">📦</span> Productos
+                                    <Package size={18} className="text-[#5b4eff]" />
+                                    Productos
                                 </h4>
                                 <div className="space-y-3">
                                     {selectedPedido.detalles?.map((detalle, idx) => (
@@ -231,7 +257,6 @@ export default function ListaPedidos({ onRefresh }) {
                                 </div>
                             </div>
 
-                            {/* Acciones */}
                             <div className="flex gap-3 pt-4 border-t">
                                 <select
                                     value={selectedPedido.estado}
@@ -241,11 +266,11 @@ export default function ListaPedidos({ onRefresh }) {
                                     }}
                                     className="flex-1 px-4 py-2 border border-gray-200 rounded-lg text-sm focus:border-[#5b4eff] focus:outline-none"
                                 >
-                                    <option value="PENDIENTE">⏳ PENDIENTE</option>
-                                    <option value="PAGADO">✅ PAGADO</option>
-                                    <option value="ENVIADO">📦 ENVIADO</option>
-                                    <option value="ENTREGADO">🎉 ENTREGADO</option>
-                                    <option value="CANCELADO">❌ CANCELADO</option>
+                                    <option value="PENDIENTE">PENDIENTE</option>
+                                    <option value="PAGADO">PAGADO</option>
+                                    <option value="ENVIADO">ENVIADO</option>
+                                    <option value="ENTREGADO">ENTREGADO</option>
+                                    <option value="CANCELADO">CANCELADO</option>
                                 </select>
                                 <button
                                     onClick={() => setShowDetalleModal(false)}

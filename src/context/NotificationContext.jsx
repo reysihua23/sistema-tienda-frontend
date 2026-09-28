@@ -1,7 +1,7 @@
 // src/context/NotificationContext.jsx
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { notificacionService } from '../services/api';
-import { useWebSocket } from '../hooks/useWebSocket'; // ✅ Importar el hook
+import { useWebSocket } from '../hooks/useWebSocket';
 
 const NotificationContext = createContext();
 
@@ -21,25 +21,57 @@ export const NotificationProvider = ({ children }) => {
   const [error, setError] = useState(null);
   const [usuarioId, setUsuarioId] = useState(null);
 
-  // Obtener usuarioId del localStorage
-  useEffect(() => {
+  // ✅ Función para leer el usuarioId del localStorage
+  const leerUsuarioId = useCallback(() => {
     const usuario = localStorage.getItem('usuario');
-    if (usuario) {
-      try {
-        const userData = JSON.parse(usuario);
-        setUsuarioId(userData.id || userData.usuarioId);
-        console.log('👤 Usuario ID obtenido:', userData.id || userData.usuarioId);
-      } catch (e) {
-        console.error('Error al obtener usuarioId:', e);
-      }
+    if (!usuario) return null;
+    try {
+      const userData = JSON.parse(usuario);
+      return userData.id || userData.usuarioId || null;
+    } catch {
+      return null;
     }
   }, []);
+
+  // ✅ Escuchar cambios de usuario (login/logout)
+  useEffect(() => {
+    const handleUsuarioChange = () => {
+      const nuevoId = leerUsuarioId();
+      console.log('🔄 Cambio de usuario detectado. Nuevo ID:', nuevoId);
+      setUsuarioId(nuevoId);
+
+      // Si cambió el usuario (o cerró sesión), limpiar notificaciones
+      if (nuevoId !== usuarioId) {
+        setNotificaciones([]);
+      }
+    };
+
+    // Escuchar el evento personalizado
+    window.addEventListener('usuario-cambio', handleUsuarioChange);
+
+    // Leer el usuarioId inicial
+    const idInicial = leerUsuarioId();
+    setUsuarioId(idInicial);
+    if (idInicial) {
+      console.log('👤 Usuario ID inicial:', idInicial);
+    }
+
+    return () => {
+      window.removeEventListener('usuario-cambio', handleUsuarioChange);
+    };
+  }, [leerUsuarioId, usuarioId]);
 
   const notificacionesNoLeidas = notificaciones.filter(n => !n.leido).length;
 
   // ✅ Cargar desde el backend
   const cargarNotificaciones = useCallback(async () => {
-    console.log('🔄 Cargando notificaciones...');
+    // No cargar si no hay usuario
+    if (!usuarioId) {
+      setNotificaciones([]);
+      return;
+    }
+
+    console.log('🔄 Cargando notificaciones para usuario', usuarioId);
     setLoading(true);
     setError(null);
 
@@ -58,15 +90,13 @@ export const NotificationProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [usuarioId]);
 
   // ✅ Manejar notificación en tiempo real
   const handleNewNotification = useCallback((nuevaNotificacion) => {
     console.log('📩 Nueva notificación recibida en tiempo real:', nuevaNotificacion);
-    
-    // ✅ Verificar que la notificación no esté duplicada
+
     setNotificaciones(prev => {
-      // Evitar duplicados por ID
       const existe = prev.some(n => n.id === nuevaNotificacion.id);
       if (existe) {
         console.log('⏳ Notificación ya existe, no se duplica');
@@ -74,10 +104,6 @@ export const NotificationProvider = ({ children }) => {
       }
       return [nuevaNotificacion, ...prev];
     });
-
-    // ✅ Opcional: Mostrar toast o alerta
-    // showToast(nuevaNotificacion.mensaje, 'info');
-
   }, []);
 
   // ✅ Conectar WebSocket cuando tengamos usuarioId
@@ -90,7 +116,7 @@ export const NotificationProvider = ({ children }) => {
     }
   }, [connected, usuarioId]);
 
-  // Cargar notificaciones iniciales
+  // ✅ Cargar notificaciones cuando cambia el usuarioId
   useEffect(() => {
     cargarNotificaciones();
   }, [cargarNotificaciones]);
@@ -134,18 +160,13 @@ export const NotificationProvider = ({ children }) => {
     cargarNotificaciones();
   };
 
-  // Cargar al montar
-  useEffect(() => {
-    cargarNotificaciones();
-  }, [cargarNotificaciones]);
-
   const value = {
     notificaciones,
     notificacionesNoLeidas,
     loading,
     error,
     cargarNotificaciones,
-    recargarNotificaciones: recargarNotificaciones,
+    recargarNotificaciones,
     marcarComoLeida,
     marcarTodasComoLeidas,
     eliminarNotificacion,

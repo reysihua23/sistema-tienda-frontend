@@ -37,7 +37,8 @@ import ClienteServicioDetalle from "./pages/cliente/ClienteServicioDetalle";
 import Comprobante from "./pages/comprobante/Comprobante";
 import TerminosCondiciones from "./pages/legal/TerminosCondiciones";
 import PoliticasPrivacidad from "./pages/legal/PoliticasPrivacidad";
-import Notificaciones from "./pages/notificaciones/Notificaciones";
+//import Notificaciones from "./pages/notificaciones/Notificaciones";
+import NotificacionesWrapper from "./pages/notificaciones/NotificacionesWrapper";
 
 // Servicios para restauración de contraseña
 import ForgotPassword from "./pages/auth/ForgotPassword";
@@ -147,7 +148,8 @@ function AppContent() {
         <Route path="/politicas-privacidad" element={<PoliticasPrivacidad />} />
 
         {/* RUTA DE NOTIFICACIONES */}
-        <Route path="/notificaciones" element={<Notificaciones />} />
+        {/* <Route path="/notificaciones" element={<Notificaciones />} /> */}
+        <Route path="/notificaciones" element={<NotificacionesWrapper />} />
 
         {/* RUTAS DE RESTABLECIMIENTO DE CONTRASEÑA */}
         <Route path="/forgot-password" element={<ForgotPassword />} />

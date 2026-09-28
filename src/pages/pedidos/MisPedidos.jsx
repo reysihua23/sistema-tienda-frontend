@@ -24,6 +24,16 @@ export default function MisPedidos() {
         cargarPedidos();
     }, []);
 
+    // ✅ NUEVO: helper para numerar pedidos por cliente (fecha ascendente)
+    const numerarPedidosPorCliente = (listaPedidos) => {
+        return [...listaPedidos]
+            .sort((a, b) => new Date(a.fecha) - new Date(b.fecha))
+            .map((p, index) => ({
+                ...p,
+                numeroRelativo: index + 1,
+            }));
+    };
+
     const cargarPedidos = async () => {
         setLoading(true);
         try {
@@ -45,7 +55,13 @@ export default function MisPedidos() {
             }
 
             const data = await pedidoService.buscarPorCliente(clienteId);
-            setPedidos(Array.isArray(data) ? data.sort((a, b) => new Date(b.fecha) - new Date(a.fecha)) : []);
+
+            // ✅ Numerar por cliente (fecha ascendente) ANTES de ordenar descendente
+            const numerados = numerarPedidosPorCliente(Array.isArray(data) ? data : []);
+
+            // ✅ Luego ordenar descendente para mostrar el más reciente primero
+            setPedidos(numerados.sort((a, b) => new Date(b.fecha) - new Date(a.fecha)));
+
             cargarImagenesProductos(data);
         } catch (error) {
             console.error("Error cargando pedidos:", error);
@@ -193,7 +209,7 @@ export default function MisPedidos() {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 pt-28 pb-16 px-4">
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 pt-6 pb-16 px-4">
             <div className="max-w-6xl mx-auto">
                 {/* Header */}
                 <div className="mb-8">
@@ -331,7 +347,8 @@ export default function MisPedidos() {
                                                     </div>
                                                     <div>
                                                         <div className="flex items-center gap-2 flex-wrap">
-                                                            <p className="font-bold text-slate-800">Pedido #{pedido.id}</p>
+                                                            {/* ✅ CAMBIO: "Pedido Nº X" en vez de "Pedido #X" */}
+                                                            <p className="font-bold text-slate-800">Pedido Nº {pedido.numeroRelativo ?? pedido.id}</p>
                                                             <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${estadoConfig.bg} ${estadoConfig.text}`}>
                                                                 {estadoConfig.label}
                                                             </span>

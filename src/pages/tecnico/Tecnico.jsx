@@ -11,7 +11,7 @@ import {
     BarChart3, Wrench, ClipboardList, Plus, LogOut, User
 } from "lucide-react";
 
-export default function Tecnico() {
+export default function Tecnico({ childrenOverride }) {
     const navigate = useNavigate();
     const location = useLocation();
     const [searchParams, setSearchParams] = useSearchParams();
@@ -27,7 +27,7 @@ export default function Tecnico() {
         }
     }, [location.state]);
 
-    // 🎯 NUEVO: Escuchar cambios en searchParams (para navegación desde el dashboard)
+    // 🎯 Escuchar cambios en searchParams (para navegación desde el dashboard)
     useEffect(() => {
         const tabFromUrl = searchParams.get("tab");
         if (tabFromUrl && tabFromUrl !== activeTab) {
@@ -47,14 +47,14 @@ export default function Tecnico() {
         setLoading(false);
     }, [navigate]);
 
-    // 🎯 Persistir tab activo en la URL
+    // 🎯 Persistir tab activo en la URL (solo si NO hay override)
     useEffect(() => {
-        // Preservar otros parámetros (?highlight=, etc.)
+        if (childrenOverride) return;
         const nuevosParams = new URLSearchParams(searchParams);
         nuevosParams.set("tab", activeTab);
         setSearchParams(nuevosParams, { replace: true });
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [activeTab]);
+    }, [activeTab, childrenOverride]);
 
     const handleLogout = () => {
         authService.logout();
@@ -128,50 +128,54 @@ export default function Tecnico() {
                 </div>
             </div>
 
-            {/* TABS */}
-            <div className="bg-white border-b sticky top-[68px] sm:top-[76px] z-[9]">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6">
-                    <div className="flex gap-1 overflow-x-auto scrollbar-hide">
-                        {tabs.map((tab) => {
-                            const isActive = activeTab === tab.id;
-                            return (
-                                <button
-                                    key={tab.id}
-                                    onClick={() => {
-                                        setActiveTab(tab.id);
-                                        // Limpiar highlight al cambiar de tab manual
-                                        const nuevosParams = new URLSearchParams();
-                                        nuevosParams.set("tab", tab.id);
-                                        setSearchParams(nuevosParams, { replace: true });
-                                    }}
-                                    className={`relative inline-flex items-center gap-2 px-4 sm:px-6 py-3 text-sm font-medium transition-all whitespace-nowrap border-b-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5b4eff]/40 ${
-                                        isActive
-                                            ? "text-[#5b4eff] border-[#5b4eff]"
-                                            : "text-gray-500 border-transparent hover:text-gray-700 hover:border-gray-300"
-                                    }`}
-                                    aria-current={isActive ? "page" : undefined}
-                                >
-                                    {tab.icon}
-                                    {tab.label}
-                                </button>
-                            );
-                        })}
+            {/* 🎯 TABS: ocultos cuando viene childrenOverride */}
+            {!childrenOverride && (
+                <div className="bg-white border-b sticky top-[68px] sm:top-[76px] z-[9]">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6">
+                        <div className="flex gap-1 overflow-x-auto scrollbar-hide">
+                            {tabs.map((tab) => {
+                                const isActive = activeTab === tab.id;
+                                return (
+                                    <button
+                                        key={tab.id}
+                                        onClick={() => {
+                                            setActiveTab(tab.id);
+                                            const nuevosParams = new URLSearchParams();
+                                            nuevosParams.set("tab", tab.id);
+                                            setSearchParams(nuevosParams, { replace: true });
+                                        }}
+                                        className={`relative inline-flex items-center gap-2 px-4 sm:px-6 py-3 text-sm font-medium transition-all whitespace-nowrap border-b-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5b4eff]/40 ${
+                                            isActive
+                                                ? "text-[#5b4eff] border-[#5b4eff]"
+                                                : "text-gray-500 border-transparent hover:text-gray-700 hover:border-gray-300"
+                                        }`}
+                                        aria-current={isActive ? "page" : undefined}
+                                    >
+                                        {tab.icon}
+                                        {tab.label}
+                                    </button>
+                                );
+                            })}
+                        </div>
                     </div>
                 </div>
-            </div>
+            )}
 
-            {/* CONTENIDO */}
+            {/* 🎯 CONTENIDO */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
-                <div key={activeTab} className="animate-fade-in">
-                    {activeTab === "dashboard" && <DashboardTecnico user={user} />}
-                    {activeTab === "servicios" && <ListaServicios />}
-                    {activeTab === "historial" && <HistorialServicios />}
-                    {activeTab === "nuevo" && (
-                        <NuevoServicio onSuccess={() => setActiveTab("servicios")} />
-                    )}
-                </div>
+                {childrenOverride ? (
+                    childrenOverride
+                ) : (
+                    <div key={activeTab} className="animate-fade-in">
+                        {activeTab === "dashboard" && <DashboardTecnico user={user} />}
+                        {activeTab === "servicios" && <ListaServicios />}
+                        {activeTab === "historial" && <HistorialServicios />}
+                        {activeTab === "nuevo" && (
+                            <NuevoServicio onSuccess={() => setActiveTab("servicios")} />
+                        )}
+                    </div>
+                )}
             </div>
-
         </div>
     );
 }

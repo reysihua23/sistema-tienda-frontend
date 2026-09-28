@@ -1,12 +1,20 @@
 // pages/vendedor/components/ListaVentasPresencial.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
     Store, Eye, Clock, CheckCircle, XCircle,
     User, Calendar, DollarSign, ShoppingBag, Loader2, X,
-    ClipboardList, Search, RefreshCw, TrendingUp
+    ClipboardList, Search, RefreshCw, TrendingUp, Package,
+    ChevronDown, ListFilter, Check
 } from "lucide-react";
 import { pedidoService, detallePedidoService, productoImagenService } from "../../../services/api";
 import { buildImageUrl } from "../../../config/apiConfig";
+
+// ✅ Opciones del dropdown de filtros
+const FILTRO_OPCIONES = [
+    { value: "TODOS",     label: "Todos los estados", icon: ListFilter,   color: "text-gray-500" },
+    { value: "PAGADO",    label: "Pagados",           icon: CheckCircle,  color: "text-green-500" },
+    { value: "CANCELADO", label: "Cancelados",        icon: XCircle,      color: "text-red-500" },
+];
 
 export default function ListaVentasPresencial({ onRefresh }) {
     const [ventas, setVentas] = useState([]);
@@ -18,6 +26,21 @@ export default function ListaVentasPresencial({ onRefresh }) {
     const [searchTerm, setSearchTerm] = useState("");
     const [filtroEstado, setFiltroEstado] = useState("TODOS");
 
+    // ✅ NUEVO: dropdown custom
+    const [showFiltroDropdown, setShowFiltroDropdown] = useState(false);
+    const filtroRef = useRef(null);
+
+    // ✅ Cerrar dropdown al hacer clic fuera
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (filtroRef.current && !filtroRef.current.contains(event.target)) {
+                setShowFiltroDropdown(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
     useEffect(() => {
         cargarVentas();
     }, []);
@@ -26,19 +49,16 @@ export default function ListaVentasPresencial({ onRefresh }) {
         aplicarFiltros();
     }, [ventas, filtroEstado, searchTerm]);
 
-    // pages/vendedor/components/ListaVentasPresencial.jsx
     const cargarVentas = async () => {
         setLoading(true);
         try {
             const data = await pedidoService.listar();
             console.log("📦 TODOS LOS PEDIDOS:", data);
 
-            // ✅ FILTRAR SOLO VENTAS PRESENCIALES (flexible)
+            // ✅ FILTRAR SOLO VENTAS PRESENCIALES
             const ventasPresencial = Array.isArray(data)
                 ? data.filter(p => {
-                    // Normalizar el origen a mayúsculas para comparar
                     const origen = (p.origen || "").toUpperCase();
-                    // Aceptar diferentes formas de "presencial"
                     return origen === "TIENDA_FISICA" ||
                         origen === "PRESENCIAL" ||
                         origen === "TIENDA" ||
@@ -54,6 +74,7 @@ export default function ListaVentasPresencial({ onRefresh }) {
             setLoading(false);
         }
     };
+
     const aplicarFiltros = () => {
         let filtrados = [...ventas];
 
@@ -136,6 +157,10 @@ export default function ListaVentasPresencial({ onRefresh }) {
         };
         return icons[estado] || <Clock size={14} className="inline" />;
     };
+
+    // ✅ Filtro actual (para el dropdown)
+    const filtroActual = FILTRO_OPCIONES.find(f => f.value === filtroEstado) || FILTRO_OPCIONES[0];
+    const FiltroIcon = filtroActual.icon;
 
     const resumenEstados = {
         TOTAL: ventas.length,
@@ -224,15 +249,49 @@ export default function ListaVentasPresencial({ onRefresh }) {
                         className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:border-[#5b4eff] focus:outline-none"
                     />
                 </div>
-                <select
-                    value={filtroEstado}
-                    onChange={(e) => setFiltroEstado(e.target.value)}
-                    className="px-4 py-2 border border-gray-200 rounded-lg text-sm focus:border-[#5b4eff] focus:outline-none"
-                >
-                    <option value="TODOS">📋 Todos los estados</option>
-                    <option value="PAGADO">✅ Pagados</option>
-                    <option value="CANCELADO">❌ Cancelados</option>
-                </select>
+
+                {/* ✅ Dropdown custom con Lucide */}
+                <div className="relative" ref={filtroRef}>
+                    <button
+                        type="button"
+                        onClick={() => setShowFiltroDropdown(!showFiltroDropdown)}
+                        className="px-4 py-2 border border-gray-200 rounded-lg text-sm focus:border-[#5b4eff] focus:outline-none flex items-center gap-2 bg-white hover:bg-gray-50 transition min-w-[180px] justify-between"
+                    >
+                        <div className="flex items-center gap-2">
+                            <FiltroIcon size={16} className={filtroActual.color} />
+                            <span className="text-gray-700">{filtroActual.label}</span>
+                        </div>
+                        <ChevronDown
+                            size={14}
+                            className={`text-gray-400 transition-transform ${showFiltroDropdown ? 'rotate-180' : ''}`}
+                        />
+                    </button>
+
+                    {showFiltroDropdown && (
+                        <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-100 z-40 overflow-hidden">
+                            {FILTRO_OPCIONES.map(opt => {
+                                const Icon = opt.icon;
+                                const selected = filtroEstado === opt.value;
+                                return (
+                                    <button
+                                        key={opt.value}
+                                        onClick={() => {
+                                            setFiltroEstado(opt.value);
+                                            setShowFiltroDropdown(false);
+                                        }}
+                                        className={`w-full px-4 py-2.5 text-left text-sm flex items-center gap-3 hover:bg-gray-50 transition ${selected ? 'bg-[#5b4eff]/5 text-[#5b4eff] font-medium' : 'text-gray-700'
+                                            }`}
+                                    >
+                                        <Icon size={16} className={opt.color} />
+                                        <span className="flex-1">{opt.label}</span>
+                                        {selected && <Check size={14} className="text-[#5b4eff]" />}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
+
                 {(filtroEstado !== "TODOS" || searchTerm) && (
                     <button
                         onClick={() => { setFiltroEstado("TODOS"); setSearchTerm(""); }}
@@ -260,28 +319,42 @@ export default function ListaVentasPresencial({ onRefresh }) {
                         <tbody className="divide-y divide-gray-100">
                             {ventasFiltradas.map(venta => (
                                 <tr key={venta.id} className="hover:bg-gray-50 transition">
-                                    <td className="px-6 py-4 text-sm font-medium">#{venta.id}</td>
-                                    <td className="px-6 py-4 text-sm flex items-center gap-2">
-                                        <User size={14} className="text-gray-400" />
-                                        {venta.clienteNombre || `Cliente #${venta.clienteId}`}
+                                    <td className="px-6 py-4 text-sm font-medium text-gray-800">
+                                        Nº {venta.id}
                                     </td>
-                                    <td className="px-6 py-4 text-sm flex items-center gap-2">
-                                        <Calendar size={14} className="text-gray-400" />
-                                        {formatDate(venta.fecha)}
+
+                                    <td className="px-6 py-4 text-sm">
+                                        <div className="flex items-center gap-2">
+                                            <User size={14} className="text-gray-400 flex-shrink-0" />
+                                            <span className="text-gray-700">
+                                                {venta.clienteNombre || `Cliente #${venta.clienteId}`}
+                                            </span>
+                                        </div>
                                     </td>
-                                    <td className="px-6 py-4 text-sm font-bold text-[#5b4eff] flex items-center gap-1">
-                                        <DollarSign size={14} />
+
+                                    <td className="px-6 py-4 text-sm">
+                                        <div className="flex items-center gap-2">
+                                            <Calendar size={14} className="text-gray-400 flex-shrink-0" />
+                                            <span className="text-gray-600">
+                                                {formatDate(venta.fecha)}
+                                            </span>
+                                        </div>
+                                    </td>
+
+                                    <td className="px-6 py-4 text-sm font-bold text-[#5b4eff]">
                                         {formatPrice(venta.total)}
                                     </td>
+
                                     <td className="px-6 py-4">
-                                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${getEstadoColor(venta.estado)}`}>
+                                        <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold ${getEstadoColor(venta.estado)}`}>
                                             {getEstadoIcon(venta.estado)} {venta.estado}
                                         </span>
                                     </td>
+
                                     <td className="px-6 py-4">
                                         <button
                                             onClick={() => verDetalles(venta)}
-                                            className="text-[#5b4eff] hover:underline text-sm font-medium flex items-center gap-1"
+                                            className="text-[#5b4eff] hover:underline text-sm font-medium inline-flex items-center gap-1"
                                         >
                                             <Eye size={14} />
                                             Ver detalles
@@ -298,8 +371,7 @@ export default function ListaVentasPresencial({ onRefresh }) {
                         <p>
                             {ventas.length === 0
                                 ? "No hay ventas presenciales registradas"
-                                : `No hay ventas ${filtroEstado !== "TODOS" ? `con estado "${filtroEstado}"` : "que coincidan con la búsqueda"}`
-                            }
+                                : `No hay ventas ${filtroEstado !== "TODOS" ? `con estado "${filtroEstado}"` : "que coincidan con la búsqueda"}`}
                         </p>
                     </div>
                 )}
@@ -313,7 +385,7 @@ export default function ListaVentasPresencial({ onRefresh }) {
                             <div>
                                 <h3 className="text-xl font-bold flex items-center gap-2">
                                     <ShoppingBag size={20} className="text-[#5b4eff]" />
-                                    Venta Presencial #{selectedVenta.id}
+                                    Venta Presencial Nº: {selectedVenta.id}
                                 </h3>
                                 <p className="text-sm text-gray-500 mt-1 flex items-center gap-1">
                                     <Calendar size={14} />
@@ -343,7 +415,7 @@ export default function ListaVentasPresencial({ onRefresh }) {
                                 </div>
                                 <div className="bg-gray-50 rounded-lg p-3">
                                     <p className="text-xs text-gray-500 uppercase flex items-center gap-1">
-                                        <DollarSign size={12} /> Total
+                                        Monto Total
                                     </p>
                                     <p className="font-bold text-xl text-[#5b4eff]">{formatPrice(selectedVenta.total)}</p>
                                 </div>
@@ -372,7 +444,7 @@ export default function ListaVentasPresencial({ onRefresh }) {
                                             />
                                             <div className="flex-1">
                                                 <p className="font-medium text-gray-800">{detalle.productoNombre}</p>
-                                                <p className="text-xs text-gray-500">Código: #{detalle.productoId}</p>
+                                                <p className="text-xs text-gray-500">Código: {detalle.productoId}</p>
                                             </div>
                                             <div className="text-right">
                                                 <p className="text-sm text-gray-500">{formatPrice(detalle.precio)} c/u</p>

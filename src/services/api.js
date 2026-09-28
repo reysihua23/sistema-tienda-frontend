@@ -209,6 +209,7 @@ export const authService = {
     if (response.token) {
       // ✅ Guardar token
       sessionStorage.setItem("token", response.token);
+      //localStorage.setItem("token", response.token);
 
       // ✅ Guardar usuario con los campos correctos
       const usuario = {
@@ -221,6 +222,9 @@ export const authService = {
 
       console.log("✅ Usuario guardado:", usuario);
       localStorage.setItem("usuario", JSON.stringify(usuario));
+
+      // ✅ NUEVO: Avisar que cambió el usuario
+      window.dispatchEvent(new Event("usuario-cambio"));
     }
 
     return response;
@@ -244,15 +248,17 @@ export const authService = {
     });
   },
 
-  // ✅ LOGOUT COMPLETO - Limpia todo
+
   logout: () => {
     console.log("🚪 Cerrando sesión...");
     localStorage.removeItem("token");
     localStorage.removeItem("usuario");
     localStorage.removeItem("redirectAfterLogin");
-    // Limpiar cualquier otro dato de sesión si existe
     sessionStorage.clear();
     console.log("✅ Sesión cerrada correctamente");
+
+    // ✅ NUEVO: Avisar que cambió el usuario (logout)
+    window.dispatchEvent(new Event("usuario-cambio"));
   },
 
   // ✅ Cierre de sesión por inactividad o cierre de ventana
@@ -464,7 +470,14 @@ export const reclamoService = {
   // Evidencias
   listarEvidencias: (reclamoId) => apiService.get(`/reclamos/${reclamoId}/evidencias`),
   subirEvidencia: (reclamoId, formData) => apiService.upload(`/reclamos/${reclamoId}/evidencias`, formData),
-  eliminarEvidencia: (evidenciaId) => apiService.delete(`/reclamo-evidencias/${evidenciaId}`)
+
+  eliminarEvidencia: (evidenciaId) => apiService.delete(`/reclamo-evidencias/${evidenciaId}`),
+  subirMultiplesEvidencias: (reclamoId, formData) => 
+    apiService.upload(`/reclamos/${reclamoId}/evidencias-multiple`, formData),
+  
+  // ✅ NUEVO: buscar reclamos por pedido
+  buscarPorPedido: (pedidoId) => apiService.get(`/reclamos/pedido/${pedidoId}`),
+  cancelar: (id) => apiService.patch(`/reclamos/${id}/cancelar`, {}),
 };
 
 // DEVOLUCIONES

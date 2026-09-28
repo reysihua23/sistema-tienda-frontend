@@ -4,7 +4,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { 
   LayoutDashboard, Package, TrendingDown, ShoppingBag, Users, 
   BarChart3, LogOut, RefreshCw, ShoppingCart, CheckCircle, AlertCircle,
-  Home, Database, Truck, FileText, Clock, DollarSign, User, Settings
+  Home, Database, Truck, FileText, Clock, DollarSign, User, Settings, Wrench  
 } from "lucide-react";
 import { authService, productoService, stockService, pedidoService, usuarioService, rolService } from "../../services/api";
 import AdminDashboard from "./AdminDashboard";
@@ -14,8 +14,10 @@ import PedidosList from "./components/PedidosList";
 import UsuariosList from "./components/UsuariosList";
 import Reportes from "./components/Reportes";
 import NotificationBell from "../../components/NotificationBell";
+import Reclamos from "../../components/reclamos/Reclamos";
+import HistorialServiciosTecnicos from './components/HistorialServiciosTecnicos';
 
-export default function Admin({ user: propUser }) {
+export default function Admin({ user: propUser, childrenOverride }) {
     const navigate = useNavigate();
     const location = useLocation();
     const [user, setUser] = useState(propUser || null);
@@ -40,13 +42,11 @@ export default function Admin({ user: propUser }) {
     const nombreCorto = useMemo(() => {
         if (!user) return 'Admin';
         
-        // Si tiene nombre, usarlo (primer nombre)
         if (user.nombre && user.nombre.trim()) {
             const primerNombre = user.nombre.trim().split(' ')[0];
             return primerNombre.charAt(0).toUpperCase() + primerNombre.slice(1).toLowerCase();
         }
         
-        // Si no, usar la parte del correo antes del @
         if (user.correo) {
             const parte = user.correo.split('@')[0];
             return parte.charAt(0).toUpperCase() + parte.slice(1).toLowerCase();
@@ -60,6 +60,8 @@ export default function Admin({ user: propUser }) {
         { id: "productos", label: "Productos", icon: Package },
         { id: "stock", label: "Stock", icon: TrendingDown },
         { id: "pedidos", label: "Pedidos", icon: ShoppingBag },
+        { id: "historialTecnicos", label: "Historial Técnicos", icon: Wrench },
+        { id: "reclamos", label: "Reclamos", icon: FileText },
         { id: "usuarios", label: "Usuarios", icon: Users },
         { id: "reportes", label: "Reportes", icon: BarChart3 }
     ];
@@ -86,11 +88,17 @@ export default function Admin({ user: propUser }) {
             }
 
             setUser(currentUser);
-            cargarDatos();
+            
+            // 🎯 Si hay childrenOverride (ej: notificaciones), NO cargar datos del admin
+            if (!childrenOverride) {
+                cargarDatos();
+            } else {
+                setLoading(false);
+            }
         };
 
         initAdmin();
-    }, []);
+    }, [childrenOverride]);
 
     const cargarDatos = async () => {
         setLoading(true);
@@ -246,35 +254,37 @@ export default function Admin({ user: propUser }) {
                 </div>
             </div>
 
-            {/* Tabs */}
-            <div className="border-b bg-white sticky top-[73px] z-10 overflow-x-auto shadow-sm">
-                <div className="max-w-7xl mx-auto px-6">
-                    <div className="flex gap-2">
-                        {tabs.map((tab) => {
-                            const Icon = tab.icon;
-                            const isActive = activeTab === tab.id;
-                            return (
-                                <button
-                                    key={tab.id}
-                                    onClick={() => setActiveTab(tab.id)}
-                                    className={`px-6 py-3 text-sm font-bold transition-all whitespace-nowrap rounded-t-xl flex items-center gap-2 ${
-                                        isActive
-                                            ? "bg-[#f4f7fe] text-[#5b4eff] border-b-2 border-[#5b4eff]"
-                                            : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
-                                    }`}
-                                >
-                                    <Icon size={16} />
-                                    {tab.label}
-                                </button>
-                            );
-                        })}
+            {/* 🎯 Tabs (ocultos cuando hay childrenOverride) */}
+            {!childrenOverride && (
+                <div className="border-b bg-white sticky top-[73px] z-10 overflow-x-auto shadow-sm">
+                    <div className="max-w-7xl mx-auto px-6">
+                        <div className="flex gap-2">
+                            {tabs.map((tab) => {
+                                const Icon = tab.icon;
+                                const isActive = activeTab === tab.id;
+                                return (
+                                    <button
+                                        key={tab.id}
+                                        onClick={() => setActiveTab(tab.id)}
+                                        className={`px-6 py-3 text-sm font-bold transition-all whitespace-nowrap rounded-t-xl flex items-center gap-2 ${
+                                            isActive
+                                                ? "bg-[#f4f7fe] text-[#5b4eff] border-b-2 border-[#5b4eff]"
+                                                : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                                        }`}
+                                    >
+                                        <Icon size={16} />
+                                        {tab.label}
+                                    </button>
+                                );
+                            })}
+                        </div>
                     </div>
                 </div>
-            </div>
+            )}
 
-            {/* Contenido */}
+            {/* 🎯 Contenido */}
             <div className="max-w-7xl mx-auto px-6 py-8">
-                {message.text && (
+                {message.text && !childrenOverride && (
                     <div className={`mb-6 p-4 rounded-xl shadow-sm border-l-4 animate-in fade-in slide-in-from-top-2 ${
                         message.type === "success" 
                             ? "bg-emerald-50 border-emerald-500 text-emerald-700" 
@@ -291,7 +301,9 @@ export default function Admin({ user: propUser }) {
                     </div>
                 )}
 
-                {loading ? (
+                {childrenOverride ? (
+                    childrenOverride
+                ) : loading ? (
                     <div className="text-center py-16">
                         <div className="relative w-16 h-16 mx-auto">
                             <div className="absolute inset-0 rounded-full border-4 border-gray-200"></div>
@@ -304,18 +316,27 @@ export default function Admin({ user: propUser }) {
                         {activeTab === "dashboard" && (
                             <AdminDashboard stats={stats} user={user} onRefresh={handleRefresh} />
                         )}
+
                         {activeTab === "productos" && (
                             <ProductosList productos={productos} stock={stock} onRefresh={cargarDatos} showMessage={showMessage} />
                         )}
+
                         {activeTab === "stock" && (
                             <StockList productos={productos} onRefresh={cargarDatos} showMessage={showMessage} />
                         )}
+
                         {activeTab === "pedidos" && (
                             <PedidosList pedidos={pedidos} onRefresh={cargarDatos} showMessage={showMessage} />
                         )}
+
+                        {activeTab === 'historialTecnicos' && <HistorialServiciosTecnicos />}
+
+                        {activeTab === "reclamos" && <Reclamos />}
+
                         {activeTab === "usuarios" && (
                             <UsuariosList usuarios={usuarios} roles={roles} onRefresh={cargarDatos} showMessage={showMessage} />
                         )}
+
                         {activeTab === "reportes" && <Reportes />}
                     </>
                 )}
