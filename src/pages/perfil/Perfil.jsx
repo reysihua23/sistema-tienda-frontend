@@ -192,7 +192,10 @@ export default function Perfil({ childrenOverride }) {
     setUpdating(true);
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch(`${API_URL}/clientes/${userData.id}`, {
+      // ✅ Usa clienteId si existe, sino el id
+      const clienteIdFinal = userData?.clienteId || userData?.id;
+
+      const response = await fetch(`${API_URL}/clientes/${clienteIdFinal}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -305,9 +308,9 @@ export default function Perfil({ childrenOverride }) {
 
   return (
     <div className="h-screen flex bg-gray-100 overflow-hidden">
-      
+
       {isSidebarOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/50 z-40 md:hidden"
           onClick={() => setIsSidebarOpen(false)}
         ></div>
@@ -326,7 +329,7 @@ export default function Perfil({ childrenOverride }) {
             </h1>
             <p className="text-xs text-gray-400 mt-2">Tu tienda de confianza</p>
           </div>
-          <button 
+          <button
             className="md:hidden text-gray-400 hover:text-white"
             onClick={() => setIsSidebarOpen(false)}
           >
@@ -429,13 +432,13 @@ export default function Perfil({ childrenOverride }) {
         {/* 👇 Header con botón de refresh */}
         <div className="bg-white border-b border-gray-100 px-4 sm:px-6 py-4 flex justify-between items-center flex-shrink-0">
           <div className="flex items-center gap-3">
-            <button 
+            <button
               className="md:hidden p-2 text-gray-600 hover:bg-gray-100 rounded-lg"
               onClick={() => setIsSidebarOpen(true)}
             >
               <Menu size={24} />
             </button>
-            
+
             <div>
               <h1 className="text-xl sm:text-3xl font-bold text-gray-800">{tabConfig.title}</h1>
               <p className="text-xs sm:text-sm text-gray-500 mt-1 hidden sm:block">{tabConfig.subtitle}</p>
@@ -457,7 +460,7 @@ export default function Perfil({ childrenOverride }) {
 
         {/* Contenido desplazable */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-6">
-          
+
           {enModoNotificaciones ? (
             <div key={`notif-${refreshKey}`}>
               {childrenOverride || <Notificaciones />}
@@ -895,13 +898,12 @@ export default function Perfil({ childrenOverride }) {
       {/* 👇 TOAST del refresh */}
       {toast.show && (
         <div className="fixed top-20 right-4 left-4 sm:left-auto z-[100] animate-in fade-in slide-in-from-top-2">
-          <div className={`rounded-xl shadow-2xl p-4 flex items-center gap-3 sm:min-w-[320px] ${
-            toast.type === "success"
+          <div className={`rounded-xl shadow-2xl p-4 flex items-center gap-3 sm:min-w-[320px] ${toast.type === "success"
               ? "bg-gradient-to-r from-emerald-500 to-green-600"
               : toast.type === "error"
-              ? "bg-gradient-to-r from-red-500 to-rose-600"
-              : "bg-gradient-to-r from-blue-500 to-indigo-600"
-          } text-white`}>
+                ? "bg-gradient-to-r from-red-500 to-rose-600"
+                : "bg-gradient-to-r from-blue-500 to-indigo-600"
+            } text-white`}>
             <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
               {toast.type === "success" && <CheckCircle size={16} />}
               {toast.type === "error" && <AlertCircle size={16} />}
