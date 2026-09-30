@@ -10,7 +10,7 @@ import { NotificationProvider } from "./context/NotificationContext";
 import NotificationBell from "./components/NotificationBell";
 
 // Componentes de navegación
-import NavBar from "./components/Navbar";
+import NavBar from "./components/NavBar";
 
 
 // Páginas principales
