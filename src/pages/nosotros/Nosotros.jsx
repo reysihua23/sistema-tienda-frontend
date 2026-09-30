@@ -31,11 +31,7 @@ export default function Nosotros() {
           animate={{ scale: 1 }}
           transition={{ duration: 1.5 }}
         >
-          <img
-            src="https://images.unsplash.com/photo-1592899677977-9e10cb5889e2?auto=format&fit=crop&q=80&w=2000"
-            alt="Celulares"
-            className="w-full h-full object-cover opacity-10"
-          />
+          
         </motion.div>
         
         {/* Círculos decorativos animados */}

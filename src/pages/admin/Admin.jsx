@@ -1,10 +1,10 @@
 // pages/admin/Admin.jsx
 import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { 
-  LayoutDashboard, Package, TrendingDown, ShoppingBag, Users, 
-  BarChart3, LogOut, RefreshCw, ShoppingCart, CheckCircle, AlertCircle,
-  Home, Database, Truck, FileText, Clock, DollarSign, User, Settings, Wrench  
+import {
+    LayoutDashboard, Package, TrendingDown, ShoppingBag, Users,
+    BarChart3, LogOut, RefreshCw, ShoppingCart, CheckCircle, AlertCircle,
+    Home, Database, Truck, FileText, Clock, DollarSign, User, Settings, Wrench, X
 } from "lucide-react";
 import { authService, productoService, stockService, pedidoService, usuarioService, rolService } from "../../services/api";
 import AdminDashboard from "./AdminDashboard";
@@ -38,20 +38,19 @@ export default function Admin({ user: propUser, childrenOverride }) {
     const [roles, setRoles] = useState([]);
     const [message, setMessage] = useState({ type: "", text: "" });
 
-    // 🎯 Nombre corto del usuario (prioriza user.nombre, si no, usa el correo)
     const nombreCorto = useMemo(() => {
         if (!user) return 'Admin';
-        
+
         if (user.nombre && user.nombre.trim()) {
             const primerNombre = user.nombre.trim().split(' ')[0];
             return primerNombre.charAt(0).toUpperCase() + primerNombre.slice(1).toLowerCase();
         }
-        
+
         if (user.correo) {
             const parte = user.correo.split('@')[0];
             return parte.charAt(0).toUpperCase() + parte.slice(1).toLowerCase();
         }
-        
+
         return 'Admin';
     }, [user]);
 
@@ -66,7 +65,6 @@ export default function Admin({ user: propUser, childrenOverride }) {
         { id: "reportes", label: "Reportes", icon: BarChart3 }
     ];
 
-    // ✅ Leer state.tab cuando llega desde una notificación
     useEffect(() => {
         if (location.state?.tab) {
             setActiveTab(location.state.tab);
@@ -76,7 +74,7 @@ export default function Admin({ user: propUser, childrenOverride }) {
     useEffect(() => {
         const initAdmin = () => {
             const currentUser = propUser || authService.getCurrentUser();
-            
+
             if (!currentUser) {
                 navigate("/login");
                 return;
@@ -88,8 +86,7 @@ export default function Admin({ user: propUser, childrenOverride }) {
             }
 
             setUser(currentUser);
-            
-            // 🎯 Si hay childrenOverride (ej: notificaciones), NO cargar datos del admin
+
             if (!childrenOverride) {
                 cargarDatos();
             } else {
@@ -102,7 +99,7 @@ export default function Admin({ user: propUser, childrenOverride }) {
 
     const cargarDatos = async () => {
         setLoading(true);
-        
+
         try {
             const [
                 productosResponse,
@@ -118,27 +115,27 @@ export default function Admin({ user: propUser, childrenOverride }) {
                 rolService.listar()
             ]);
 
-            const productosData = productosResponse.status === "fulfilled" 
+            const productosData = productosResponse.status === "fulfilled"
                 ? (Array.isArray(productosResponse.value) ? productosResponse.value : [])
                 : [];
             setProductos(productosData);
 
-            const stockData = stockResponse.status === "fulfilled" 
+            const stockData = stockResponse.status === "fulfilled"
                 ? (Array.isArray(stockResponse.value) ? stockResponse.value : [])
                 : [];
             setStock(stockData);
 
-            const pedidosData = pedidosResponse.status === "fulfilled" 
+            const pedidosData = pedidosResponse.status === "fulfilled"
                 ? (Array.isArray(pedidosResponse.value) ? pedidosResponse.value : [])
                 : [];
             setPedidos(pedidosData);
 
-            const usuariosData = usuariosResponse.status === "fulfilled" 
+            const usuariosData = usuariosResponse.status === "fulfilled"
                 ? (Array.isArray(usuariosResponse.value) ? usuariosResponse.value : [])
                 : [];
             setUsuarios(usuariosData);
 
-            const rolesData = rolesResponse.status === "fulfilled" 
+            const rolesData = rolesResponse.status === "fulfilled"
                 ? (Array.isArray(rolesResponse.value) ? rolesResponse.value : [])
                 : [];
             setRoles(rolesData);
@@ -211,41 +208,54 @@ export default function Admin({ user: propUser, childrenOverride }) {
 
     return (
         <div className="min-h-screen bg-[#f4f7fe]">
-            {/* Header */}
+            {/* HEADER */}
             <div className="bg-white shadow-sm border-b sticky top-0 z-10">
-                <div className="max-w-7xl mx-auto px-6 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-gradient-to-r from-[#5b4eff] to-[#4a3dcc] rounded-xl flex items-center justify-center shadow-md">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center gap-3">
+                    <div className="min-w-0 flex items-center gap-3">
+                        <div className="hidden sm:flex w-10 h-10 bg-gradient-to-br from-[#5b4eff] to-[#4a3dcc] rounded-xl items-center justify-center shadow-md flex-shrink-0">
                             <ShoppingCart size={20} className="text-white" />
                         </div>
-                        <h1 className="text-2xl font-black bg-gradient-to-r from-[#0d0c1e] to-[#5b4eff] bg-clip-text text-transparent">
-                            Panel Administrador
-                        </h1>
+                        <div className="min-w-0">
+                            <h1 className="text-xl sm:text-2xl font-black text-[#0d0c1e] truncate">
+                                Panel Administrador
+                            </h1>
+                            <p className="text-xs sm:text-sm text-gray-500 mt-0.5 hidden sm:block">
+                                Gestiona productos, pedidos, usuarios y reportes
+                            </p>
+                        </div>
                     </div>
-                    <div className="flex items-center gap-4">
+
+                    <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
                         <NotificationBell />
-                        <button 
+
+                        <button
                             onClick={handleRefresh}
                             className="p-2 text-gray-400 hover:text-[#5b4eff] hover:bg-gray-100 rounded-lg transition-all"
                             title="Actualizar datos"
                         >
                             <RefreshCw size={18} />
                         </button>
-                        <div className="flex items-center gap-3 bg-gray-50 rounded-xl px-4 py-2">
-                            {/* 🎯 Avatar con iniciales */}
-                            <div className="w-8 h-8 bg-gradient-to-r from-[#5b4eff] to-[#4a3dcc] rounded-full flex items-center justify-center">
+
+                        <div className="hidden sm:flex items-center gap-3 pl-3 border-l border-gray-200">
+                            <div className="w-9 h-9 bg-gradient-to-br from-[#5b4eff] to-[#4a3dcc] rounded-full flex items-center justify-center flex-shrink-0">
                                 <span className="text-white text-xs font-bold">
-                                    {user?.nombre?.substring(0, 2).toUpperCase() || user?.correo?.substring(0, 2).toUpperCase() || 'AD'}
+                                    {user?.nombre?.substring(0, 2).toUpperCase() ||
+                                        user?.correo?.substring(0, 2).toUpperCase() ||
+                                        'AD'}
                                 </span>
                             </div>
-                            <div className="text-left hidden sm:block">
-                                <p className="text-xs text-gray-400 font-medium">Administrador</p>
-                                <p className="text-sm font-bold text-gray-700">{nombreCorto}</p>
+                            <div className="text-right">
+                                <p className="text-sm font-bold text-gray-800 truncate max-w-[120px]">
+                                    {nombreCorto}
+                                </p>
+                                <p className="text-xs text-gray-400">Administrador</p>
                             </div>
                         </div>
-                        <button 
-                            onClick={handleLogout} 
-                            className="px-5 py-2 bg-gradient-to-r from-rose-500 to-red-600 text-white rounded-xl text-sm font-bold hover:shadow-lg transition-all hover:scale-105 flex items-center gap-2"
+
+                        <button
+                            onClick={handleLogout}
+                            className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 bg-red-500 text-white rounded-lg text-sm font-bold hover:bg-red-600 active:scale-95 transition-all"
+                            aria-label="Cerrar sesión"
                         >
                             <LogOut size={16} />
                             <span className="hidden sm:inline">Cerrar Sesión</span>
@@ -254,7 +264,7 @@ export default function Admin({ user: propUser, childrenOverride }) {
                 </div>
             </div>
 
-            {/* 🎯 Tabs (ocultos cuando hay childrenOverride) */}
+            {/* Tabs */}
             {!childrenOverride && (
                 <div className="border-b bg-white sticky top-[73px] z-10 overflow-x-auto shadow-sm">
                     <div className="max-w-7xl mx-auto px-6">
@@ -266,11 +276,10 @@ export default function Admin({ user: propUser, childrenOverride }) {
                                     <button
                                         key={tab.id}
                                         onClick={() => setActiveTab(tab.id)}
-                                        className={`px-6 py-3 text-sm font-bold transition-all whitespace-nowrap rounded-t-xl flex items-center gap-2 ${
-                                            isActive
+                                        className={`px-6 py-3 text-sm font-bold transition-all whitespace-nowrap rounded-t-xl flex items-center gap-2 ${isActive
                                                 ? "bg-[#f4f7fe] text-[#5b4eff] border-b-2 border-[#5b4eff]"
                                                 : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
-                                        }`}
+                                            }`}
                                     >
                                         <Icon size={16} />
                                         {tab.label}
@@ -282,25 +291,8 @@ export default function Admin({ user: propUser, childrenOverride }) {
                 </div>
             )}
 
-            {/* 🎯 Contenido */}
+            {/* Contenido */}
             <div className="max-w-7xl mx-auto px-6 py-8">
-                {message.text && !childrenOverride && (
-                    <div className={`mb-6 p-4 rounded-xl shadow-sm border-l-4 animate-in fade-in slide-in-from-top-2 ${
-                        message.type === "success" 
-                            ? "bg-emerald-50 border-emerald-500 text-emerald-700" 
-                            : message.type === "warning"
-                            ? "bg-amber-50 border-amber-500 text-amber-700"
-                            : "bg-rose-50 border-rose-500 text-rose-700"
-                    }`}>
-                        <div className="flex items-center gap-2">
-                            {message.type === "success" && <CheckCircle size={18} />}
-                            {message.type === "warning" && <AlertCircle size={18} />}
-                            {message.type === "error" && <AlertCircle size={18} />}
-                            <p className="text-sm font-medium">{message.text}</p>
-                        </div>
-                    </div>
-                )}
-
                 {childrenOverride ? (
                     childrenOverride
                 ) : loading ? (
@@ -329,18 +321,49 @@ export default function Admin({ user: propUser, childrenOverride }) {
                             <PedidosList pedidos={pedidos} onRefresh={cargarDatos} showMessage={showMessage} />
                         )}
 
-                        {activeTab === 'historialTecnicos' && <HistorialServiciosTecnicos />}
+                        {activeTab === 'historialTecnicos' && <HistorialServiciosTecnicos onRefresh={cargarDatos} showMessage={showMessage} />}
 
-                        {activeTab === "reclamos" && <Reclamos />}
+                        {activeTab === "reclamos" && <Reclamos onRefresh={cargarDatos} showMessage={showMessage} />}
 
                         {activeTab === "usuarios" && (
                             <UsuariosList usuarios={usuarios} roles={roles} onRefresh={cargarDatos} showMessage={showMessage} />
                         )}
 
-                        {activeTab === "reportes" && <Reportes />}
+                        {activeTab === "reportes" && <Reportes onRefresh={cargarDatos} showMessage={showMessage} />}
                     </>
                 )}
             </div>
+
+            {/* 👇 TOAST FLOTANTE (mismo estilo que Técnico) */}
+            {message.text && !childrenOverride && (
+                <div className="fixed top-20 right-4 left-4 sm:left-auto z-[100] animate-in fade-in slide-in-from-top-2">
+                    <div className={`rounded-xl shadow-2xl p-4 flex items-center gap-3 sm:min-w-[320px] ${
+                        message.type === "success"
+                            ? "bg-gradient-to-r from-emerald-500 to-green-600"
+                            : message.type === "warning"
+                            ? "bg-gradient-to-r from-amber-500 to-orange-600"
+                            : "bg-gradient-to-r from-red-500 to-rose-600"
+                    } text-white`}>
+                        <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
+                            {message.type === "success" && <CheckCircle size={16} />}
+                            {message.type === "warning" && <AlertCircle size={16} />}
+                            {message.type === "error" && <AlertCircle size={16} />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <p className="font-bold text-sm">
+                                {message.type === "success" ? "Éxito" : message.type === "warning" ? "Advertencia" : "Error"}
+                            </p>
+                            <p className="text-xs opacity-90 break-words">{message.text}</p>
+                        </div>
+                        <button
+                            onClick={() => setMessage({ type: "", text: "" })}
+                            className="text-white/80 hover:text-white flex-shrink-0"
+                        >
+                            <X size={16} />
+                        </button>
+                    </div>
+                </div>
+            )}
 
             <style>{`
                 .animate-in { animation: fadeIn 0.3s ease-out; }

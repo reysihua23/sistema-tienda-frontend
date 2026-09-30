@@ -26,7 +26,7 @@ export default function ListaVentasPresencial({ onRefresh }) {
     const [searchTerm, setSearchTerm] = useState("");
     const [filtroEstado, setFiltroEstado] = useState("TODOS");
 
-    // ✅ NUEVO: dropdown custom
+    // ✅ dropdown custom
     const [showFiltroDropdown, setShowFiltroDropdown] = useState(false);
     const filtroRef = useRef(null);
 
@@ -53,7 +53,6 @@ export default function ListaVentasPresencial({ onRefresh }) {
         setLoading(true);
         try {
             const data = await pedidoService.listar();
-            console.log("📦 TODOS LOS PEDIDOS:", data);
 
             // ✅ FILTRAR SOLO VENTAS PRESENCIALES
             const ventasPresencial = Array.isArray(data)
@@ -66,7 +65,6 @@ export default function ListaVentasPresencial({ onRefresh }) {
                 })
                 : [];
 
-            console.log("🏪 VENTAS PRESENCIALES ENCONTRADAS:", ventasPresencial.length);
             setVentas(ventasPresencial.sort((a, b) => new Date(b.fecha) - new Date(a.fecha)));
         } catch (error) {
             console.error("Error cargando ventas presenciales:", error);
@@ -130,7 +128,8 @@ export default function ListaVentasPresencial({ onRefresh }) {
         return new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' }).format(price);
     };
 
-    const formatDate = (date) => {
+    // Fecha larga (desktop)
+    const formatDateLong = (date) => {
         if (!date) return "Fecha no disponible";
         return new Date(date).toLocaleDateString('es-PE', {
             year: 'numeric',
@@ -139,6 +138,16 @@ export default function ListaVentasPresencial({ onRefresh }) {
             hour: '2-digit',
             minute: '2-digit'
         });
+    };
+
+    // Fecha corta (móvil)
+    const formatDateShort = (date) => {
+        if (!date) return "—";
+        const d = new Date(date);
+        const day = String(d.getDate()).padStart(2, '0');
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const year = d.getFullYear();
+        return `${day}/${month}/${year}`;
     };
 
     const getEstadoColor = (estado) => ({
@@ -181,33 +190,33 @@ export default function ListaVentasPresencial({ onRefresh }) {
     return (
         <div>
             {/* Header */}
-            <div className="mb-6 flex justify-between items-center">
+            <div className="mb-4 sm:mb-6 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
                 <div>
-                    <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                    <h2 className="text-lg sm:text-xl font-bold text-gray-800 flex items-center gap-2">
                         <Store size={22} className="text-[#5b4eff]" />
                         Ventas Presenciales
                     </h2>
-                    <p className="text-sm text-gray-500">Historial de ventas realizadas en tienda física</p>
+                    <p className="text-xs sm:text-sm text-gray-500">Historial de ventas realizadas en tienda física</p>
                 </div>
-                <button
+                {/*<button
                     onClick={cargarVentas}
-                    className="px-4 py-2 bg-[#5b4eff] text-white rounded-lg text-sm font-medium hover:bg-[#4a3dcc] transition flex items-center gap-2"
+                    className="px-4 py-2 bg-[#5b4eff] text-white rounded-lg text-sm font-medium hover:bg-[#4a3dcc] transition flex items-center gap-2 self-start sm:self-auto"
                 >
                     <RefreshCw size={16} />
                     Actualizar
-                </button>
+                </button>*/}
             </div>
 
             {/* Resumen */}
             {ventas.length > 0 && (
-                <div className="grid grid-cols-3 gap-4 mb-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-4">
                     <div className="bg-white rounded-lg p-4 border border-gray-200">
                         <div className="flex items-center justify-between">
-                            <div>
+                            <div className="min-w-0">
                                 <p className="text-xs text-gray-500">Total Ventas</p>
-                                <p className="text-2xl font-bold text-[#5b4eff]">{formatPrice(totalVentas)}</p>
+                                <p className="text-xl sm:text-2xl font-bold text-[#5b4eff] truncate">{formatPrice(totalVentas)}</p>
                             </div>
-                            <div className="w-10 h-10 bg-[#5b4eff]/10 rounded-full flex items-center justify-center">
+                            <div className="w-10 h-10 bg-[#5b4eff]/10 rounded-full flex items-center justify-center flex-shrink-0">
                                 <TrendingUp size={20} className="text-[#5b4eff]" />
                             </div>
                         </div>
@@ -216,9 +225,9 @@ export default function ListaVentasPresencial({ onRefresh }) {
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-xs text-gray-500">Ventas Completadas</p>
-                                <p className="text-2xl font-bold text-green-600">{resumenEstados.PAGADO}</p>
+                                <p className="text-xl sm:text-2xl font-bold text-green-600">{resumenEstados.PAGADO}</p>
                             </div>
-                            <div className="w-10 h-10 bg-green-500/10 rounded-full flex items-center justify-center">
+                            <div className="w-10 h-10 bg-green-500/10 rounded-full flex items-center justify-center flex-shrink-0">
                                 <CheckCircle size={20} className="text-green-500" />
                             </div>
                         </div>
@@ -227,9 +236,9 @@ export default function ListaVentasPresencial({ onRefresh }) {
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-xs text-gray-500">Ventas Canceladas</p>
-                                <p className="text-2xl font-bold text-red-600">{resumenEstados.CANCELADO}</p>
+                                <p className="text-xl sm:text-2xl font-bold text-red-600">{resumenEstados.CANCELADO}</p>
                             </div>
-                            <div className="w-10 h-10 bg-red-500/10 rounded-full flex items-center justify-center">
+                            <div className="w-10 h-10 bg-red-500/10 rounded-full flex items-center justify-center flex-shrink-0">
                                 <XCircle size={20} className="text-red-500" />
                             </div>
                         </div>
@@ -302,8 +311,76 @@ export default function ListaVentasPresencial({ onRefresh }) {
                 )}
             </div>
 
-            {/* Tabla */}
-            <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+            {/* ==================== VISTA MÓVIL (TARJETAS) ==================== */}
+            <div className="md:hidden space-y-3">
+                {ventasFiltradas.length === 0 ? (
+                    <div className="bg-white rounded-xl shadow-sm p-12 text-center text-gray-400">
+                        <Store size={48} className="mx-auto mb-2 opacity-50" />
+                        <p>
+                            {ventas.length === 0
+                                ? "No hay ventas presenciales registradas"
+                                : `No hay ventas ${filtroEstado !== "TODOS" ? `con estado "${filtroEstado}"` : "que coincidan con la búsqueda"}`}
+                        </p>
+                    </div>
+                ) : (
+                    ventasFiltradas.map(venta => (
+                        <div
+                            key={venta.id}
+                            className="bg-white rounded-xl shadow-sm border border-gray-100 p-4"
+                        >
+                            {/* Header: VENTA + Nº + Estado */}
+                            <div className="flex items-start justify-between gap-2 mb-3">
+                                <div>
+                                    <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">
+                                        Venta
+                                    </p>
+                                    <p className="text-base font-black text-gray-800">
+                                        Nº {venta.id}
+                                    </p>
+                                </div>
+                                <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold ${getEstadoColor(venta.estado)}`}>
+                                    {getEstadoIcon(venta.estado)}
+                                    {venta.estado}
+                                </span>
+                            </div>
+
+                            {/* Cliente + Fecha */}
+                            <div className="space-y-1.5 mb-3">
+                                <div className="flex items-center gap-2 text-sm text-gray-600">
+                                    <User size={14} className="text-gray-400 flex-shrink-0" />
+                                    <span className="truncate">
+                                        {venta.clienteNombre || `Cliente #${venta.clienteId}`}
+                                    </span>
+                                </div>
+                                <div className="flex items-center gap-2 text-sm text-gray-600">
+                                    <Calendar size={14} className="text-gray-400 flex-shrink-0" />
+                                    <span>{formatDateShort(venta.fecha)}</span>
+                                </div>
+                            </div>
+
+                            {/* Total + Ver detalles */}
+                            <div className="flex items-center justify-between pt-3 border-t border-gray-100 gap-2">
+                                <div>
+                                    <p className="text-[10px] text-gray-400 uppercase font-bold">Total</p>
+                                    <p className="text-base font-black text-[#5b4eff]">
+                                        {formatPrice(venta.total)}
+                                    </p>
+                                </div>
+                                <button
+                                    onClick={() => verDetalles(venta)}
+                                    className="px-3 py-2 text-[#5b4eff] bg-[#5b4eff]/10 rounded-lg hover:bg-[#5b4eff]/20 transition flex items-center gap-1.5 text-xs font-bold"
+                                >
+                                    <Eye size={14} />
+                                    Ver detalles
+                                </button>
+                            </div>
+                        </div>
+                    ))
+                )}
+            </div>
+
+            {/* ==================== VISTA DESKTOP (TABLA ORIGINAL) ==================== */}
+            <div className="hidden md:block bg-white rounded-xl shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full">
                         <thead className="bg-gray-50">
@@ -325,7 +402,7 @@ export default function ListaVentasPresencial({ onRefresh }) {
 
                                     <td className="px-6 py-4 text-sm">
                                         <div className="flex items-center gap-2">
-                                            <User size={14} className="text-gray-400 flex-shrink-0" />
+                                            {/*<User size={14} className="text-gray-400 flex-shrink-0" />*/}
                                             <span className="text-gray-700">
                                                 {venta.clienteNombre || `Cliente #${venta.clienteId}`}
                                             </span>
@@ -334,9 +411,9 @@ export default function ListaVentasPresencial({ onRefresh }) {
 
                                     <td className="px-6 py-4 text-sm">
                                         <div className="flex items-center gap-2">
-                                            <Calendar size={14} className="text-gray-400 flex-shrink-0" />
+                                            {/*<Calendar size={14} className="text-gray-400 flex-shrink-0" />*/}
                                             <span className="text-gray-600">
-                                                {formatDate(venta.fecha)}
+                                                {formatDateLong(venta.fecha)}
                                             </span>
                                         </div>
                                     </td>
@@ -389,7 +466,7 @@ export default function ListaVentasPresencial({ onRefresh }) {
                                 </h3>
                                 <p className="text-sm text-gray-500 mt-1 flex items-center gap-1">
                                     <Calendar size={14} />
-                                    {formatDate(selectedVenta.fecha)}
+                                    {formatDateLong(selectedVenta.fecha)}
                                 </p>
                             </div>
                             <button onClick={() => setShowDetalleModal(false)} className="text-gray-400 hover:text-gray-600 transition p-2 hover:bg-gray-100 rounded-lg">
@@ -423,7 +500,7 @@ export default function ListaVentasPresencial({ onRefresh }) {
                                     <p className="text-xs text-gray-500 uppercase flex items-center gap-1">
                                         <ShoppingBag size={12} /> Productos
                                     </p>
-                                    <p className="font-medium">{selectedVenta.detalles?.length || 0} Productos</p>
+                                    <p className="font-medium">{selectedVenta.detalles?.length || 0} </p>
                                 </div>
                             </div>
 

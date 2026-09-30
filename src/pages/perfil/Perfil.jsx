@@ -1,60 +1,59 @@
 // pages/perfil/Perfil.jsx
 import React, { useEffect, useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { authService, usuarioService } from "../../services/api";
 import { API_URL } from "../../config/apiConfig";
 import MisPedidos from "../pedidos/MisPedidos";
 import MisServicios from "../servicios/MisServicios";
-//import MisDevoluciones from "../devoluciones/MisDevoluciones";
-
+import NotificationBell from "../../components/NotificationBell";
 import MisReclamos from "../reclamos/MisReclamos";
-import { User, Phone, FileText, MapPin, Mail, AlertCircle, CheckCircle, Lock, Eye, EyeOff, Shield, Key } from "lucide-react";
+import Notificaciones from "../notificaciones/Notificaciones";
+import {
+  User, Phone, FileText, MapPin, Mail, AlertCircle, CheckCircle,
+  Lock, Eye, EyeOff, Shield, Key, Menu, X, RefreshCw
+} from "lucide-react";
 
-export default function Perfil() {
+export default function Perfil({ childrenOverride }) {
   const [user, setUser] = useState(null);
   const [userData, setUserData] = useState(null);
   const [activeTab, setActiveTab] = useState("datos");
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [mostrarNotificaciones, setMostrarNotificaciones] = useState(false);
+
+  // 👇 NUEVO: estados para el refresh
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [toast, setToast] = useState({ show: false, message: "", type: "" });
+
+  const location = useLocation();
+  const navigate = useNavigate();
+
   const [passwordData, setPasswordData] = useState({
-    actual: "",
-    nueva: "",
-    confirmar: ""
+    actual: "", nueva: "", confirmar: ""
   });
   const [passwordError, setPasswordError] = useState("");
   const [passwordSuccess, setPasswordSuccess] = useState("");
   const [cambiandoPassword, setCambiandoPassword] = useState(false);
   const [editing, setEditing] = useState(false);
   const [showPassword, setShowPassword] = useState({
-    actual: false,
-    nueva: false,
-    confirmar: false
+    actual: false, nueva: false, confirmar: false
   });
   const [passwordStrength, setPasswordStrength] = useState({ score: 0, message: "", color: "" });
   const [formData, setFormData] = useState({
-    nombre: "",
-    telefono: "",
-    documento: "",
-    direccion: ""
+    nombre: "", telefono: "", documento: "", direccion: ""
   });
-  const navigate = useNavigate();
 
   const [errors, setErrors] = useState({
-    nombre: "",
-    telefono: "",
-    documento: "",
-    direccion: ""
+    nombre: "", telefono: "", documento: "", direccion: ""
   });
 
-  // Validación de fuerza de contraseña
   const validatePasswordStrength = (password) => {
     let score = 0;
     let message = "";
     let color = "";
 
-    if (password.length === 0) {
-      return { score: 0, message: "", color: "" };
-    }
+    if (password.length === 0) return { score: 0, message: "", color: "" };
 
     if (password.length >= 8) score++;
     if (password.length >= 12) score++;
@@ -89,6 +88,13 @@ export default function Perfil() {
     cargarPerfil();
   }, [navigate]);
 
+  useEffect(() => {
+    if (location.state?.openNotificaciones) {
+      setMostrarNotificaciones(true);
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
+
   const cargarPerfil = async () => {
     setLoading(true);
     try {
@@ -112,10 +118,22 @@ export default function Perfil() {
     }
   };
 
+  // 👇 NUEVO: función para mostrar toast
+  const showToast = (type, message) => {
+    setToast({ show: true, type, message });
+    setTimeout(() => setToast({ show: false, type: "", message: "" }), 3000);
+  };
+
+  // 👇 NUEVO: función de refresh general
+  const handleRefresh = async () => {
+    await cargarPerfil();
+    // Fuerza el remount de las tabs hijas
+    setRefreshKey(prev => prev + 1);
+    showToast("success", "Datos actualizados correctamente");
+  };
+
   const handleUpdateProfile = async (e) => {
     e.preventDefault();
-
-    // Validaciones finales antes de enviar
     let hasError = false;
     const newErrors = { nombre: "", telefono: "", documento: "", direccion: "" };
 
@@ -137,8 +155,6 @@ export default function Perfil() {
       newErrors.telefono = "El teléfono debe comenzar con 9";
       hasError = true;
     }
-
-    // Dentro de handleUpdateProfile, reemplaza la validación del documento:
 
     if (!formData.documento) {
       newErrors.documento = "El documento es obligatorio";
@@ -169,11 +185,7 @@ export default function Perfil() {
     setErrors(newErrors);
 
     if (hasError) {
-      const errorMsg = document.createElement("div");
-      errorMsg.className = "fixed top-20 right-4 bg-red-500 text-white px-4 py-3 rounded-xl shadow-lg z-50 animate-in fade-in slide-in-from-top-2 flex items-center gap-2";
-      errorMsg.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg> Por favor corrige los errores del formulario';
-      document.body.appendChild(errorMsg);
-      setTimeout(() => errorMsg.remove(), 3000);
+      showToast("error", "Por favor corrige los errores del formulario");
       return;
     }
 
@@ -195,26 +207,15 @@ export default function Perfil() {
         })
       });
 
-      if (!response.ok) {
-        throw new Error("Error al actualizar datos");
-      }
+      if (!response.ok) throw new Error("Error al actualizar datos");
 
       setUserData({ ...userData, ...formData });
       setEditing(false);
-
-      const successMsg = document.createElement("div");
-      successMsg.className = "fixed top-20 right-4 bg-green-500 text-white px-4 py-3 rounded-xl shadow-lg z-50 animate-in fade-in slide-in-from-top-2 flex items-center gap-2";
-      successMsg.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Datos actualizados correctamente';
-      document.body.appendChild(successMsg);
-      setTimeout(() => successMsg.remove(), 3000);
+      showToast("success", "Datos actualizados correctamente");
 
     } catch (error) {
       console.error("Error:", error);
-      const errorMsg = document.createElement("div");
-      errorMsg.className = "fixed top-20 right-4 bg-red-500 text-white px-4 py-3 rounded-xl shadow-lg z-50 animate-in fade-in slide-in-from-top-2 flex items-center gap-2";
-      errorMsg.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg> Error al actualizar datos';
-      document.body.appendChild(errorMsg);
-      setTimeout(() => errorMsg.remove(), 3000);
+      showToast("error", "Error al actualizar datos");
     } finally {
       setUpdating(false);
     }
@@ -226,54 +227,14 @@ export default function Perfil() {
     setPasswordSuccess("");
     setCambiandoPassword(true);
 
-    // Validaciones de contraseña
-    if (!passwordData.actual) {
-      setPasswordError("Ingresa tu contraseña actual");
-      setCambiandoPassword(false);
-      return;
-    }
-
-    if (!passwordData.nueva) {
-      setPasswordError("Ingresa una nueva contraseña");
-      setCambiandoPassword(false);
-      return;
-    }
-
-    if (passwordData.nueva.length < 8) {
-      setPasswordError("La nueva contraseña debe tener al menos 8 caracteres");
-      setCambiandoPassword(false);
-      return;
-    }
-
-    if (!/[A-Z]/.test(passwordData.nueva)) {
-      setPasswordError("La nueva contraseña debe contener al menos una mayúscula");
-      setCambiandoPassword(false);
-      return;
-    }
-
-    if (!/[a-z]/.test(passwordData.nueva)) {
-      setPasswordError("La nueva contraseña debe contener al menos una minúscula");
-      setCambiandoPassword(false);
-      return;
-    }
-
-    if (!/[0-9]/.test(passwordData.nueva)) {
-      setPasswordError("La nueva contraseña debe contener al menos un número");
-      setCambiandoPassword(false);
-      return;
-    }
-
-    if (passwordData.nueva !== passwordData.confirmar) {
-      setPasswordError("Las contraseñas nuevas no coinciden");
-      setCambiandoPassword(false);
-      return;
-    }
-
-    if (passwordData.nueva === passwordData.actual) {
-      setPasswordError("La nueva contraseña debe ser diferente a la actual");
-      setCambiandoPassword(false);
-      return;
-    }
+    if (!passwordData.actual) { setPasswordError("Ingresa tu contraseña actual"); setCambiandoPassword(false); return; }
+    if (!passwordData.nueva) { setPasswordError("Ingresa una nueva contraseña"); setCambiandoPassword(false); return; }
+    if (passwordData.nueva.length < 8) { setPasswordError("La nueva contraseña debe tener al menos 8 caracteres"); setCambiandoPassword(false); return; }
+    if (!/[A-Z]/.test(passwordData.nueva)) { setPasswordError("La nueva contraseña debe contener al menos una mayúscula"); setCambiandoPassword(false); return; }
+    if (!/[a-z]/.test(passwordData.nueva)) { setPasswordError("La nueva contraseña debe contener al menos una minúscula"); setCambiandoPassword(false); return; }
+    if (!/[0-9]/.test(passwordData.nueva)) { setPasswordError("La nueva contraseña debe contener al menos un número"); setCambiandoPassword(false); return; }
+    if (passwordData.nueva !== passwordData.confirmar) { setPasswordError("Las contraseñas nuevas no coinciden"); setCambiandoPassword(false); return; }
+    if (passwordData.nueva === passwordData.actual) { setPasswordError("La nueva contraseña debe ser diferente a la actual"); setCambiandoPassword(false); return; }
 
     try {
       const response = await fetch(`${API_URL}/usuarios/cambiar-password`, {
@@ -313,37 +274,17 @@ export default function Perfil() {
   };
 
   const getTabConfig = () => {
+    if (childrenOverride || mostrarNotificaciones) {
+      return { title: "Notificaciones", subtitle: "Historial de todas tus alertas y mensajes" };
+    }
+
     switch (activeTab) {
-      case "datos":
-        return {
-          title: "Datos Personales",
-          subtitle: "Mantén tus datos actualizados para una mejor experiencia"
-        };
-      case "seguridad":
-        return {
-          title: "Seguridad de la Cuenta",
-          subtitle: "Protege tu cuenta actualizando tu contraseña regularmente"
-        };
-      case "pedidos":
-        return {
-          title: "Mis Pedidos",
-          subtitle: "Historial de tus compras realizadas"
-        };
-      case "servicios":
-        return {
-          title: "Mis Servicios Técnicos",
-          subtitle: "Seguimiento de tus servicios de reparación"
-        };
-      case "reclamos":
-        return {
-          title: "Mis Reclamos",
-          subtitle: "Seguimiento de tus reclamos y solicitudes"
-        };
-      default:
-        return {
-          title: "Mi Perfil",
-          subtitle: "Gestiona tu información personal"
-        };
+      case "datos": return { title: "Datos Personales", subtitle: "Mantén tus datos actualizados para una mejor experiencia" };
+      case "seguridad": return { title: "Seguridad de la Cuenta", subtitle: "Protege tu cuenta actualizando tu contraseña regularmente" };
+      case "pedidos": return { title: "Mis Pedidos", subtitle: "Historial de tus compras realizadas" };
+      case "servicios": return { title: "Mis Servicios Técnicos", subtitle: "Seguimiento de tus servicios de reparación" };
+      case "reclamos": return { title: "Mis Reclamos", subtitle: "Seguimiento de tus reclamos y solicitudes" };
+      default: return { title: "Mi Perfil", subtitle: "Gestiona tu información personal" };
     }
   };
 
@@ -360,18 +301,40 @@ export default function Perfil() {
     );
   }
 
+  const enModoNotificaciones = childrenOverride || mostrarNotificaciones;
+
   return (
-    <div className="h-screen flex overflow-hidden bg-gray-100">
-      {/* Sidebar Izquierdo */}
-      <div className="w-80 flex-shrink-0 bg-[#0d0c1e] flex flex-col shadow-2xl overflow-y-auto">
-        <div className="p-6 border-b border-white/10">
-          <h1 className="text-2xl font-black italic text-white">
-            Jimenez<span className="text-[#5b4eff]">.</span>
-          </h1>
-          <p className="text-xs text-gray-400 mt-2">Tu tienda de confianza</p>
+    <div className="h-screen flex bg-gray-100 overflow-hidden">
+      
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        ></div>
+      )}
+
+      {/* Sidebar */}
+      <div className={`
+        fixed inset-y-0 left-0 z-50 w-80 bg-[#0d0c1e] flex flex-col shadow-2xl transition-transform duration-300 ease-in-out
+        md:relative md:translate-x-0 h-screen
+        ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}
+      `}>
+        <div className="p-6 border-b border-white/10 flex justify-between items-center flex-shrink-0">
+          <div>
+            <h1 className="text-2xl font-black italic text-white">
+              Jimenez<span className="text-[#5b4eff]">.</span>
+            </h1>
+            <p className="text-xs text-gray-400 mt-2">Tu tienda de confianza</p>
+          </div>
+          <button 
+            className="md:hidden text-gray-400 hover:text-white"
+            onClick={() => setIsSidebarOpen(false)}
+          >
+            <X size={24} />
+          </button>
         </div>
 
-        <div className="p-5 text-center">
+        <div className="p-5 text-center flex-shrink-0">
           <div className="relative inline-block">
             <div className="w-24 h-24 mx-auto bg-gradient-to-br from-[#5b4eff] to-[#4a3dcc] rounded-2xl flex items-center justify-center text-3xl font-bold text-white shadow-lg">
               {userData?.nombre?.substring(0, 2).toUpperCase() || userData?.correo?.substring(0, 2).toUpperCase()}
@@ -388,10 +351,10 @@ export default function Perfil() {
           </div>
         </div>
 
-        <nav className="flex-1 px-3 py-2 space-y-1">
+        <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto">
           <button
-            onClick={() => setActiveTab("datos")}
-            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${activeTab === "datos"
+            onClick={() => { setActiveTab("datos"); setMostrarNotificaciones(false); if (childrenOverride) navigate("/perfil"); setIsSidebarOpen(false); }}
+            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${activeTab === "datos" && !enModoNotificaciones
               ? "bg-[#5b4eff] text-white shadow-lg"
               : "text-gray-400 hover:bg-white/5 hover:text-white"
               }`}
@@ -400,8 +363,8 @@ export default function Perfil() {
             Datos Personales
           </button>
           <button
-            onClick={() => setActiveTab("seguridad")}
-            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${activeTab === "seguridad"
+            onClick={() => { setActiveTab("seguridad"); setMostrarNotificaciones(false); if (childrenOverride) navigate("/perfil"); setIsSidebarOpen(false); }}
+            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${activeTab === "seguridad" && !enModoNotificaciones
               ? "bg-[#5b4eff] text-white shadow-lg"
               : "text-gray-400 hover:bg-white/5 hover:text-white"
               }`}
@@ -410,8 +373,8 @@ export default function Perfil() {
             Seguridad
           </button>
           <button
-            onClick={() => setActiveTab("pedidos")}
-            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${activeTab === "pedidos"
+            onClick={() => { setActiveTab("pedidos"); setMostrarNotificaciones(false); if (childrenOverride) navigate("/perfil"); setIsSidebarOpen(false); }}
+            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${activeTab === "pedidos" && !enModoNotificaciones
               ? "bg-[#5b4eff] text-white shadow-lg"
               : "text-gray-400 hover:bg-white/5 hover:text-white"
               }`}
@@ -422,8 +385,8 @@ export default function Perfil() {
             Mis Pedidos
           </button>
           <button
-            onClick={() => setActiveTab("servicios")}
-            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${activeTab === "servicios"
+            onClick={() => { setActiveTab("servicios"); setMostrarNotificaciones(false); if (childrenOverride) navigate("/perfil"); setIsSidebarOpen(false); }}
+            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${activeTab === "servicios" && !enModoNotificaciones
               ? "bg-[#5b4eff] text-white shadow-lg"
               : "text-gray-400 hover:bg-white/5 hover:text-white"
               }`}
@@ -435,8 +398,8 @@ export default function Perfil() {
             Mis Servicios
           </button>
           <button
-            onClick={() => setActiveTab("reclamos")}
-            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${activeTab === "reclamos"
+            onClick={() => { setActiveTab("reclamos"); setMostrarNotificaciones(false); if (childrenOverride) navigate("/perfil"); setIsSidebarOpen(false); }}
+            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${activeTab === "reclamos" && !enModoNotificaciones
               ? "bg-[#5b4eff] text-white shadow-lg"
               : "text-gray-400 hover:bg-white/5 hover:text-white"
               }`}
@@ -448,7 +411,7 @@ export default function Perfil() {
           </button>
         </nav>
 
-        <div className="p-4 border-t border-white/10">
+        <div className="p-4 border-t border-white/10 flex-shrink-0">
           <Link
             to="/"
             className="w-full flex items-center justify-center gap-2 px-3 py-2.5 bg-white/5 text-gray-300 rounded-xl text-xs font-medium hover:bg-white/10 hover:text-white transition-all"
@@ -462,459 +425,510 @@ export default function Perfil() {
       </div>
 
       {/* Contenido Principal */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Header fijo */}
-        <div className="bg-white border-b border-gray-100 px-6 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sticky top-0 z-10 flex-shrink-0">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">{tabConfig.title}</h1>
-            <p className="text-sm text-gray-500 mt-1">{tabConfig.subtitle}</p>
+      <div className="flex-1 flex flex-col h-screen overflow-hidden">
+        {/* 👇 Header con botón de refresh */}
+        <div className="bg-white border-b border-gray-100 px-4 sm:px-6 py-4 flex justify-between items-center flex-shrink-0">
+          <div className="flex items-center gap-3">
+            <button 
+              className="md:hidden p-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+              onClick={() => setIsSidebarOpen(true)}
+            >
+              <Menu size={24} />
+            </button>
+            
+            <div>
+              <h1 className="text-xl sm:text-3xl font-bold text-gray-800">{tabConfig.title}</h1>
+              <p className="text-xs sm:text-sm text-gray-500 mt-1 hidden sm:block">{tabConfig.subtitle}</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 sm:gap-4">
+            {/* 👇 BOTÓN DE REFRESH */}
+            <button
+              onClick={handleRefresh}
+              className="p-2 text-gray-400 hover:text-[#5b4eff] hover:bg-gray-100 rounded-lg transition-all"
+              title="Actualizar datos"
+            >
+              <RefreshCw size={18} />
+            </button>
+            <NotificationBell />
           </div>
         </div>
 
         {/* Contenido desplazable */}
-        <div className="flex-1 overflow-y-auto p-6">
-          {/* Datos Personales */}
-          {activeTab === "datos" && (
-            <div className="max-w-4xl mx-auto">
-              <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-                <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex flex-wrap justify-between items-center gap-3">
-                  <h3 className="font-semibold text-gray-700">Mis Datos</h3>
-                  {!editing && (
-                    <button
-                      onClick={() => setEditing(true)}
-                      className="px-3 py-1.5 text-sm font-medium text-[#5b4eff] border border-[#5b4eff] rounded-lg hover:bg-[#5b4eff] hover:text-white transition-all flex items-center gap-2"
-                    >
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                      </svg>
-                      Editar
-                    </button>
-                  )}
-                </div>
-
-                <div className="p-6 space-y-5">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    <div>
-                      <label className="block text-xs font-bold text-gray-500 uppercase mb-1 flex items-center gap-1">
-                        <User size={12} />
-                        Nombre completo
-                      </label>
-                      {editing ? (
-                        <div>
-                          <input
-                            type="text"
-                            value={formData.nombre}
-                            onChange={(e) => {
-                              const value = e.target.value;
-                              const isValid = /^[a-zA-ZáéíóúñÑÁÉÍÓÚ\s]*$/.test(value);
-                              if (isValid) {
-                                setFormData({ ...formData, nombre: value });
-                                setErrors({ ...errors, nombre: "" });
-                              }
-                            }}
-                            onBlur={() => {
-                              if (!formData.nombre.trim()) {
-                                setErrors({ ...errors, nombre: "El nombre es obligatorio" });
-                              } else if (formData.nombre.trim().length < 3) {
-                                setErrors({ ...errors, nombre: "El nombre debe tener al menos 3 caracteres" });
-                              } else {
-                                setErrors({ ...errors, nombre: "" });
-                              }
-                            }}
-                            className={`w-full p-2.5 bg-gray-50 border rounded-lg focus:border-[#5b4eff] focus:outline-none transition ${errors.nombre ? "border-red-400" : "border-gray-200"
-                              }`}
-                            placeholder="Ej: Juan Pérez"
-                          />
-                          {errors.nombre && (
-                            <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
-                              <AlertCircle size={10} />
-                              {errors.nombre}
-                            </p>
-                          )}
-                          <p className="text-xs text-gray-400 mt-1">Solo letras y espacios (mínimo 3 caracteres)</p>
-                        </div>
-                      ) : (
-                        <p className="text-gray-800 font-medium p-2.5 bg-gray-50 rounded-lg">
-                          {formData.nombre || "No especificado"}
-                        </p>
-                      )}
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-bold text-gray-500 uppercase mb-1 flex items-center gap-1">
-                        <Mail size={12} />
-                        Correo electrónico
-                      </label>
-                      <p className="text-gray-800 font-medium p-2.5 bg-gray-50 rounded-lg">{userData?.correo}</p>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    <div>
-                      <label className="block text-xs font-bold text-gray-500 uppercase mb-1 flex items-center gap-1">
-                        <Phone size={12} />
-                        Teléfono
-                      </label>
-                      {editing ? (
-                        <div>
-                          <input
-                            type="tel"
-                            value={formData.telefono}
-                            onChange={(e) => {
-                              const value = e.target.value.replace(/\D/g, "").slice(0, 9);
-                              setFormData({ ...formData, telefono: value });
-                              setErrors({ ...errors, telefono: "" });
-                            }}
-                            onBlur={() => {
-                              if (!formData.telefono) {
-                                setErrors({ ...errors, telefono: "El teléfono es obligatorio" });
-                              } else if (formData.telefono.length !== 9) {
-                                setErrors({ ...errors, telefono: "El teléfono debe tener exactamente 9 dígitos" });
-                              } else if (!formData.telefono.startsWith("9")) {
-                                setErrors({ ...errors, telefono: "El teléfono debe comenzar con 9" });
-                              } else {
-                                setErrors({ ...errors, telefono: "" });
-                              }
-                            }}
-                            className={`w-full p-2.5 bg-gray-50 border rounded-lg focus:border-[#5b4eff] focus:outline-none transition ${errors.telefono ? "border-red-400" : "border-gray-200"
-                              }`}
-                            placeholder="9 9999 9999"
-                          />
-                          {errors.telefono && (
-                            <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
-                              <AlertCircle size={10} />
-                              {errors.telefono}
-                            </p>
-                          )}
-                          <p className="text-xs text-gray-400 mt-1">9 dígitos, debe comenzar con 9 (ej: 987654321)</p>
-                        </div>
-                      ) : (
-                        <p className="text-gray-800 font-medium p-2.5 bg-gray-50 rounded-lg">
-                          {formData.telefono || "No especificado"}
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Documento (DNI/RUC) */}
-                    <div>
-                      <label className="block text-xs font-bold text-gray-500 uppercase mb-1 flex items-center gap-1">
-                        <FileText size={12} />
-                        Documento (DNI/RUC)
-                      </label>
-                      {editing ? (
-                        <div>
-                          <input
-                            type="text"
-                            value={formData.documento}
-                            onChange={(e) => {
-                              const value = e.target.value;
-                              // Validación: solo números, máximo 11 dígitos
-                              if (/^\d*$/.test(value) && value.length <= 11) {
-                                setFormData({ ...formData, documento: value });
-                                setErrors({ ...errors, documento: "" });
-                              }
-                            }}
-                            onBlur={() => {
-                              const doc = formData.documento;
-                              if (!doc) {
-                                setErrors({ ...errors, documento: "El documento es obligatorio" });
-                              } else if (doc.length === 8) {
-                                // DNI válido
-                                if (!/^\d{8}$/.test(doc)) {
-                                  setErrors({ ...errors, documento: "DNI debe tener 8 dígitos numéricos" });
-                                } else {
-                                  setErrors({ ...errors, documento: "" });
-                                }
-                              } else if (doc.length === 11) {
-                                // RUC válido
-                                if (!/^\d{11}$/.test(doc)) {
-                                  setErrors({ ...errors, documento: "RUC debe tener 11 dígitos numéricos" });
-                                } else {
-                                  setErrors({ ...errors, documento: "" });
-                                }
-                              } else if (doc.length === 9 || doc.length === 10) {
-                                // Longitud inválida (ni DNI ni RUC)
-                                setErrors({ ...errors, documento: `El documento ingresado tiene ${doc.length} dígitos. Debe ser DNI (8 dígitos) o RUC (11 dígitos)` });
-                              } else {
-                                setErrors({ ...errors, documento: "DNI (8 dígitos) o RUC (11 dígitos)" });
-                              }
-                            }}
-                            className={`w-full p-2.5 bg-gray-50 border rounded-lg focus:border-[#5b4eff] focus:outline-none transition ${errors.documento ? "border-red-400" : "border-gray-200"
-                              }`}
-                            placeholder="DNI: 12345678 | RUC: 12345678901"
-                            maxLength={11}
-                          />
-                          {errors.documento && (
-                            <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
-                              <AlertCircle size={10} />
-                              {errors.documento}
-                            </p>
-                          )}
-                          <p className="text-xs text-gray-400 mt-1">DNI (8 dígitos) o RUC (11 dígitos)</p>
-                        </div>
-                      ) : (
-                        <p className="text-gray-800 font-medium p-2.5 bg-gray-50 rounded-lg">
-                          {formData.documento || "No especificado"}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1 flex items-center gap-1">
-                      <MapPin size={12} />
-                      Dirección
-                    </label>
-                    {editing ? (
-                      <div>
-                        <textarea
-                          value={formData.direccion}
-                          onChange={(e) => {
-                            setFormData({ ...formData, direccion: e.target.value });
-                            setErrors({ ...errors, direccion: "" });
-                          }}
-                          onBlur={() => {
-                            if (formData.direccion && formData.direccion.length < 10) {
-                              setErrors({ ...errors, direccion: "La dirección debe tener al menos 10 caracteres" });
-                            } else {
-                              setErrors({ ...errors, direccion: "" });
-                            }
-                          }}
-                          rows="2"
-                          className={`w-full p-2.5 bg-gray-50 border rounded-lg focus:border-[#5b4eff] focus:outline-none transition resize-none ${errors.direccion ? "border-red-400" : "border-gray-200"
-                            }`}
-                          placeholder="Av. Principal 123, Lima, Perú"
-                        />
-                        {errors.direccion && (
-                          <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
-                            <AlertCircle size={10} />
-                            {errors.direccion}
-                          </p>
-                        )}
-                        <p className="text-xs text-gray-400 mt-1">Mínimo 10 caracteres</p>
-                      </div>
-                    ) : (
-                      <p className="text-gray-800 font-medium p-2.5 bg-gray-50 rounded-lg">
-                        {formData.direccion || "No especificada"}
-                      </p>
-                    )}
-                  </div>
-
-                  {editing && (
-                    <div className="flex gap-3 pt-2">
-                      <button
-                        onClick={handleUpdateProfile}
-                        disabled={updating || Object.values(errors).some(e => e !== "") || !formData.nombre.trim()}
-                        className="px-5 py-2 bg-gradient-to-r from-[#5b4eff] to-[#4a3dcc] text-white rounded-lg font-medium text-sm hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                      >
-                        {updating ? (
-                          <>
-                            <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
-                            Guardando...
-                          </>
-                        ) : (
-                          "Guardar cambios"
-                        )}
-                      </button>
-                      <button
-                        onClick={() => {
-                          setEditing(false);
-                          setFormData({
-                            nombre: userData?.nombre || "",
-                            telefono: userData?.telefono || "",
-                            documento: userData?.documento || "",
-                            direccion: userData?.direccion || ""
-                          });
-                          setErrors({ nombre: "", telefono: "", documento: "", direccion: "" });
-                        }}
-                        className="px-5 py-2 bg-gray-100 text-gray-600 rounded-lg font-medium text-sm hover:bg-gray-200 transition"
-                      >
-                        Cancelar
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+          
+          {enModoNotificaciones ? (
+            <div key={`notif-${refreshKey}`}>
+              {childrenOverride || <Notificaciones />}
             </div>
-          )}
-
-          {/* Seguridad - Mejorada con validaciones como login */}
-          {activeTab === "seguridad" && (
-            <div className="max-w-4xl mx-auto">
-              <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-                <div className="p-6">
-                  {passwordError && (
-                    <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm flex items-center gap-2">
-                      <AlertCircle size={16} />
-                      {passwordError}
-                    </div>
-                  )}
-                  {passwordSuccess && (
-                    <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-green-600 text-sm flex items-center gap-2">
-                      <CheckCircle size={16} />
-                      {passwordSuccess}
-                    </div>
-                  )}
-
-                  <form onSubmit={handlePasswordChange} className="space-y-5">
-                    <div>
-                      <label className="block text-xs font-bold text-gray-500 uppercase mb-1 flex items-center gap-1">
-                        <Lock size={12} />
-                        Contraseña actual
-                      </label>
-                      <div className="relative">
-                        <input
-                          type={showPassword.actual ? "text" : "password"}
-                          className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:border-[#5b4eff] focus:outline-none transition pr-10"
-                          value={passwordData.actual}
-                          onChange={(e) => setPasswordData({ ...passwordData, actual: e.target.value })}
-                          required
-                          placeholder="Ingresa tu contraseña actual"
-                        />
+          ) : (
+            <>
+              {activeTab === "datos" && (
+                <div className="max-w-4xl mx-auto">
+                  <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                    <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex flex-wrap justify-between items-center gap-3">
+                      <h3 className="font-semibold text-gray-700">Mis Datos</h3>
+                      {!editing && (
                         <button
-                          type="button"
-                          onClick={() => setShowPassword({ ...showPassword, actual: !showPassword.actual })}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                          onClick={() => setEditing(true)}
+                          className="px-3 py-1.5 text-sm font-medium text-[#5b4eff] border border-[#5b4eff] rounded-lg hover:bg-[#5b4eff] hover:text-white transition-all flex items-center gap-2"
                         >
-                          {showPassword.actual ? <EyeOff size={16} /> : <Eye size={16} />}
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                          </svg>
+                          Editar
                         </button>
-                      </div>
+                      )}
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                      <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1 flex items-center gap-1">
-                          <Key size={12} />
-                          Nueva contraseña
-                        </label>
-                        <div className="relative">
-                          <input
-                            type={showPassword.nueva ? "text" : "password"}
-                            className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:border-[#5b4eff] focus:outline-none transition pr-10"
-                            value={passwordData.nueva}
-                            onChange={handlePasswordChangeWithStrength}
-                            required
-                            placeholder="Mínimo 8 caracteres"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setShowPassword({ ...showPassword, nueva: !showPassword.nueva })}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                          >
-                            {showPassword.nueva ? <EyeOff size={16} /> : <Eye size={16} />}
-                          </button>
-                        </div>
-                        {passwordData.nueva && (
-                          <div className="mt-2">
-                            <div className="flex items-center gap-2">
-                              <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                                <div
-                                  className={`h-full ${passwordStrength.color} transition-all duration-300`}
-                                  style={{ width: `${(passwordStrength.score / 8) * 100}%` }}
-                                ></div>
-                              </div>
-                              <span className="text-xs text-gray-500">{passwordStrength.message}</span>
+                    <div className="p-6 space-y-5">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div>
+                          <label className="block text-xs font-bold text-gray-500 uppercase mb-1 flex items-center gap-1">
+                            <User size={12} />
+                            Nombre completo
+                          </label>
+                          {editing ? (
+                            <div>
+                              <input
+                                type="text"
+                                value={formData.nombre}
+                                onChange={(e) => {
+                                  const value = e.target.value;
+                                  const isValid = /^[a-zA-ZáéíóúñÑÁÉÍÓÚ\s]*$/.test(value);
+                                  if (isValid) {
+                                    setFormData({ ...formData, nombre: value });
+                                    setErrors({ ...errors, nombre: "" });
+                                  }
+                                }}
+                                onBlur={() => {
+                                  if (!formData.nombre.trim()) {
+                                    setErrors({ ...errors, nombre: "El nombre es obligatorio" });
+                                  } else if (formData.nombre.trim().length < 3) {
+                                    setErrors({ ...errors, nombre: "El nombre debe tener al menos 3 caracteres" });
+                                  } else {
+                                    setErrors({ ...errors, nombre: "" });
+                                  }
+                                }}
+                                className={`w-full p-2.5 bg-gray-50 border rounded-lg focus:border-[#5b4eff] focus:outline-none transition ${errors.nombre ? "border-red-400" : "border-gray-200"}`}
+                                placeholder="Ej: Juan Pérez"
+                              />
+                              {errors.nombre && (
+                                <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
+                                  <AlertCircle size={10} />
+                                  {errors.nombre}
+                                </p>
+                              )}
                             </div>
-                          </div>
-                        )}
+                          ) : (
+                            <p className="text-gray-800 font-medium p-2.5 bg-gray-50 rounded-lg">
+                              {formData.nombre || "No especificado"}
+                            </p>
+                          )}
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-bold text-gray-500 uppercase mb-1 flex items-center gap-1">
+                            <Mail size={12} />
+                            Correo electrónico
+                          </label>
+                          <p className="text-gray-800 font-medium p-2.5 bg-gray-50 rounded-lg">{userData?.correo}</p>
+                        </div>
                       </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div>
+                          <label className="block text-xs font-bold text-gray-500 uppercase mb-1 flex items-center gap-1">
+                            <Phone size={12} />
+                            Teléfono
+                          </label>
+                          {editing ? (
+                            <div>
+                              <input
+                                type="tel"
+                                value={formData.telefono}
+                                onChange={(e) => {
+                                  const value = e.target.value.replace(/\D/g, "").slice(0, 9);
+                                  setFormData({ ...formData, telefono: value });
+                                  setErrors({ ...errors, telefono: "" });
+                                }}
+                                onBlur={() => {
+                                  if (!formData.telefono) {
+                                    setErrors({ ...errors, telefono: "El teléfono es obligatorio" });
+                                  } else if (formData.telefono.length !== 9) {
+                                    setErrors({ ...errors, telefono: "El teléfono debe tener exactamente 9 dígitos" });
+                                  } else if (!formData.telefono.startsWith("9")) {
+                                    setErrors({ ...errors, telefono: "El teléfono debe comenzar con 9" });
+                                  } else {
+                                    setErrors({ ...errors, telefono: "" });
+                                  }
+                                }}
+                                className={`w-full p-2.5 bg-gray-50 border rounded-lg focus:border-[#5b4eff] focus:outline-none transition ${errors.telefono ? "border-red-400" : "border-gray-200"}`}
+                                placeholder="9 9999 9999"
+                              />
+                              {errors.telefono && (
+                                <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
+                                  <AlertCircle size={10} />
+                                  {errors.telefono}
+                                </p>
+                              )}
+                            </div>
+                          ) : (
+                            <p className="text-gray-800 font-medium p-2.5 bg-gray-50 rounded-lg">
+                              {formData.telefono || "No especificado"}
+                            </p>
+                          )}
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-bold text-gray-500 uppercase mb-1 flex items-center gap-1">
+                            <FileText size={12} />
+                            Documento (DNI/RUC)
+                          </label>
+                          {editing ? (
+                            <div>
+                              <input
+                                type="text"
+                                value={formData.documento}
+                                onChange={(e) => {
+                                  const value = e.target.value;
+                                  if (/^\d*$/.test(value) && value.length <= 11) {
+                                    setFormData({ ...formData, documento: value });
+                                    setErrors({ ...errors, documento: "" });
+                                  }
+                                }}
+                                onBlur={() => {
+                                  const doc = formData.documento;
+                                  if (!doc) {
+                                    setErrors({ ...errors, documento: "El documento es obligatorio" });
+                                  } else if (doc.length === 8) {
+                                    if (!/^\d{8}$/.test(doc)) {
+                                      setErrors({ ...errors, documento: "DNI debe tener 8 dígitos numéricos" });
+                                    } else {
+                                      setErrors({ ...errors, documento: "" });
+                                    }
+                                  } else if (doc.length === 11) {
+                                    if (!/^\d{11}$/.test(doc)) {
+                                      setErrors({ ...errors, documento: "RUC debe tener 11 dígitos numéricos" });
+                                    } else {
+                                      setErrors({ ...errors, documento: "" });
+                                    }
+                                  } else if (doc.length === 9 || doc.length === 10) {
+                                    setErrors({ ...errors, documento: `El documento ingresado tiene ${doc.length} dígitos. Debe ser DNI (8 dígitos) o RUC (11 dígitos)` });
+                                  } else {
+                                    setErrors({ ...errors, documento: "DNI (8 dígitos) o RUC (11 dígitos)" });
+                                  }
+                                }}
+                                className={`w-full p-2.5 bg-gray-50 border rounded-lg focus:border-[#5b4eff] focus:outline-none transition ${errors.documento ? "border-red-400" : "border-gray-200"}`}
+                                placeholder="DNI: 12345678 | RUC: 12345678901"
+                                maxLength={11}
+                              />
+                              {errors.documento && (
+                                <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
+                                  <AlertCircle size={10} />
+                                  {errors.documento}
+                                </p>
+                              )}
+                            </div>
+                          ) : (
+                            <p className="text-gray-800 font-medium p-2.5 bg-gray-50 rounded-lg">
+                              {formData.documento || "No especificado"}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
                       <div>
                         <label className="block text-xs font-bold text-gray-500 uppercase mb-1 flex items-center gap-1">
-                          <Shield size={12} />
-                          Confirmar contraseña
+                          <MapPin size={12} />
+                          Dirección
                         </label>
-                        <div className="relative">
-                          <input
-                            type={showPassword.confirmar ? "text" : "password"}
-                            className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:border-[#5b4eff] focus:outline-none transition pr-10"
-                            value={passwordData.confirmar}
-                            onChange={(e) => setPasswordData({ ...passwordData, confirmar: e.target.value })}
-                            required
-                            placeholder="Repite tu nueva contraseña"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setShowPassword({ ...showPassword, confirmar: !showPassword.confirmar })}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                          >
-                            {showPassword.confirmar ? <EyeOff size={16} /> : <Eye size={16} />}
-                          </button>
-                        </div>
-                        {passwordData.confirmar && passwordData.nueva !== passwordData.confirmar && (
-                          <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
-                            <AlertCircle size={10} />
-                            Las contraseñas no coinciden
+                        {editing ? (
+                          <div>
+                            <textarea
+                              value={formData.direccion}
+                              onChange={(e) => {
+                                setFormData({ ...formData, direccion: e.target.value });
+                                setErrors({ ...errors, direccion: "" });
+                              }}
+                              onBlur={() => {
+                                if (formData.direccion && formData.direccion.length < 10) {
+                                  setErrors({ ...errors, direccion: "La dirección debe tener al menos 10 caracteres" });
+                                } else {
+                                  setErrors({ ...errors, direccion: "" });
+                                }
+                              }}
+                              rows="2"
+                              className={`w-full p-2.5 bg-gray-50 border rounded-lg focus:border-[#5b4eff] focus:outline-none transition resize-none ${errors.direccion ? "border-red-400" : "border-gray-200"}`}
+                              placeholder="Av. Principal 123, Lima, Perú"
+                            />
+                            {errors.direccion && (
+                              <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
+                                <AlertCircle size={10} />
+                                {errors.direccion}
+                              </p>
+                            )}
+                          </div>
+                        ) : (
+                          <p className="text-gray-800 font-medium p-2.5 bg-gray-50 rounded-lg">
+                            {formData.direccion || "No especificada"}
                           </p>
                         )}
                       </div>
-                    </div>
 
-                    <div className="p-3 bg-amber-50 rounded-lg border border-amber-100">
-                      <p className="text-xs font-bold text-amber-700 mb-2 flex items-center gap-2">
-                        <Shield size={14} />
-                        Recomendaciones de seguridad:
-                      </p>
-                      <ul className="text-xs text-amber-600 space-y-1 ml-6 list-disc">
-                        <li>Usa al menos 8 caracteres</li>
-                        <li>Combina letras mayúsculas, minúsculas y números</li>
-                        <li>Incluye al menos un carácter especial (!@#$%^&*)</li>
-                        <li>No uses contraseñas obvias como "12345678" o tu nombre</li>
-                        <li>No compartas tu contraseña con nadie</li>
-                        <li>Cambia tu contraseña regularmente</li>
-                      </ul>
+                      {editing && (
+                        <div className="flex gap-3 pt-2">
+                          <button
+                            onClick={handleUpdateProfile}
+                            disabled={updating || Object.values(errors).some(e => e !== "") || !formData.nombre.trim()}
+                            className="px-5 py-2 bg-gradient-to-r from-[#5b4eff] to-[#4a3dcc] text-white rounded-lg font-medium text-sm hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                          >
+                            {updating ? (
+                              <>
+                                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
+                                Guardando...
+                              </>
+                            ) : (
+                              "Guardar cambios"
+                            )}
+                          </button>
+                          <button
+                            onClick={() => {
+                              setEditing(false);
+                              setFormData({
+                                nombre: userData?.nombre || "",
+                                telefono: userData?.telefono || "",
+                                documento: userData?.documento || "",
+                                direccion: userData?.direccion || ""
+                              });
+                              setErrors({ nombre: "", telefono: "", documento: "", direccion: "" });
+                            }}
+                            className="px-5 py-2 bg-gray-100 text-gray-600 rounded-lg font-medium text-sm hover:bg-gray-200 transition"
+                          >
+                            Cancelar
+                          </button>
+                        </div>
+                      )}
                     </div>
-
-                    <div className="flex gap-3 pt-2">
-                      <button
-                        type="submit"
-                        disabled={cambiandoPassword}
-                        className="px-5 py-2 bg-gradient-to-r from-[#5b4eff] to-[#4a3dcc] text-white rounded-lg font-medium text-sm hover:shadow-lg transition-all disabled:opacity-50 flex items-center gap-2"
-                      >
-                        {cambiandoPassword ? (
-                          <>
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                            Actualizando...
-                          </>
-                        ) : (
-                          <>
-                            <CheckCircle size={16} />
-                            Actualizar contraseña
-                          </>
-                        )}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setPasswordData({ actual: "", nueva: "", confirmar: "" });
-                          setPasswordError("");
-                          setPasswordSuccess("");
-                          setPasswordStrength({ score: 0, message: "", color: "" });
-                        }}
-                        className="px-5 py-2 bg-gray-100 text-gray-600 rounded-lg font-medium text-sm hover:bg-gray-200 transition"
-                      >
-                        Limpiar
-                      </button>
-                    </div>
-                  </form>
+                  </div>
                 </div>
-              </div>
-            </div>
-          )}
+              )}
 
-          {/* Mis Pedidos */}
-          {activeTab === "pedidos" && (
-            <MisPedidos embedded={true} />
-          )}
+              {activeTab === "seguridad" && (
+                <div className="max-w-4xl mx-auto">
+                  <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                    <div className="p-6">
+                      {passwordError && (
+                        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm flex items-center gap-2">
+                          <AlertCircle size={16} />
+                          {passwordError}
+                        </div>
+                      )}
+                      {passwordSuccess && (
+                        <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-green-600 text-sm flex items-center gap-2">
+                          <CheckCircle size={16} />
+                          {passwordSuccess}
+                        </div>
+                      )}
 
-          {/* Mis Servicios Técnicos */}
-          {activeTab === "servicios" && (
-            <MisServicios embedded={true} />
-          )}
+                      <form onSubmit={handlePasswordChange} className="space-y-5">
+                        <div>
+                          <label className="block text-xs font-bold text-gray-500 uppercase mb-1 flex items-center gap-1">
+                            <Lock size={12} />
+                            Contraseña actual
+                          </label>
+                          <div className="relative">
+                            <input
+                              type={showPassword.actual ? "text" : "password"}
+                              className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:border-[#5b4eff] focus:outline-none transition pr-10"
+                              value={passwordData.actual}
+                              onChange={(e) => setPasswordData({ ...passwordData, actual: e.target.value })}
+                              required
+                              placeholder="Ingresa tu contraseña actual"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setShowPassword({ ...showPassword, actual: !showPassword.actual })}
+                              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                            >
+                              {showPassword.actual ? <EyeOff size={16} /> : <Eye size={16} />}
+                            </button>
+                          </div>
+                        </div>
 
-          {/* Mis Reclamos */}
-          {activeTab === "reclamos" && <MisReclamos embedded={true} />}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                          <div>
+                            <label className="block text-xs font-bold text-gray-500 uppercase mb-1 flex items-center gap-1">
+                              <Key size={12} />
+                              Nueva contraseña
+                            </label>
+                            <div className="relative">
+                              <input
+                                type={showPassword.nueva ? "text" : "password"}
+                                className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:border-[#5b4eff] focus:outline-none transition pr-10"
+                                value={passwordData.nueva}
+                                onChange={handlePasswordChangeWithStrength}
+                                required
+                                placeholder="Mínimo 8 caracteres"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => setShowPassword({ ...showPassword, nueva: !showPassword.nueva })}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                              >
+                                {showPassword.nueva ? <EyeOff size={16} /> : <Eye size={16} />}
+                              </button>
+                            </div>
+                            {passwordData.nueva && (
+                              <div className="mt-2">
+                                <div className="flex items-center gap-2">
+                                  <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                                    <div
+                                      className={`h-full ${passwordStrength.color} transition-all duration-300`}
+                                      style={{ width: `${(passwordStrength.score / 8) * 100}%` }}
+                                    ></div>
+                                  </div>
+                                  <span className="text-xs text-gray-500">{passwordStrength.message}</span>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                          <div>
+                            <label className="block text-xs font-bold text-gray-500 uppercase mb-1 flex items-center gap-1">
+                              <Shield size={12} />
+                              Confirmar contraseña
+                            </label>
+                            <div className="relative">
+                              <input
+                                type={showPassword.confirmar ? "text" : "password"}
+                                className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:border-[#5b4eff] focus:outline-none transition pr-10"
+                                value={passwordData.confirmar}
+                                onChange={(e) => setPasswordData({ ...passwordData, confirmar: e.target.value })}
+                                required
+                                placeholder="Repite tu nueva contraseña"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => setShowPassword({ ...showPassword, confirmar: !showPassword.confirmar })}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                              >
+                                {showPassword.confirmar ? <EyeOff size={16} /> : <Eye size={16} />}
+                              </button>
+                            </div>
+                            {passwordData.confirmar && passwordData.nueva !== passwordData.confirmar && (
+                              <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
+                                <AlertCircle size={10} />
+                                Las contraseñas no coinciden
+                              </p>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="p-3 bg-amber-50 rounded-lg border border-amber-100">
+                          <p className="text-xs font-bold text-amber-700 mb-2 flex items-center gap-2">
+                            <Shield size={14} />
+                            Recomendaciones de seguridad:
+                          </p>
+                          <ul className="text-xs text-amber-600 space-y-1 ml-6 list-disc">
+                            <li>Usa al menos 8 caracteres</li>
+                            <li>Combina letras mayúsculas, minúsculas y números</li>
+                            <li>Incluye al menos un carácter especial (!@#$%^&*)</li>
+                            <li>No uses contraseñas obvias como "12345678" o tu nombre</li>
+                            <li>No compartas tu contraseña con nadie</li>
+                            <li>Cambia tu contraseña regularmente</li>
+                          </ul>
+                        </div>
+
+                        <div className="flex gap-3 pt-2">
+                          <button
+                            type="submit"
+                            disabled={cambiandoPassword}
+                            className="px-5 py-2 bg-gradient-to-r from-[#5b4eff] to-[#4a3dcc] text-white rounded-lg font-medium text-sm hover:shadow-lg transition-all disabled:opacity-50 flex items-center gap-2"
+                          >
+                            {cambiandoPassword ? (
+                              <>
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                Actualizando...
+                              </>
+                            ) : (
+                              <>
+                                <CheckCircle size={16} />
+                                Actualizar contraseña
+                              </>
+                            )}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setPasswordData({ actual: "", nueva: "", confirmar: "" });
+                              setPasswordError("");
+                              setPasswordSuccess("");
+                              setPasswordStrength({ score: 0, message: "", color: "" });
+                            }}
+                            className="px-5 py-2 bg-gray-100 text-gray-600 rounded-lg font-medium text-sm hover:bg-gray-200 transition"
+                          >
+                            Limpiar
+                          </button>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* 👇 Tabs con refreshKey para forzar remount al refrescar */}
+              {activeTab === "pedidos" && (
+                <MisPedidos key={`pedidos-${refreshKey}`} embedded={true} />
+              )}
+              {activeTab === "servicios" && (
+                <MisServicios key={`servicios-${refreshKey}`} embedded={true} />
+              )}
+              {activeTab === "reclamos" && (
+                <MisReclamos key={`reclamos-${refreshKey}`} embedded={true} />
+              )}
+            </>
+          )}
         </div>
       </div>
+
+      {/* 👇 TOAST del refresh */}
+      {toast.show && (
+        <div className="fixed top-20 right-4 left-4 sm:left-auto z-[100] animate-in fade-in slide-in-from-top-2">
+          <div className={`rounded-xl shadow-2xl p-4 flex items-center gap-3 sm:min-w-[320px] ${
+            toast.type === "success"
+              ? "bg-gradient-to-r from-emerald-500 to-green-600"
+              : toast.type === "error"
+              ? "bg-gradient-to-r from-red-500 to-rose-600"
+              : "bg-gradient-to-r from-blue-500 to-indigo-600"
+          } text-white`}>
+            <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
+              {toast.type === "success" && <CheckCircle size={16} />}
+              {toast.type === "error" && <AlertCircle size={16} />}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-bold text-sm">
+                {toast.type === "success" ? "Éxito" : "Error"}
+              </p>
+              <p className="text-xs opacity-90 break-words">{toast.message}</p>
+            </div>
+            <button
+              onClick={() => setToast({ show: false, type: "", message: "" })}
+              className="text-white/80 hover:text-white flex-shrink-0"
+            >
+              <X size={16} />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Animaciones */}
+      <style>{`
+        .animate-in { animation: fadeIn 0.3s ease-out; }
+        .slide-in-from-top-2 { animation: slideDown 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+      `}</style>
     </div>
   );
 }

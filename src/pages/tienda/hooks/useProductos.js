@@ -193,23 +193,21 @@ export const useProductos = () => {
     };
 
     // ✅ Productos filtrados por categoría y stock
-    const productosFiltrados = useMemo(() => {
-        if (productos.length === 0) return [];
+const productosFiltrados = useMemo(() => {
+    if (productos.length === 0) return [];
 
-        let resultado = [...productos];
+    let resultado = [...productos];
 
-        // Filtrar por categoría
-        if (filtros.categoria !== "todos") {
-            resultado = resultado.filter(p => determinarCategoria(p.nombre) === filtros.categoria);
-        }
+    // Filtrar por categoría
+    if (filtros.categoria !== "todos") {
+        resultado = resultado.filter(p => determinarCategoria(p.nombre) === filtros.categoria);
+    }
 
-        // Filtrar solo con stock
-        if (filtros.soloStock) {
-            resultado = resultado.filter(p => p.stock > 0);
-        }
+    // ✅ SIEMPRE ocultar productos agotados (stock === 0) en la tienda pública
+    resultado = resultado.filter(p => (p.stock || 0) > 0);
 
-        return resultado;
-    }, [productos, filtros.categoria, filtros.soloStock]);
+    return resultado;
+}, [productos, filtros.categoria, filtros.soloStock]);
 
     // Actualizar filtros
     const actualizarFiltros = useCallback((nuevosFiltros) => {

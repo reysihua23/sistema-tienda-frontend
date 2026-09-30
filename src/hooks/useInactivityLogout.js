@@ -1,142 +1,125 @@
-// src/hooks/useInactivityLogout.js
-import { useEffect, useRef, useState } from 'react';
+// hooks/useInactivityLogout.js
+import { useState, useEffect, useRef, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 
-// ⏰ CONFIGURACIÓN DE TIEMPOS (en milisegundos)
-const INACTIVITY_TIME = 5 * 60 * 1000; // 5 minutos
-const WARNING_TIME = 1 * 60 * 1000; // 1 minuto antes (aparece el modal)
-
-export const useInactivityLogout = () => {
+export function useInactivityLogout(
+  timeoutMs = 15 * 60 * 1000,
+  warningMs = 60 * 1000
+  
+) {
   const [showWarning, setShowWarning] = useState(false);
-  const [countdown, setCountdown] = useState(60);
-  const timerRef = useRef(null);
+  const [remainingTime, setRemainingTime] = useState(0);
+  const navigate = useNavigate();
+
+  const logoutTimerRef = useRef(null);
   const warningTimerRef = useRef(null);
-  const countdownIntervalRef = useRef(null);
-  const logoutExecutedRef = useRef(false);
+  const countdownRef = useRef(null);
 
-  // 🔒 Función que cierra la sesión
-  const logout = () => {
-    if (logoutExecutedRef.current) return; // Evita ejecutar logout varias veces
-    logoutExecutedRef.current = true;
+  // 📌 Refs para que resetTimers sea ESTABLE
+  const timeoutRef = useRef(timeoutMs);
+  const warningRef = useRef(warningMs);
+  const navigateRef = useRef(navigate);
 
-    console.log("🔒 [Seguridad] Cerrando sesión por inactividad");
+  // Mantener refs actualizados sin causar re-renders
+  useEffect(() => {
+    timeoutRef.current = timeoutMs;
+    warningRef.current = warningMs;
+    navigateRef.current = navigate;
+  }, [timeoutMs, warningMs, navigate]);
 
-    // Limpiar todo
+  // 🔒 Cerrar sesión (ESTABLE - sin dependencias)
+  const handleLogout = useCallback(() => {
+    setShowWarning(false);
+    setRemainingTime(0);
+    sessionStorage.setItem("logoutReason", "inactividad");
     localStorage.removeItem("token");
     localStorage.removeItem("usuario");
-    sessionStorage.clear();
+    window.dispatchEvent(new Event("carrito-cambio-usuario"));
+    window.dispatchEvent(new Event("storage"));
+    navigateRef.current("/login");
+  }, []);
 
-    // Cerrar modales
-    setShowWarning(false);
-    
-    // Redirigir al login con mensaje
-    window.location.href = "/login?mensaje=sesion-expirada";
-  };
+  // 📌 Ref para handleLogout (para no recrear resetTimers)
+  const handleLogoutRef = useRef(handleLogout);
+  useEffect(() => {
+    handleLogoutRef.current = handleLogout;
+  }, [handleLogout]);
 
-  // 🔄 Reiniciar el timer de inactividad
-  const resetTimer = () => {
-    // Si el modal está visible, NO reiniciar (el usuario debe hacer clic en "Continuar")
-    if (showWarning) {
-      console.log("⚠️ [Seguridad] Modal visible - esperando acción del usuario");
-      return;
-    }
-
-    console.log("🔄 [Seguridad] Reiniciando timer de inactividad");
-
-    // Limpiar timers existentes
-    if (timerRef.current) clearTimeout(timerRef.current);
+  // ⏱️ resetTimers ESTABLE (sin dependencias que cambien)
+  const resetTimers = useCallback(() => {
+    if (logoutTimerRef.current) clearTimeout(logoutTimerRef.current);
     if (warningTimerRef.current) clearTimeout(warningTimerRef.current);
-    if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
+    if (countdownRef.current) clearInterval(countdownRef.current);
 
-    // Resetear estados
     setShowWarning(false);
-    setCountdown(60);
+    setRemainingTime(0);
 
-    // ⏰ Timer para mostrar advertencia (a los 4 minutos)
+    const tMs = timeoutRef.current;
+    const wMs = warningRef.current;
+
+    // ⏰ Timer de advertencia
     warningTimerRef.current = setTimeout(() => {
-      console.log("⚠️ [Seguridad] Mostrando advertencia de inactividad");
       setShowWarning(true);
-      
-      // Iniciar contador regresivo
-      setCountdown(60);
-      countdownIntervalRef.current = setInterval(() => {
-        setCountdown(prev => {
-          if (prev <= 1) {
-            clearInterval(countdownIntervalRef.current);
-            return 0;
+      const segundosIniciales = Math.round(wMs / 1000);
+      setRemainingTime(segundosIniciales);
+
+      countdownRef.current = setInterval(() => {
+        setRemainingTime((prev) => {
+          const next = prev - 1;
+          if (next <= 1) {
+            clearInterval(countdownRef.current);
+            return 1;
           }
-          return prev - 1;
+          return next;
         });
       }, 1000);
-      
-    }, INACTIVITY_TIME - WARNING_TIME);
+    }, tMs - wMs);
 
-    // 🔒 Timer para cerrar sesión (a los 5 minutos)
-    timerRef.current = setTimeout(() => {
-      console.log("🔒 [Seguridad] Ejecutando logout por inactividad");
-      logout();
-    }, INACTIVITY_TIME);
-  };
+    // ⏰ Timer de logout
+    logoutTimerRef.current = setTimeout(() => {
+      if (countdownRef.current) clearInterval(countdownRef.current);
+      if (warningTimerRef.current) clearTimeout(warningTimerRef.current);
+      handleLogoutRef.current();
+    }, tMs);
+  }, []);  // 👈 SIN dependencias = referencia ESTABLE para siempre
 
-  // 👆 Función para continuar sesión (desde el modal)
-  const continuarSesion = () => {
-    console.log("🔄 [Seguridad] Usuario continuó sesión");
-    setShowWarning(false);
-    setCountdown(60);
-    logoutExecutedRef.current = false;
-    
-    // Limpiar interval
-    if (countdownIntervalRef.current) {
-      clearInterval(countdownIntervalRef.current);
-    }
-    
-    // Reiniciar el timer
-    resetTimer();
-  };
+  // 📌 Ref para resetTimers (por si se necesita en useEffect)
+  const resetTimersRef = useRef(resetTimers);
+  useEffect(() => {
+    resetTimersRef.current = resetTimers;
+  }, [resetTimers]);
 
-  // 🚀 Activar el hook al montar el componente
+  // 🎯 useEffect PRINCIPAL - se ejecuta SOLO 1 VEZ al montar
   useEffect(() => {
     const token = localStorage.getItem("token");
-    
-    // Solo activar si el usuario está autenticado
-    if (!token) {
-      console.log("❌ [Seguridad] No hay token - cierre por inactividad desactivado");
-      return;
-    }
+    if (!token) return;
 
-    console.log("✅ [Seguridad] Cierre por inactividad ACTIVADO");
-    console.log(`⏰ [Seguridad] Tiempo de inactividad: ${INACTIVITY_TIME / 60000} minutos`);
+    const events = ["mousedown", "mousemove", "keydown", "scroll", "touchstart", "click"];
 
-    // Eventos que indican actividad del usuario
-    const activityEvents = [
-      'mousedown', 'mousemove', 'keydown', 
-      'scroll', 'touchstart', 'click', 'wheel'
-    ];
-
-    const handleActivity = () => {
-      resetTimer();
+    let lastReset = 0;
+    const throttledReset = () => {
+      const now = Date.now();
+      if (now - lastReset > 2000) {
+        lastReset = now;
+        resetTimersRef.current();  // 👈 Usa la ref (estable)
+      }
     };
 
-    // Registrar eventos
-    activityEvents.forEach(event => {
-      document.addEventListener(event, handleActivity);
-    });
+    events.forEach((event) => window.addEventListener(event, throttledReset));
+    resetTimersRef.current();  // 👈 Inicio inicial
 
-    // Iniciar el timer
-    resetTimer();
-
-    // Limpiar al desmontar
     return () => {
-      console.log("🧹 [Seguridad] Limpiando recursos de inactividad");
-      
-      activityEvents.forEach(event => {
-        document.removeEventListener(event, handleActivity);
-      });
-      
-      if (timerRef.current) clearTimeout(timerRef.current);
+      events.forEach((event) => window.removeEventListener(event, throttledReset));
+      if (logoutTimerRef.current) clearTimeout(logoutTimerRef.current);
       if (warningTimerRef.current) clearTimeout(warningTimerRef.current);
-      if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
+      if (countdownRef.current) clearInterval(countdownRef.current);
     };
-  }, [showWarning]); // Dependencia: se ejecuta cuando showWarning cambia
+  }, []);  // 👈 VACÍO = solo al montar
 
-  return { showWarning, countdown, continuarSesion };
-};
+  // 🔘 Extender sesión
+  const extendSession = useCallback(() => {
+    resetTimersRef.current();
+  }, []);
+
+  return { showWarning, remainingTime, extendSession, warningMs };
+}

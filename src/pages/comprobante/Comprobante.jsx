@@ -1,13 +1,12 @@
 // pages/comprobante/Comprobante.jsx
-import React, { useState, useEffect, useRef } from "react";
-import { useParams, useLocation, useNavigate, Link } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useParams, useLocation, Link } from "react-router-dom";
 import { PDFDownloadLink, Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer';
 import { comprobanteService } from "../../services/api";
 import {
     CheckCircle,
     Download,
     Printer,
-    Package,
     ArrowLeft,
     Calendar,
     User,
@@ -16,11 +15,8 @@ import {
     FileText,
     CreditCard,
     Truck,
-    Store,
-    Clock,
     AlertCircle,
     Copy,
-    Share2,
     Loader,
     Mail
 } from "lucide-react";
@@ -136,13 +132,11 @@ const pdfStyles = StyleSheet.create({
 const ComprobantePDF = ({ comprobante }) => (
     <Document>
         <Page size="A4" style={pdfStyles.page}>
-            {/* Encabezado */}
             <View style={pdfStyles.header}>
                 <Text style={pdfStyles.title}>COMPROBANTE DE PAGO</Text>
                 <Text style={pdfStyles.subtitle}>N° {comprobante.numeroComprobante}</Text>
             </View>
 
-            {/* Datos de la empresa */}
             <View style={pdfStyles.empresaInfo}>
                 <Text style={pdfStyles.empresaNombre}>{comprobante.empresaNombre || 'TIENDA JIMENEZ'}</Text>
                 <Text>RUC: {comprobante.empresaRuc || '20601234567'}</Text>
@@ -150,7 +144,6 @@ const ComprobantePDF = ({ comprobante }) => (
                 <Text>Tel: {comprobante.empresaTelefono || '01-2345678'}</Text>
             </View>
 
-            {/* Datos del cliente */}
             <View style={pdfStyles.section}>
                 <Text style={pdfStyles.sectionTitle}>DATOS DEL CLIENTE</Text>
                 <View style={pdfStyles.row}>
@@ -163,7 +156,6 @@ const ComprobantePDF = ({ comprobante }) => (
                 </View>
             </View>
 
-            {/* Fecha y tipo */}
             <View style={pdfStyles.section}>
                 <View style={pdfStyles.row}>
                     <Text>Fecha de emisión: {new Date(comprobante.fechaEmision || Date.now()).toLocaleDateString('es-PE')}</Text>
@@ -171,7 +163,6 @@ const ComprobantePDF = ({ comprobante }) => (
                 </View>
             </View>
 
-            {/* Detalle de productos */}
             <View style={pdfStyles.table}>
                 <Text style={pdfStyles.sectionTitle}>DETALLE DE PRODUCTOS</Text>
                 <View style={pdfStyles.tableHeader}>
@@ -190,7 +181,6 @@ const ComprobantePDF = ({ comprobante }) => (
                 ))}
             </View>
 
-            {/* Totales */}
             <View style={pdfStyles.totalSection}>
                 <View style={pdfStyles.totalRow}>
                     <Text style={{ width: 100, textAlign: 'right' }}>Subtotal:</Text>
@@ -212,7 +202,6 @@ const ComprobantePDF = ({ comprobante }) => (
                 </View>
             </View>
 
-            {/* Pie de página */}
             <View style={pdfStyles.footer}>
                 <Text>Este documento es una representación digital de su comprobante de pago</Text>
                 <Text>© {new Date().getFullYear()} Jimenez - Todos los derechos reservados</Text>
@@ -224,7 +213,6 @@ const ComprobantePDF = ({ comprobante }) => (
 export default function Comprobante() {
     const { pedidoId, id } = useParams();
     const location = useLocation();
-    const navigate = useNavigate();
     const [comprobante, setComprobante] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -239,10 +227,7 @@ export default function Comprobante() {
         try {
             setLoading(true);
 
-            // ✅ Si viene del state (venta presencial)
             if (location.state && location.state.comprobanteId) {
-                console.log("📄 Comprobante desde state:", location.state);
-
                 const data = {
                     numeroComprobante: location.state.numeroComprobante || `B001-${String(comprobanteId).padStart(8, '0')}`,
                     empresaNombre: 'TIENDA JIMENEZ',
@@ -250,9 +235,10 @@ export default function Comprobante() {
                     empresaDireccion: 'Av. Principal 123, Lima',
                     empresaTelefono: '01-2345678',
                     clienteNombre: location.state.clienteNombre || 'Cliente no especificado',
-                    clienteDocumento: location.state.clienteDocumento || 'Sin documento',
+                    clienteDocumento: location.state.clienteDocumento || '-',
                     clienteDireccion: location.state.clienteDireccion || 'No especificada',
                     clienteTelefono: location.state.clienteTelefono || 'No especificado',
+                    clienteEmail: location.state.clienteEmail || 'No especificado',
                     tipoComprobante: 'BOLETA',
                     fechaEmision: location.state.fecha || new Date().toISOString(),
                     subtotal: location.state.subtotal || 0,
@@ -262,7 +248,9 @@ export default function Comprobante() {
                     metodoPago: location.state.metodoPago || 'EFECTIVO',
                     metodoEnvio: 'RECOJO_EN_TIENDA',
                     detalles: location.state.productos || [],
-                    estado: 'PAGADO'
+                    estado: 'PAGADO',
+                    comprobanteId: location.state.comprobanteId,
+                    pedidoId: location.state.pedidoId
                 };
 
                 setComprobante(data);
@@ -270,7 +258,6 @@ export default function Comprobante() {
                 return;
             }
 
-            // ✅ Si viene por URL (pedido online)
             if (comprobanteId) {
                 const data = await comprobanteService.obtenerPorPedido(comprobanteId);
                 setComprobante(data);
@@ -361,7 +348,9 @@ export default function Comprobante() {
                         <CheckCircle size={28} />
                         <div>
                             <h2 className="font-bold text-lg">¡Pago completado exitosamente!</h2>
-                            <p className="text-sm opacity-90">Se ha generado el comprobante de tu venta</p>
+                            <p className="text-sm opacity-90">
+                                Se ha generado el comprobante y enviado al correo del cliente
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -427,12 +416,14 @@ export default function Comprobante() {
                         </div>
                     </div>
 
-                    {/* Información de la empresa */}
+                    {/* Info de la empresa con logo de texto */}
                     <div className="p-6 border-b text-center bg-gradient-to-r from-slate-50 to-white">
-                        <h2 className="text-2xl font-bold text-gray-800">TIENDA JIMENEZ</h2>
-                        <p className="text-sm text-gray-500 mt-1">RUC: 20601234567</p>
-                        <p className="text-sm text-gray-500">Av. Principal 123, Lima</p>
-                        <p className="text-sm text-gray-500">Tel: 01-2345678</p>
+                        <h2 className="text-3xl font-black italic tracking-tighter text-[#0d0c1e]">
+                            Jimenez<span className="text-[#5b4eff]">.</span>
+                        </h2>
+                        <p className="text-sm text-gray-500 mt-2">RUC: 20601234567</p>
+                        <p className="text-sm text-gray-500">Amazonas, Písac 08106- Cusco - Perú</p>
+                        <p className="text-sm text-gray-500">Tel: 997863112</p>
                     </div>
 
                     {/* Información del cliente */}
@@ -444,28 +435,28 @@ export default function Comprobante() {
                                     <div>
                                         <p className="text-xs text-gray-400 uppercase tracking-wide">Cliente</p>
                                         <p className="font-semibold text-gray-800">{comprobante?.clienteNombre || 'Cliente no especificado'}</p>
-                                        <p className="text-sm text-gray-600">DNI: {comprobante?.clienteDocumento || 'Sin documento'}</p>
+                                        <p className="text-sm text-gray-600">DNI: {comprobante?.clienteDocumento || '-'}</p>
                                     </div>
                                 </div>
                                 <div className="flex items-start gap-3">
                                     <MapPin size={18} className="text-[#5b4eff] mt-0.5" />
                                     <div>
                                         <p className="text-xs text-gray-400 uppercase tracking-wide">Dirección</p>
-                                        <p className="text-sm text-gray-600">{comprobante?.clienteDireccion || 'No especificada'}</p>
+                                        <p className="text-sm text-gray-600">{comprobante?.clienteDireccion || '-'}</p>
                                     </div>
                                 </div>
                                 <div className="flex items-start gap-3">
                                     <Phone size={18} className="text-[#5b4eff] mt-0.5" />
                                     <div>
                                         <p className="text-xs text-gray-400 uppercase tracking-wide">Teléfono</p>
-                                        <p className="text-sm text-gray-600">{comprobante?.clienteTelefono || 'No especificado'}</p>
+                                        <p className="text-sm text-gray-600">{comprobante?.clienteTelefono || '-'}</p>
                                     </div>
                                 </div>
                                 <div className="flex items-start gap-3">
-                                    <Mail size={18} className="text-[#5b4eff] mt-0.5" /> 
+                                    <Mail size={18} className="text-[#5b4eff] mt-0.5" />
                                     <div>
                                         <p className="text-xs text-gray-400 uppercase tracking-wide">Email</p>
-                                        <p className="text-sm text-gray-600">{comprobante?.clienteEmail || 'No especificado'}</p>
+                                        <p className="text-sm text-gray-600">{comprobante?.clienteEmail || '-'}</p>
                                     </div>
                                 </div>
                             </div>
@@ -529,7 +520,6 @@ export default function Comprobante() {
                             </table>
                         </div>
 
-                        {/* Totales */}
                         <div className="mt-6 border-t pt-4">
                             <div className="flex justify-end">
                                 <div className="w-72 space-y-2">

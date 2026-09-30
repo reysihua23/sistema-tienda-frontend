@@ -6,7 +6,7 @@ import { authService } from "../../services/api";
 import {
   Mail, Lock, User, Phone, Eye, EyeOff,
   Shield, CheckCircle, AlertCircle, ArrowRight,
-  X, UserPlus, LogIn, 
+  X, UserPlus, LogIn,
 } from "lucide-react";
 
 const styles = `
@@ -318,6 +318,7 @@ export default function AuthPage() {
           };
 
           localStorage.setItem("usuario", JSON.stringify(usuario));
+          window.dispatchEvent(new Event("carrito-cambio-usuario"));
 
           showSuccess(`¡Bienvenido ${usuario.nombre}! Has iniciado sesión correctamente.`);
 
@@ -400,12 +401,20 @@ export default function AuthPage() {
     }
   };
 
-  // En AuthPage.jsx - mostrar mensaje si viene de sesión expirada
+  // En AuthPage.jsx - mostrar mensaje si viene de sesión expirada o inactividad
   useEffect(() => {
+    // 1. Verificar parámetro de URL (sesión expirada)
     const params = new URLSearchParams(window.location.search);
     const mensaje = params.get('mensaje');
     if (mensaje === 'sesion-expirada') {
       setError('🔒 Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
+    }
+
+    // 2. Verificar motivo de logout (inactividad)
+    const reason = sessionStorage.getItem("logoutReason");
+    if (reason === "inactividad") {
+      setError("🔒 Tu sesión se cerró por inactividad. Por favor, inicia sesión nuevamente.");
+      sessionStorage.removeItem("logoutReason");
     }
   }, []);
 
@@ -421,7 +430,7 @@ export default function AuthPage() {
             Jimenez<span className="text-[#5b4eff]"></span>
           </h1>
           <p className="text-sm text-gray-500 mt-2 flex items-center justify-center gap-2">
-            
+
             {isLogin ? "Bienvenido de vuelta" : "Crea tu cuenta para empezar a comprar"}
           </p>
         </div>

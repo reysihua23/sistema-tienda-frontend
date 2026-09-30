@@ -11,22 +11,60 @@ export const useCarrito = () => {
     return context;
 };
 
+// 🔑 Obtener la clave del carrito según el usuario logueado
+const getCarritoKey = () => {
+    try {
+        const usuarioStr = localStorage.getItem("usuario");
+        if (usuarioStr) {
+            const usuario = JSON.parse(usuarioStr);
+            // Prioriza clienteId, luego id, luego correo
+            const id = usuario.clienteId || usuario.id || usuario.correo || "anonimo";
+            return `carrito_${id}`;
+        }
+    } catch (e) {
+        console.error("Error al leer usuario:", e);
+    }
+    return "carrito_anonimo";
+};
+
 export const CarritoProvider = ({ children }) => {
     const [cartItems, setCartItems] = useState([]);
     const [subtotal, setSubtotal] = useState(0);
     const [itemsCount, setItemsCount] = useState(0);
 
-    // Cargar carrito del localStorage al iniciar
+    // 📥 Cargar carrito del localStorage al iniciar y al cambiar de usuario
     useEffect(() => {
-        const carritoGuardado = localStorage.getItem("carrito");
-        if (carritoGuardado) {
-            setCartItems(JSON.parse(carritoGuardado));
-        }
+        const cargarCarrito = () => {
+            const key = getCarritoKey();
+            const carritoGuardado = localStorage.getItem(key);
+            if (carritoGuardado) {
+                try {
+                    setCartItems(JSON.parse(carritoGuardado));
+                } catch (e) {
+                    console.error("Error al parsear carrito:", e);
+                    setCartItems([]);
+                }
+            } else {
+                setCartItems([]);
+            }
+        };
+
+        cargarCarrito();
+
+        // 👂 Escuchar cambios de usuario (login/logout)
+        window.addEventListener("storage", cargarCarrito);
+        window.addEventListener("carrito-cambio-usuario", cargarCarrito);
+
+        return () => {
+            window.removeEventListener("storage", cargarCarrito);
+            window.removeEventListener("carrito-cambio-usuario", cargarCarrito);
+        };
     }, []);
 
-    // Guardar carrito en localStorage cuando cambie
+    // 💾 Guardar carrito en localStorage cuando cambie
     useEffect(() => {
-        localStorage.setItem("carrito", JSON.stringify(cartItems));
+        const key = getCarritoKey();
+        localStorage.setItem(key, JSON.stringify(cartItems));
         calcularTotales();
     }, [cartItems]);
 
@@ -47,7 +85,7 @@ export const CarritoProvider = ({ children }) => {
                         : item
                 );
             }
-            return [...prev, { 
+            return [...prev, {
                 id: producto.id,
                 nombre: producto.nombre,
                 descripcion: producto.descripcion || "Sin descripción",

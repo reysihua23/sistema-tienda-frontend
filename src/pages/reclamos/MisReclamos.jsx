@@ -52,20 +52,20 @@ function Toast({ message, type = "success", onClose }) {
 // ✅ Estilos por estado y tipo
 // =========================================================
 const ESTADO_STYLES = {
-  REGISTRADO:  { bg: "bg-amber-50",   text: "text-amber-700",   border: "border-amber-200",   icon: Clock },
-  EN_REVISION: { bg: "bg-blue-50",    text: "text-blue-700",    border: "border-blue-200",    icon: RefreshCw },
-  APROBADO:    { bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200", icon: CheckCircle },
-  REVISION:    { bg: "bg-purple-50",  text: "text-purple-700",  border: "border-purple-200",  icon: AlertCircle },
-  RECHAZADO:   { bg: "bg-red-50",     text: "text-red-700",     border: "border-red-200",     icon: XCircle },
-  CERRADO:     { bg: "bg-gray-50",    text: "text-gray-700",    border: "border-gray-200",    icon: FileText },
-  CANCELADO:   { bg: "bg-gray-100",   text: "text-gray-600",    border: "border-gray-300",    icon: Ban },
+  REGISTRADO: { bg: "bg-amber-50", text: "text-amber-700", border: "border-amber-200", icon: Clock },
+  EN_REVISION: { bg: "bg-blue-50", text: "text-blue-700", border: "border-blue-200", icon: RefreshCw },
+  APROBADO: { bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200", icon: CheckCircle },
+  REVISION: { bg: "bg-purple-50", text: "text-purple-700", border: "border-purple-200", icon: AlertCircle },
+  RECHAZADO: { bg: "bg-red-50", text: "text-red-700", border: "border-red-200", icon: XCircle },
+  CERRADO: { bg: "bg-gray-50", text: "text-gray-700", border: "border-gray-200", icon: FileText },
+  CANCELADO: { bg: "bg-gray-100", text: "text-gray-600", border: "border-gray-300", icon: Ban },
 };
 
 const TIPO_STYLES = {
-  DEVOLUCION:     { label: "Devolución",          icon: RefreshCw },
-  DEFECTO:        { label: "Producto defectuoso", icon: AlertCircle },
-  GARANTIA:       { label: "Garantía",            icon: Shield },
-  NO_CONFORMIDAD: { label: "No conformidad",      icon: XCircle },
+  DEVOLUCION: { label: "Devolución", icon: RefreshCw },
+  DEFECTO: { label: "Producto defectuoso", icon: AlertCircle },
+  GARANTIA: { label: "Garantía", icon: Shield },
+  NO_CONFORMIDAD: { label: "No conformidad", icon: XCircle },
 };
 
 const ESTADO_LABEL = {
@@ -403,174 +403,174 @@ export default function MisReclamos({ embedded = false }) {
   // ✅ RENDER
   // =========================================================
   return (
-    <div className={`${embedded ? "" : "max-w-6xl mx-auto"} px-4 sm:px-6`}>
-      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 pt-6 pb-16 px-4">
+      <div className={`${embedded ? "" : "max-w-6xl mx-auto"} px-4 sm:px-6`}>
+        {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
 
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Mis Reclamos</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Gestiona tus reclamos, devoluciones y garantías
-          </p>
-        </div>
-        <button
-          onClick={() => setShowFormModal(true)}
-          className="w-full sm:w-auto px-5 py-2.5 bg-gradient-to-r from-[#5b4eff] to-[#4a3dcc] text-white rounded-xl text-sm font-bold hover:shadow-lg hover:scale-[1.02] transition-all flex items-center justify-center gap-2"
-        >
-          <Plus size={18} />
-          Nuevo Reclamo
-        </button>
-      </div>
-
-      {/* Filtros */}
-      <div className="bg-white rounded-2xl shadow-sm p-4 mb-6 border border-gray-100">
-        <div className="flex flex-col lg:flex-row gap-4">
-          <div className="flex-1 relative">
-            <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Buscar por número, tipo o descripción..."
-              value={busqueda}
-              onChange={(e) => setBusqueda(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:border-[#5b4eff] focus:ring-2 focus:ring-[#5b4eff]/20 focus:outline-none transition text-sm"
-            />
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Mis Reclamos</h1>
+            <p className="text-sm text-gray-500 mt-1">
+              Gestiona tus reclamos, devoluciones y garantías
+            </p>
           </div>
+          <button
+            onClick={() => setShowFormModal(true)}
+            className="w-full sm:w-auto px-5 py-2.5 bg-gradient-to-r from-[#5b4eff] to-[#4a3dcc] text-white rounded-xl text-sm font-bold hover:shadow-lg hover:scale-[1.02] transition-all flex items-center justify-center gap-2"
+          >
+            <Plus size={18} />
+            Nuevo Reclamo
+          </button>
+        </div>
 
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => setFiltroEstado("todos")}
-              className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
-                filtroEstado === "todos"
-                  ? "bg-[#5b4eff] text-white shadow-md"
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-              }`}
-            >
-              Todos ({reclamos.length})
-            </button>
-            {Object.entries(ESTADO_STYLES).map(([key, style]) => {
-              const Icon = style.icon;
-              const count = reclamos.filter(r => r.estado === key).length;
-              if (count === 0 && filtroEstado !== key) return null;
-              return (
-                <button
-                  key={key}
-                  onClick={() => setFiltroEstado(key)}
-                  className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 ${
-                    filtroEstado === key
-                      ? "bg-[#5b4eff] text-white shadow-md"
-                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+        {/* Filtros */}
+        <div className="bg-white rounded-2xl shadow-sm p-4 mb-6 border border-gray-100">
+          <div className="flex flex-col lg:flex-row gap-4">
+            <div className="flex-1 relative">
+              <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Buscar por número, tipo o descripción..."
+                value={busqueda}
+                onChange={(e) => setBusqueda(e.target.value)}
+                className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:border-[#5b4eff] focus:ring-2 focus:ring-[#5b4eff]/20 focus:outline-none transition text-sm"
+              />
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => setFiltroEstado("todos")}
+                className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all ${filtroEstado === "todos"
+                    ? "bg-[#5b4eff] text-white shadow-md"
+                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                   }`}
-                >
-                  <Icon size={14} />
-                  {ESTADO_LABEL[key]} ({count})
-                </button>
-              );
-            })}
+              >
+                Todos ({reclamos.length})
+              </button>
+              {Object.entries(ESTADO_STYLES).map(([key, style]) => {
+                const Icon = style.icon;
+                const count = reclamos.filter(r => r.estado === key).length;
+                if (count === 0 && filtroEstado !== key) return null;
+                return (
+                  <button
+                    key={key}
+                    onClick={() => setFiltroEstado(key)}
+                    className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 ${filtroEstado === key
+                        ? "bg-[#5b4eff] text-white shadow-md"
+                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                      }`}
+                  >
+                    <Icon size={14} />
+                    {ESTADO_LABEL[key]} ({count})
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
+
+        {/* Lista */}
+        {reclamosFiltrados.length === 0 ? (
+          <EmptyState
+            onNew={() => setShowFormModal(true)}
+            hasFilters={filtroEstado !== "todos" || busqueda}
+          />
+        ) : (
+          <div className="space-y-3">
+            {reclamosFiltrados.map(reclamo => (
+              <ReclamoCard
+                key={reclamo.id}
+                reclamo={reclamo}
+                onVerDetalle={() => {
+                  setReclamoSeleccionado(reclamo);
+                  setShowDetalleModal(true);
+                }}
+                onVerEvidencias={async () => {
+                  setReclamoSeleccionado(reclamo);
+                  await cargarEvidencias(reclamo.id);
+                  setShowEvidenciasModal(true);
+                }}
+                onCancelar={() => setShowConfirmCancel(reclamo.id)}
+                formatDate={formatDate}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Modal Nuevo Reclamo */}
+        {showFormModal && (
+          <NuevoReclamoModal
+            formData={formData}
+            setFormData={setFormData}
+            fieldErrors={fieldErrors}
+            evidenciasPendientes={evidenciasPendientes}
+            handleSeleccionarEvidencias={handleSeleccionarEvidencias}
+            eliminarEvidenciaPendiente={eliminarEvidenciaPendiente}
+            handleSubmit={handleSubmitReclamo}
+            submitting={submitting}
+            pedidos={pedidos}
+            formatDate={formatDate}
+            formatPrice={formatPrice}
+            onClose={() => {
+              setShowFormModal(false);
+              setFieldErrors({});
+            }}
+            isDragging={isDragging}
+            setIsDragging={setIsDragging}
+          />
+        )}
+
+        {/* Modal Detalle */}
+        {showDetalleModal && reclamoSeleccionado && (
+          <DetalleModal
+            reclamo={reclamoSeleccionado}
+            onClose={() => setShowDetalleModal(false)}
+            onCancelar={() => setShowConfirmCancel(reclamoSeleccionado.id)}
+            formatDate={formatDate}
+            formatPrice={formatPrice}
+          />
+        )}
+
+        {/* Modal Evidencias */}
+        {showEvidenciasModal && reclamoSeleccionado && (
+          <EvidenciasModal
+            reclamo={reclamoSeleccionado}
+            evidencias={evidencias}
+            evidenciasSubiendo={evidenciasSubiendo}
+            onSubir={handleSubirEvidencias}
+            onEliminar={(id) => setShowConfirmDelete(id)}
+            onClose={() => setShowEvidenciasModal(false)}
+            formatDate={formatDate}
+          />
+        )}
+
+        {/* Confirmar eliminar evidencia */}
+        {showConfirmDelete && (
+          <ConfirmModal
+            titulo="¿Eliminar evidencia?"
+            descripcion="Esta acción no se puede deshacer."
+            icono={Trash2}
+            colorIcono="red"
+            textoConfirmar="Eliminar"
+            onConfirm={() => handleEliminarEvidencia(showConfirmDelete)}
+            onCancel={() => setShowConfirmDelete(null)}
+          />
+        )}
+
+        {/* Confirmar cancelar reclamo */}
+        {showConfirmCancel && (
+          <ConfirmModal
+            titulo="¿Cancelar este reclamo?"
+            descripcion="Solo puedes cancelar reclamos en estado REGISTRADO. Esta acción no se puede deshacer."
+            icono={Ban}
+            colorIcono="amber"
+            textoConfirmar="Sí, cancelar"
+            onConfirm={() => handleCancelarReclamo(showConfirmCancel)}
+            onCancel={() => setShowConfirmCancel(null)}
+          />
+        )}
       </div>
-
-      {/* Lista */}
-      {reclamosFiltrados.length === 0 ? (
-        <EmptyState
-          onNew={() => setShowFormModal(true)}
-          hasFilters={filtroEstado !== "todos" || busqueda}
-        />
-      ) : (
-        <div className="space-y-3">
-          {reclamosFiltrados.map(reclamo => (
-            <ReclamoCard
-              key={reclamo.id}
-              reclamo={reclamo}
-              onVerDetalle={() => {
-                setReclamoSeleccionado(reclamo);
-                setShowDetalleModal(true);
-              }}
-              onVerEvidencias={async () => {
-                setReclamoSeleccionado(reclamo);
-                await cargarEvidencias(reclamo.id);
-                setShowEvidenciasModal(true);
-              }}
-              onCancelar={() => setShowConfirmCancel(reclamo.id)}
-              formatDate={formatDate}
-            />
-          ))}
-        </div>
-      )}
-
-      {/* Modal Nuevo Reclamo */}
-      {showFormModal && (
-        <NuevoReclamoModal
-          formData={formData}
-          setFormData={setFormData}
-          fieldErrors={fieldErrors}
-          evidenciasPendientes={evidenciasPendientes}
-          handleSeleccionarEvidencias={handleSeleccionarEvidencias}
-          eliminarEvidenciaPendiente={eliminarEvidenciaPendiente}
-          handleSubmit={handleSubmitReclamo}
-          submitting={submitting}
-          pedidos={pedidos}
-          formatDate={formatDate}
-          formatPrice={formatPrice}
-          onClose={() => {
-            setShowFormModal(false);
-            setFieldErrors({});
-          }}
-          isDragging={isDragging}
-          setIsDragging={setIsDragging}
-        />
-      )}
-
-      {/* Modal Detalle */}
-      {showDetalleModal && reclamoSeleccionado && (
-        <DetalleModal
-          reclamo={reclamoSeleccionado}
-          onClose={() => setShowDetalleModal(false)}
-          onCancelar={() => setShowConfirmCancel(reclamoSeleccionado.id)}
-          formatDate={formatDate}
-          formatPrice={formatPrice}
-        />
-      )}
-
-      {/* Modal Evidencias */}
-      {showEvidenciasModal && reclamoSeleccionado && (
-        <EvidenciasModal
-          reclamo={reclamoSeleccionado}
-          evidencias={evidencias}
-          evidenciasSubiendo={evidenciasSubiendo}
-          onSubir={handleSubirEvidencias}
-          onEliminar={(id) => setShowConfirmDelete(id)}
-          onClose={() => setShowEvidenciasModal(false)}
-          formatDate={formatDate}
-        />
-      )}
-
-      {/* Confirmar eliminar evidencia */}
-      {showConfirmDelete && (
-        <ConfirmModal
-          titulo="¿Eliminar evidencia?"
-          descripcion="Esta acción no se puede deshacer."
-          icono={Trash2}
-          colorIcono="red"
-          textoConfirmar="Eliminar"
-          onConfirm={() => handleEliminarEvidencia(showConfirmDelete)}
-          onCancel={() => setShowConfirmDelete(null)}
-        />
-      )}
-
-      {/* Confirmar cancelar reclamo */}
-      {showConfirmCancel && (
-        <ConfirmModal
-          titulo="¿Cancelar este reclamo?"
-          descripcion="Solo puedes cancelar reclamos en estado REGISTRADO. Esta acción no se puede deshacer."
-          icono={Ban}
-          colorIcono="amber"
-          textoConfirmar="Sí, cancelar"
-          onConfirm={() => handleCancelarReclamo(showConfirmCancel)}
-          onCancel={() => setShowConfirmCancel(null)}
-        />
-      )}
     </div>
   );
 }
@@ -764,11 +764,10 @@ function NuevoReclamoModal({
                     key={value}
                     type="button"
                     onClick={() => setFormData(prev => ({ ...prev, tipo: value }))}
-                    className={`p-3 rounded-xl border-2 text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 justify-center ${
-                      selected
+                    className={`p-3 rounded-xl border-2 text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 justify-center ${selected
                         ? "border-[#5b4eff] bg-[#5b4eff]/10 text-[#5b4eff] shadow-sm"
                         : "border-gray-200 text-gray-600 hover:border-gray-300"
-                    }`}
+                      }`}
                   >
                     <Icon size={16} />
                     <span className="truncate">{style.label}</span>
@@ -789,9 +788,8 @@ function NuevoReclamoModal({
               <label className="block text-sm font-bold text-gray-700">
                 Descripción <span className="text-red-500">*</span>
               </label>
-              <span className={`text-xs ${
-                formData.descripcion.length > MAX_DESCRIPCION ? "text-red-500" : "text-gray-400"
-              }`}>
+              <span className={`text-xs ${formData.descripcion.length > MAX_DESCRIPCION ? "text-red-500" : "text-gray-400"
+                }`}>
                 {formData.descripcion.length}/{MAX_DESCRIPCION}
               </span>
             </div>
@@ -819,9 +817,8 @@ function NuevoReclamoModal({
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
-              className={`border-2 border-dashed rounded-xl p-6 text-center transition ${
-                isDragging ? "border-[#5b4eff] bg-[#5b4eff]/5" : "border-gray-200 hover:border-[#5b4eff]"
-              }`}
+              className={`border-2 border-dashed rounded-xl p-6 text-center transition ${isDragging ? "border-[#5b4eff] bg-[#5b4eff]/5" : "border-gray-200 hover:border-[#5b4eff]"
+                }`}
             >
               <input
                 type="file"
@@ -1059,11 +1056,10 @@ function EvidenciasModal({ reclamo, evidencias, evidenciasSubiendo, onSubir, onE
             />
             <label
               htmlFor="subir-evidencia"
-              className={`border-2 border-dashed rounded-xl p-5 text-center cursor-pointer transition flex flex-col items-center gap-2 ${
-                evidenciasSubiendo
+              className={`border-2 border-dashed rounded-xl p-5 text-center cursor-pointer transition flex flex-col items-center gap-2 ${evidenciasSubiendo
                   ? "border-gray-200 bg-gray-50 cursor-not-allowed"
                   : "border-gray-200 hover:border-[#5b4eff] hover:bg-[#5b4eff]/5"
-              }`}
+                }`}
             >
               {evidenciasSubiendo ? (
                 <>

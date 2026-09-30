@@ -42,7 +42,7 @@ export default function ListaPedidos({ onRefresh }) {
     const cargarImagenProducto = async (productoId) => {
         if (!productoId) return null;
         if (imagenesCache[productoId]) return imagenesCache[productoId];
-        
+
         try {
             const imagenes = await productoImagenService.buscarPorProducto(productoId);
             const imagenPrincipal = imagenes?.find(img => img.principal) || imagenes?.[0];
@@ -88,16 +88,27 @@ export default function ListaPedidos({ onRefresh }) {
         if (!price || isNaN(price)) return "S/ 0.00";
         return new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' }).format(price);
     };
-    
-    const formatDate = (date) => {
+
+    // Fecha larga (desktop)
+    const formatDateLong = (date) => {
         if (!date) return "Fecha no disponible";
-        return new Date(date).toLocaleDateString('es-PE', { 
-            year: 'numeric', 
-            month: 'long', 
-            day: 'numeric', 
-            hour: '2-digit', 
-            minute: '2-digit' 
+        return new Date(date).toLocaleDateString('es-PE', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
         });
+    };
+
+    // Fecha corta (móvil)
+    const formatDateShort = (date) => {
+        if (!date) return "—";
+        const d = new Date(date);
+        const day = String(d.getDate()).padStart(2, '0');
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const year = d.getFullYear();
+        return `${day}/${month}/${year}`;
     };
 
     const getEstadoColor = (estado) => ({
@@ -130,12 +141,90 @@ export default function ListaPedidos({ onRefresh }) {
 
     return (
         <div>
-            <div className="mb-6">
-                <h2 className="text-xl font-bold text-gray-800">Pedidos Online</h2>
-                <p className="text-sm text-gray-500">Gestiona los pedidos realizados desde la tienda virtual</p>
+            <div className="mb-4 sm:mb-6">
+                <h2 className="text-lg sm:text-xl font-bold text-gray-800">Pedidos Online</h2>
+                <p className="text-xs sm:text-sm text-gray-500">Gestiona los pedidos realizados desde la tienda virtual</p>
             </div>
 
-            <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+            {/* ==================== VISTA MÓVIL (SOLO TABLA CAMBIA AQUÍ) ==================== */}
+            <div className="md:hidden space-y-3">
+                {pedidos.length === 0 ? (
+                    <div className="bg-white rounded-xl shadow-sm p-12 text-center text-gray-400">
+                        <ShoppingBag size={48} className="mx-auto mb-2 opacity-50" />
+                        <p>No hay pedidos online registrados</p>
+                    </div>
+                ) : (
+                    pedidos.map(pedido => (
+                        <div
+                            key={pedido.id}
+                            className="bg-white rounded-xl shadow-sm border border-gray-100 p-4"
+                        >
+                            {/* Header: PEDIDO + Nº + Estado (badge arriba derecha) */}
+                            <div className="flex items-start justify-between gap-2 mb-3">
+                                <div>
+                                    <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">
+                                        Pedido
+                                    </p>
+                                    <p className="text-base font-black text-gray-800">
+                                        Nº {pedido.id}
+                                    </p>
+                                </div>
+                                <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold ${getEstadoColor(pedido.estado)}`}>
+                                    {getEstadoIcon(pedido.estado)}
+                                    {pedido.estado}
+                                </span>
+                            </div>
+
+                            {/* Cliente + Fecha con iconos */}
+                            <div className="space-y-1.5 mb-3">
+                                <div className="flex items-center gap-2 text-sm text-gray-600">
+                                    <User size={14} className="text-gray-400 flex-shrink-0" />
+                                    <span className="truncate">
+                                        {pedido.clienteNombre || `Cliente #${pedido.clienteId}`}
+                                    </span>
+                                </div>
+                                <div className="flex items-center gap-2 text-sm text-gray-600">
+                                    <Calendar size={14} className="text-gray-400 flex-shrink-0" />
+                                    <span>{formatDateShort(pedido.fecha)}</span>
+                                </div>
+                            </div>
+
+                            {/* Total + Estado select + Ver */}
+                            <div className="flex items-center justify-between pt-3 border-t border-gray-100 gap-2">
+                                <div>
+                                    <p className="text-[10px] text-gray-400 uppercase font-bold">Total</p>
+                                    <p className="text-base font-black text-[#5b4eff]">
+                                        {formatPrice(pedido.total)}
+                                    </p>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <select
+                                        value={pedido.estado}
+                                        onChange={(e) => cambiarEstado(pedido.id, e.target.value)}
+                                        className={`px-2 py-1.5 rounded-lg text-xs font-bold ${getEstadoColor(pedido.estado)} border-0 cursor-pointer focus:outline-none`}
+                                    >
+                                        <option value="PENDIENTE">PENDIENTE</option>
+                                        <option value="PAGADO">PAGADO</option>
+                                        <option value="ENVIADO">ENVIADO</option>
+                                        <option value="ENTREGADO">ENTREGADO</option>
+                                        <option value="CANCELADO">CANCELADO</option>
+                                    </select>
+                                    <button
+                                        onClick={() => verDetalles(pedido)}
+                                        className="p-2 text-[#5b4eff] hover:bg-[#5b4eff]/10 rounded-lg transition"
+                                        aria-label="Ver detalles"
+                                    >
+                                        <Eye size={16} />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    ))
+                )}
+            </div>
+
+            {/* ==================== VISTA DESKTOP (TABLA ORIGINAL, SIN CAMBIOS) ==================== */}
+            <div className="hidden md:block bg-white rounded-xl shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full">
                         <thead className="bg-gray-50">
@@ -153,7 +242,7 @@ export default function ListaPedidos({ onRefresh }) {
                                 <tr key={pedido.id} className="hover:bg-gray-50">
                                     <td className="px-6 py-4 text-sm font-medium">Nº {pedido.id}</td>
                                     <td className="px-6 py-4 text-sm">{pedido.clienteNombre || `Cliente #${pedido.clienteId}`}</td>
-                                    <td className="px-6 py-4 text-sm">{formatDate(pedido.fecha)}</td>
+                                    <td className="px-6 py-4 text-sm">{formatDateLong(pedido.fecha)}</td>
                                     <td className="px-6 py-4 text-sm font-bold text-[#5b4eff]">{formatPrice(pedido.total)}</td>
                                     <td className="px-6 py-4">
                                         <select
@@ -197,7 +286,7 @@ export default function ListaPedidos({ onRefresh }) {
                         <div className="sticky top-0 bg-white p-6 border-b flex justify-between items-center">
                             <div>
                                 <h3 className="text-xl font-bold">Pedido {selectedPedido.id}</h3>
-                                <p className="text-sm text-gray-500 mt-1">{formatDate(selectedPedido.fecha)}</p>
+                                <p className="text-sm text-gray-500 mt-1">{formatDateLong(selectedPedido.fecha)}</p>
                             </div>
                             <button
                                 onClick={() => setShowDetalleModal(false)}
@@ -219,13 +308,14 @@ export default function ListaPedidos({ onRefresh }) {
                                         {getEstadoIcon(selectedPedido.estado)} {selectedPedido.estado}
                                     </span>
                                 </div>
+
                                 <div className="bg-gray-50 rounded-lg p-3">
                                     <p className="text-xs text-gray-500 uppercase">Total</p>
                                     <p className="font-bold text-xl text-[#5b4eff]">{formatPrice(selectedPedido.total)}</p>
                                 </div>
                                 <div className="bg-gray-50 rounded-lg p-3">
                                     <p className="text-xs text-gray-500 uppercase">Productos</p>
-                                    <p className="font-medium">{selectedPedido.detalles?.length || 0} Productos</p>
+                                    <p className="font-medium">{selectedPedido.detalles?.length || 0} </p>
                                 </div>
                             </div>
 

@@ -12,6 +12,7 @@ import NotificationBell from "./components/NotificationBell";
 // Componentes de navegación
 import NavBar from "./components/Navbar";
 
+
 // Páginas principales
 import Tienda from "./pages/tienda/Tienda";
 import Nosotros from "./pages/nosotros/Nosotros";
@@ -43,12 +44,15 @@ import NotificacionesWrapper from "./pages/notificaciones/NotificacionesWrapper"
 // Servicios para restauración de contraseña
 import ForgotPassword from "./pages/auth/ForgotPassword";
 import ResetPassword from "./pages/auth/ResetPassword";
+// Arriba de App.jsx
+//import { authService } from "./services/api";
 
-// Cierre de seción por inactividad
-// import { useInactivityLogout } from "./hooks/useInactivityLogout";
+import { useInactivityLogout } from "./hooks/useInactivityLogout";
+import InactivityWarningModal from "./components/InactivityWarningModal";
+
 
 import { PAYPAL_CLIENT_ID } from './config/apiConfig';
-//const PAYPAL_CLIENT_ID = "AdDS_NWdSZlLid9nJXduRqgzB6qej9M2mtnVhpTfi-G0QzZmbh0QXiNeWFgohS9ZHFdYLdhqY3XWIACS";
+
 const paypalOptions = {
   "client-id": PAYPAL_CLIENT_ID,
   currency: "USD",
@@ -65,6 +69,11 @@ function AppContent() {
   const location = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
 
+  const { showWarning, remainingTime, extendSession, warningMs } = useInactivityLogout(
+    15 * 60 * 1000,   // 15 minutos
+    60 * 1000          // 1 minuto
+    
+  );
   // Rutas donde NO se muestra el NavBar
   const hideNavBar = location.pathname.startsWith("/dashboard") ||
     location.pathname.startsWith("/login") ||
@@ -85,6 +94,7 @@ function AppContent() {
     }
   }, []);
 
+  {/* RUTA PRINCIPAL (HOME) 
   useEffect(() => {
     // Cerrar sesión cuando se cierra la ventana
     const handleBeforeUnload = () => {
@@ -96,7 +106,7 @@ function AppContent() {
     return () => {
       window.removeEventListener("beforeunload", handleBeforeUnload);
     };
-  }, []);
+  }, []);*/}
 
   return (
     <>
@@ -129,7 +139,7 @@ function AppContent() {
         <Route path="/nosotros" element={<Nosotros />} />
         <Route path="/servicioTec" element={<ServicioTec />} />
         <Route path="/login" element={<AuthPage />} />
-        
+
         <Route path="/perfil" element={<Perfil />} />
 
         <Route path="/cliente/pedido/:id" element={<ClientePedidoDetalle />} />
@@ -158,6 +168,22 @@ function AppContent() {
         {/* CAPTURADOR DE ERRORES 404 */}
         <Route path="*" element={<PageNotFound />} />
       </Routes>
+      {/* 👇 Modal de advertencia */}
+      {showWarning && (
+        <InactivityWarningModal
+          remainingTime={remainingTime}
+          warningMs={warningMs}
+          onExtend={extendSession}
+          onLogout={() => {
+            // Cerrar sesión inmediatamente
+            sessionStorage.setItem("logoutReason", "inactividad");
+            localStorage.removeItem("token");
+            localStorage.removeItem("usuario");
+            window.dispatchEvent(new Event("carrito-cambio-usuario"));
+            window.location.href = "/login";
+          }}
+        />
+      )}
     </>
   );
 }

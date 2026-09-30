@@ -178,6 +178,7 @@ export default function Reclamos() {
             Administra los reclamos de todos los clientes
           </p>
         </div>
+        
         <button
           onClick={cargarReclamos}
           className="w-full sm:w-auto px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl text-sm font-semibold hover:bg-gray-50 transition flex items-center justify-center gap-2"

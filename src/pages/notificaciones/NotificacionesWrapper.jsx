@@ -4,6 +4,7 @@ import { authService } from '../../services/api';
 import Admin from '../admin/Admin';
 import Vendedor from '../vendedor/Vendedor';
 import Tecnico from '../tecnico/Tecnico';
+import Perfil from '../perfil/Perfil';
 import Notificaciones from './Notificaciones';
 
 export default function NotificacionesWrapper() {
@@ -20,6 +21,9 @@ export default function NotificacionesWrapper() {
     }
     if (rol === 'TECNICO') {
         return <Tecnico childrenOverride={contenido} />;
+    }
+    if (rol === 'CLIENTE' || rol === 'USER' || !rol) {
+        return <Perfil childrenOverride={contenido} />;
     }
 
     return <Notificaciones />;
