@@ -227,8 +227,11 @@ export const authService = {
       window.dispatchEvent(new Event("usuario-cambio"));
     }
 
+
     return response;
   },
+
+
 
   register: async (data) => {
     return await apiService.post("/auth/register", {
@@ -472,9 +475,9 @@ export const reclamoService = {
   subirEvidencia: (reclamoId, formData) => apiService.upload(`/reclamos/${reclamoId}/evidencias`, formData),
 
   eliminarEvidencia: (evidenciaId) => apiService.delete(`/reclamo-evidencias/${evidenciaId}`),
-  subirMultiplesEvidencias: (reclamoId, formData) => 
+  subirMultiplesEvidencias: (reclamoId, formData) =>
     apiService.upload(`/reclamos/${reclamoId}/evidencias-multiple`, formData),
-  
+
   // ✅ NUEVO: buscar reclamos por pedido
   buscarPorPedido: (pedidoId) => apiService.get(`/reclamos/pedido/${pedidoId}`),
   cancelar: (id) => apiService.patch(`/reclamos/${id}/cancelar`, {}),

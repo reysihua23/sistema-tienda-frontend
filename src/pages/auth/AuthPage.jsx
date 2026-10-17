@@ -360,9 +360,9 @@ export default function AuthPage() {
           telefono: formData.phone
         };
 
-        await authService.register(registerData);
-
-        showSuccess("¡Cuenta creada exitosamente! Ahora puedes iniciar sesión.");
+        const response = await authService.register(registerData);
+        // ✅ Usamos el mensaje que envía el backend (sea "Cuenta creada" o "Bienvenido de vuelta")
+        showSuccess(response.message || "¡Cuenta creada exitosamente! Ahora puedes iniciar sesión.");
 
         setTimeout(() => {
           setIsLogin(true);
