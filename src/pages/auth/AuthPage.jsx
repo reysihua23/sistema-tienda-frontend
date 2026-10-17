@@ -26,6 +26,14 @@ const styles = `
   .animate-fade-in { animation: fadeIn 0.5s ease-out; }
   .animate-slide-in { animation: slideIn 0.4s ease-out; }
   .error-shake { animation: shake 0.4s ease-in-out; }
+  
+  input::-ms-reveal,
+  input::-ms-clear {
+    display: none;
+  }
+  input[type="password"]::-webkit-textfield-decoration-container {
+    display: none;
+  }
 `;
 
 export default function AuthPage() {
@@ -549,7 +557,7 @@ export default function AuthPage() {
                   onChange={handlePasswordChange}
                   onFocus={() => setFocusedField("password")}
                   onBlur={() => setFocusedField(null)}
-                  className="w-full pl-12 pr-12 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:border-[#5b4eff] focus:outline-none focus:ring-2 focus:ring-[#5b4eff]/20 transition-all"
+                  className="w-full pl-12 pr-10 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:border-[#5b4eff] focus:outline-none focus:ring-2 focus:ring-[#5b4eff]/20 transition-all"
                   required
                 />
                 <button
@@ -601,7 +609,7 @@ export default function AuthPage() {
                     onChange={handleChange}
                     onFocus={() => setFocusedField("confirmPassword")}
                     onBlur={() => setFocusedField(null)}
-                    className="w-full pl-12 pr-12 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:border-[#5b4eff] focus:outline-none focus:ring-2 focus:ring-[#5b4eff]/20 transition-all"
+                    className="w-full pl-12 pr-10 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:border-[#5b4eff] focus:outline-none focus:ring-2 focus:ring-[#5b4eff]/20 transition-all"
                     required
                   />
                   <button
