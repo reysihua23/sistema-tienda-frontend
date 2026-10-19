@@ -1,7 +1,7 @@
 // src/pages/admin/components/ProductoForm.jsx
 import React, { useState, useEffect, useRef } from "react";
 import ImageAnalysis from './ImageAnalysis';
-import { productoService, stockService } from "../../../services/api";
+import { productoService, stockService, productoImagenService } from "../../../services/api";
 import { API_URL } from "../../../config/apiConfig";
 import {
     X, Package, DollarSign, Box, AlertTriangle,
@@ -19,6 +19,10 @@ export default function ProductoForm({ editingProduct, onClose, onRefresh }) {
     const [notification, setNotification] = useState(null);
     const [uploadedImages, setUploadedImages] = useState([]);
     const [previewUrls, setPreviewUrls] = useState([]);
+    
+    // ✅ Estado para guardar las imágenes que ya están en la base de datos
+    const [imagenesExistentes, setImagenesExistentes] = useState([]);
+    
     const [uploadingImages, setUploadingImages] = useState(false);
     const [errors, setErrors] = useState({});
     const [touched, setTouched] = useState({});
@@ -40,6 +44,22 @@ export default function ProductoForm({ editingProduct, onClose, onRefresh }) {
     });
 
     const fileInputRef = useRef(null);
+
+    // ✅ NUEVO: Cargar las imágenes existentes al abrir el formulario en modo Edición
+    useEffect(() => {
+        if (editingProduct?.id) {
+            const cargarImagenes = async () => {
+                try {
+                    // Usamos buscarPorProducto (el nombre real en tu api.js)
+                    const imagenes = await productoImagenService.buscarPorProducto(editingProduct.id);
+                    setImagenesExistentes(imagenes || []);
+                } catch (error) {
+                    console.error("Error al cargar imágenes existentes:", error);
+                }
+            };
+            cargarImagenes();
+        }
+    }, [editingProduct]);
 
     // Limpiar URLs al desmontar
     useEffect(() => {
@@ -149,7 +169,6 @@ export default function ProductoForm({ editingProduct, onClose, onRefresh }) {
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
 
-        // ✅ Si es precio, recalcular descuento si está activo
         if (name === "precio" && productForm.descuentoActivo && productForm.porcentajeDescuento > 0) {
             const nuevoPrecio = parseFloat(value) || 0;
             const descuentoCalc = calcularPrecioConDescuento(nuevoPrecio, productForm.porcentajeDescuento);
@@ -164,7 +183,6 @@ export default function ProductoForm({ editingProduct, onClose, onRefresh }) {
             return;
         }
 
-        // ✅ Si es descuento, recalcular precio
         if (name === "porcentajeDescuento" && productForm.descuentoActivo) {
             const porcentaje = parseFloat(value) || 0;
             const precioOriginal = parseFloat(productForm.precio) || 0;
@@ -180,7 +198,6 @@ export default function ProductoForm({ editingProduct, onClose, onRefresh }) {
             return;
         }
 
-        // ✅ Si se activa/desactiva descuento
         if (name === "descuentoActivo") {
             if (!checked) {
                 setProductForm(prev => ({
@@ -243,12 +260,10 @@ export default function ProductoForm({ editingProduct, onClose, onRefresh }) {
         };
     };
 
-    // ✅ handleAddImage - SOLO 1 IMAGEN A LA VEZ
     const handleAddImage = (e) => {
         const files = Array.from(e.target.files);
         if (files.length === 0) return;
 
-        // ✅ Restringir a UNA sola imagen
         if (files.length > 1) {
             showNotification(
                 "warning",
@@ -264,7 +279,6 @@ export default function ProductoForm({ editingProduct, onClose, onRefresh }) {
 
         const file = files[0];
 
-        // Validar límite total
         const totalImages = uploadedImages.length + 1;
         if (totalImages > 10) {
             showNotification("warning", "Límite excedido", `Máximo 10 imágenes por producto. Actualmente tienes ${uploadedImages.length}.`);
@@ -274,7 +288,6 @@ export default function ProductoForm({ editingProduct, onClose, onRefresh }) {
             return;
         }
 
-        // Validar tamaño
         const maxSize = 5 * 1024 * 1024;
         if (file.size > maxSize) {
             showNotification("warning", "Archivo muy grande", `${file.name} excede el límite de 5MB`);
@@ -284,7 +297,6 @@ export default function ProductoForm({ editingProduct, onClose, onRefresh }) {
             return;
         }
 
-        // Validar formato
         const validTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
         if (!validTypes.includes(file.type)) {
             showNotification("warning", "Formato no válido", `${file.name} no es una imagen válida. Formatos: JPG, PNG, WEBP`);
@@ -294,7 +306,6 @@ export default function ProductoForm({ editingProduct, onClose, onRefresh }) {
             return;
         }
 
-        // ✅ Abrir análisis para la imagen
         setPendingImage(file);
         setShowAnalysis(true);
 
@@ -303,7 +314,6 @@ export default function ProductoForm({ editingProduct, onClose, onRefresh }) {
         }
     };
 
-    // ✅ Función para manejar imagen aceptada
     const handleImageAccepted = (processedImage) => {
         const file = processedImage || pendingImage;
 
@@ -321,7 +331,6 @@ export default function ProductoForm({ editingProduct, onClose, onRefresh }) {
         showNotification("success", "Imagen aprobada", "La imagen ha sido procesada y agregada correctamente");
     };
 
-    // ✅ Función para cancelar análisis
     const handleAnalysisCancel = () => {
         setShowAnalysis(false);
         setPendingImage(null);
@@ -391,7 +400,6 @@ export default function ProductoForm({ editingProduct, onClose, onRefresh }) {
                 activo: productForm.activo,
                 stock: parseInt(productForm.stock) || 0,
                 categoria: productForm.categoria || "otros",
-                // ✅ Campos de descuento
                 porcentajeDescuento: productForm.descuentoActivo ? parseFloat(productForm.porcentajeDescuento) : 0,
                 precioDescuento: productForm.descuentoActivo ? parseFloat(productForm.precioDescuento) : 0,
                 descuentoActivo: productForm.descuentoActivo,
@@ -401,6 +409,15 @@ export default function ProductoForm({ editingProduct, onClose, onRefresh }) {
 
             if (editingProduct) {
                 await productoService.actualizar(editingProduct.id, productoData);
+                
+                // ✅ Subir imágenes nuevas si el usuario seleccionó alguna al editar
+                if (uploadedImages.length > 0) {
+                    setUploadingImages(true);
+                    showNotification("info", "Subiendo imágenes", `Subiendo ${uploadedImages.length} imagen(es) nueva(s)...`);
+                    await uploadImages(editingProduct.id, uploadedImages);
+                    setUploadingImages(false);
+                }
+
                 showNotification("success", "¡Actualizado!", "Producto actualizado correctamente");
                 setTimeout(() => {
                     onRefresh();
@@ -855,101 +872,120 @@ export default function ProductoForm({ editingProduct, onClose, onRefresh }) {
                                 )}
                             </div>
 
-                            {/* Imágenes */}
-                            {!editingProduct && (
-                                <div>
-                                    <label className="block text-xs font-black text-gray-500 uppercase tracking-wider mb-1.5 flex items-center gap-1">
-                                        <Image size={12} />
-                                        Imágenes del Producto <span className="text-rose-500">*</span>
-                                    </label>
+                            {/* ✅ SECCIÓN DE IMÁGENES (UNIFICADA) */}
+                            <div>
+                                <label className="block text-xs font-black text-gray-500 uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                                    <Image size={12} />
+                                    Imágenes del Producto {!editingProduct && <span className="text-rose-500">*</span>}
+                                </label>
 
-                                    <div className={`border-2 border-dashed rounded-xl p-4 text-center hover:border-[#5b4eff] transition-all hover:bg-gray-50 cursor-pointer group ${errors.imagenes ? "border-rose-500 bg-rose-50" : "border-gray-200"
-                                        }`}>
-                                        <input
-                                            type="file"
-                                            accept="image/jpeg,image/jpg,image/png,image/webp"
-                                            multiple
-                                            ref={fileInputRef}
-                                            onChange={handleAddImage}
-                                            className="hidden"
-                                            id="image-upload"
-                                        />
-                                        <label htmlFor="image-upload" className="cursor-pointer flex flex-col items-center gap-2">
-                                            <Upload size={32} className="text-gray-400 group-hover:scale-110 transition-transform group-hover:text-[#5b4eff]" />
-                                            <span className="text-sm text-gray-500 font-medium">Haz clic para subir imágenes</span>
-                                            <span className="text-xs text-gray-400">Puedes seleccionar múltiples imágenes (JPG, PNG, WEBP hasta 5MB)</span>
-                                        </label>
-                                    </div>
-
-                                    {errors.imagenes && (
-                                        <p className="text-xs text-rose-500 mt-1 flex items-center gap-1">
-                                            <AlertCircle size={10} /> {errors.imagenes}
+                                {/* ✅ Miniaturas de imágenes existentes (si estamos editando) */}
+                                {editingProduct && imagenesExistentes.length > 0 && (
+                                    <div className="mb-4">
+                                        <p className="text-xs font-bold text-gray-500 mb-2 flex items-center gap-1">
+                                            <Camera size={12} /> Imágenes actuales:
                                         </p>
-                                    )}
-
-                                    {previewUrls.length > 0 && previewUrls.length < 10 && (
-                                        <button
-                                            type="button"
-                                            onClick={() => fileInputRef.current?.click()}
-                                            className="mt-3 w-full py-2 text-sm text-[#5b4eff] border border-[#5b4eff] rounded-xl hover:bg-[#5b4eff] hover:text-white transition-all flex items-center justify-center gap-2"
-                                        >
-                                            <Plus size={14} /> Agregar más imágenes ({previewUrls.length}/10)
-                                        </button>
-                                    )}
-
-                                    {previewUrls.length > 0 && (
-                                        <div className="mt-4">
-                                            <div className="flex items-center justify-between mb-3">
-                                                <p className="text-xs font-bold text-gray-500 flex items-center gap-2">
-                                                    <Camera size={12} /> {previewUrls.length} / 10 imagen(es) seleccionada(s)
-                                                </p>
-                                                <p className="text-[10px] text-green-600 flex items-center gap-1">
-                                                    <Star size={10} /> La primera será la principal
-                                                </p>
-                                            </div>
-
-                                            <div className="flex flex-wrap gap-3 max-h-48 overflow-y-auto p-2 bg-gray-50 rounded-xl">
-                                                {previewUrls.map((url, idx) => (
-                                                    <div key={idx} className="relative group flex-shrink-0">
-                                                        <img
-                                                            src={url}
-                                                            alt={`preview-${idx}`}
-                                                            className="w-20 h-20 object-cover rounded-xl border-2 border-gray-200 group-hover:border-[#5b4eff] transition-all"
-                                                        />
-
-                                                        {idx === 0 && (
-                                                            <span className="absolute top-1 left-1 bg-gradient-to-r from-emerald-500 to-green-600 text-white text-[10px] px-2 py-0.5 rounded-full shadow-lg flex items-center gap-0.5">
-                                                                <Star size={8} /> Principal
-                                                            </span>
-                                                        )}
-
-                                                        {idx > 0 && (
-                                                            <span className="absolute bottom-1 right-1 bg-black/60 text-white text-[9px] px-1.5 py-0.5 rounded-full">
-                                                                #{idx + 1}
-                                                            </span>
-                                                        )}
-
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => removeImage(idx)}
-                                                            className="absolute -top-2 -right-2 bg-rose-500 text-white rounded-full w-6 h-6 text-xs flex items-center justify-center hover:bg-rose-600 hover:scale-110 transition-all shadow-lg opacity-0 group-hover:opacity-100"
-                                                            title="Eliminar imagen"
-                                                        >
-                                                            <Trash2 size={10} />
-                                                        </button>
-                                                    </div>
-                                                ))}
-                                            </div>
+                                        <div className="flex flex-wrap gap-2">
+                                            {imagenesExistentes.map((img) => (
+                                                <div key={img.id} className="relative group">
+                                                    <img
+                                                        src={img.urlImagen.startsWith('http') ? img.urlImagen : `${API_URL}${img.urlImagen}`}
+                                                        alt="Imagen actual"
+                                                        className="w-16 h-16 object-cover rounded-lg border border-gray-200"
+                                                    />
+                                                </div>
+                                            ))}
                                         </div>
-                                    )}
+                                    </div>
+                                )}
 
-                                    {previewUrls.length === 0 && (
-                                        <p className="text-xs text-amber-500 mt-2 flex items-center gap-1">
-                                            <AlertTriangle size={10} /> Es obligatorio agregar al menos una imagen
-                                        </p>
-                                    )}
+                                <div className={`border-2 border-dashed rounded-xl p-4 text-center hover:border-[#5b4eff] transition-all hover:bg-gray-50 cursor-pointer group ${errors.imagenes ? "border-rose-500 bg-rose-50" : "border-gray-200"
+                                    }`}>
+                                    <input
+                                        type="file"
+                                        accept="image/jpeg,image/jpg,image/png,image/webp"
+                                        multiple
+                                        ref={fileInputRef}
+                                        onChange={handleAddImage}
+                                        className="hidden"
+                                        id="image-upload"
+                                    />
+                                    <label htmlFor="image-upload" className="cursor-pointer flex flex-col items-center gap-2">
+                                        <Upload size={32} className="text-gray-400 group-hover:scale-110 transition-transform group-hover:text-[#5b4eff]" />
+                                        <span className="text-sm text-gray-500 font-medium">Haz clic para subir imágenes</span>
+                                        <span className="text-xs text-gray-400">Puedes seleccionar múltiples imágenes (JPG, PNG, WEBP hasta 5MB)</span>
+                                    </label>
                                 </div>
-                            )}
+
+                                {errors.imagenes && (
+                                    <p className="text-xs text-rose-500 mt-1 flex items-center gap-1">
+                                        <AlertCircle size={10} /> {errors.imagenes}
+                                    </p>
+                                )}
+
+                                {previewUrls.length > 0 && previewUrls.length < 10 && (
+                                    <button
+                                        type="button"
+                                        onClick={() => fileInputRef.current?.click()}
+                                        className="mt-3 w-full py-2 text-sm text-[#5b4eff] border border-[#5b4eff] rounded-xl hover:bg-[#5b4eff] hover:text-white transition-all flex items-center justify-center gap-2"
+                                    >
+                                        <Plus size={14} /> Agregar más imágenes ({previewUrls.length}/10)
+                                    </button>
+                                )}
+
+                                {previewUrls.length > 0 && (
+                                    <div className="mt-4">
+                                        <div className="flex items-center justify-between mb-3">
+                                            <p className="text-xs font-bold text-gray-500 flex items-center gap-2">
+                                                <Camera size={12} /> {previewUrls.length} / 10 imagen(es) seleccionada(s)
+                                            </p>
+                                            <p className="text-[10px] text-green-600 flex items-center gap-1">
+                                                <Star size={10} /> La primera será la principal
+                                            </p>
+                                        </div>
+
+                                        <div className="flex flex-wrap gap-3 max-h-48 overflow-y-auto p-2 bg-gray-50 rounded-xl">
+                                            {previewUrls.map((url, idx) => (
+                                                <div key={idx} className="relative group flex-shrink-0">
+                                                    <img
+                                                        src={url}
+                                                        alt={`preview-${idx}`}
+                                                        className="w-20 h-20 object-cover rounded-xl border-2 border-gray-200 group-hover:border-[#5b4eff] transition-all"
+                                                    />
+
+                                                    {/* ✅ Solo marcamos como principal si es nuevo producto o si no tenía imágenes */}
+                                                    {idx === 0 && (!editingProduct || imagenesExistentes.length === 0) && (
+                                                        <span className="absolute top-1 left-1 bg-gradient-to-r from-emerald-500 to-green-600 text-white text-[10px] px-2 py-0.5 rounded-full shadow-lg flex items-center gap-0.5">
+                                                            <Star size={8} /> Principal
+                                                        </span>
+                                                    )}
+
+                                                    {idx > 0 && (
+                                                        <span className="absolute bottom-1 right-1 bg-black/60 text-white text-[9px] px-1.5 py-0.5 rounded-full">
+                                                            #{idx + 1}
+                                                        </span>
+                                                    )}
+
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => removeImage(idx)}
+                                                        className="absolute -top-2 -right-2 bg-rose-500 text-white rounded-full w-6 h-6 text-xs flex items-center justify-center hover:bg-rose-600 hover:scale-110 transition-all shadow-lg opacity-0 group-hover:opacity-100"
+                                                        title="Eliminar imagen"
+                                                    >
+                                                        <Trash2 size={10} />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {!editingProduct && previewUrls.length === 0 && (
+                                    <p className="text-xs text-amber-500 mt-2 flex items-center gap-1">
+                                        <AlertTriangle size={10} /> Es obligatorio agregar al menos una imagen
+                                    </p>
+                                )}
+                            </div>
 
                             {/* Botones */}
                             <div className="flex gap-3 pt-4">
@@ -959,13 +995,9 @@ export default function ProductoForm({ editingProduct, onClose, onRefresh }) {
                                     className={`flex-1 py-3 bg-gradient-to-r from-[#5b4eff] to-[#4a3dcc] text-white rounded-xl font-bold text-sm uppercase tracking-wider transition-all duration-300 flex items-center justify-center gap-2 ${loading || uploadingImages ? "opacity-50 cursor-not-allowed" : "hover:shadow-lg hover:scale-105"
                                         }`}
                                 >
-                                    {loading ? (
+                                    {loading || uploadingImages ? (
                                         <>
-                                            <Loader2 size={16} className="animate-spin" /> Guardando...
-                                        </>
-                                    ) : uploadingImages ? (
-                                        <>
-                                            <Upload size={16} className="animate-pulse" /> Subiendo imágenes...
+                                            <Loader2 size={16} className="animate-spin" /> {uploadingImages ? "Subiendo..." : "Guardando..."}
                                         </>
                                     ) : (
                                         <>
