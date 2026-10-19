@@ -56,10 +56,11 @@ export default function ProductosList({ productos, onRefresh, showMessage }) {
         if (productToDelete) {
             try {
                 await productoService.eliminar(productToDelete.id);
-                showMessage("success", ` "${productToDelete.nombre}" eliminado correctamente`);
+                // ✅ Mensaje actualizado para reflejar el Soft Delete
+                showMessage("success", `"${productToDelete.nombre}" ha sido desactivado del catálogo`);
                 onRefresh();
             } catch (error) {
-                showMessage("error", " Error al eliminar producto");
+                showMessage("error", "Error al eliminar producto");
             } finally {
                 setShowConfirm(false);
                 setProductToDelete(null);
@@ -87,9 +88,10 @@ export default function ProductosList({ productos, onRefresh, showMessage }) {
                     setProductToDelete(null);
                 }}
                 onConfirm={handleConfirmDelete}
-                title="¿Eliminar producto?"
-                message={`¿Estás seguro de que deseas eliminar "${productToDelete?.nombre}"? Esta acción no se puede deshacer.`}
-                confirmText="Eliminar"
+                title="¿Desactivar producto?"
+                // ✅ Mensaje actualizado para reflejar el Soft Delete
+                message={`¿Estás seguro de que deseas desactivar "${productToDelete?.nombre}"? Ya no se mostrará en la tienda, pero conservarás su historial de ventas.`}
+                confirmText="Desactivar"
                 cancelText="Cancelar"
             />
 
@@ -113,13 +115,15 @@ export default function ProductosList({ productos, onRefresh, showMessage }) {
             )}
 
             <div className="bg-white rounded-xl shadow overflow-x-auto">
-                <table className="w-full min-w-[600px]">
+                <table className="w-full min-w-[700px]">
                     <thead className="bg-gray-50">
                         <tr>
                             <th className="px-6 py-3 text-left text-xs font-bold text-gray-500">Nº</th>
                             <th className="px-6 py-3 text-left text-xs font-bold text-gray-500">Nombre</th>
                             <th className="px-6 py-3 text-left text-xs font-bold text-gray-500">Precio</th>
                             <th className="px-6 py-3 text-left text-xs font-bold text-gray-500">Stock</th>
+                            {/* ✅ NUEVA COLUMNA: Estado */}
+                            <th className="px-6 py-3 text-left text-xs font-bold text-gray-500">Estado</th>
                             <th className="px-6 py-3 text-left text-xs font-bold text-gray-500">Acciones</th>
                         </tr>
                     </thead>
@@ -140,13 +144,28 @@ export default function ProductosList({ productos, onRefresh, showMessage }) {
                                         {producto.stock || 0} unidades
                                     </span>
                                 </td>
+                                {/* ✅ NUEVO: Mostrar el estado Activo/Inactivo */}
+                                <td className="px-6 py-4">
+                                    {producto.activo !== false ? (
+                                        <span className="px-2 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700">
+                                            Activo
+                                        </span>
+                                    ) : (
+                                        <span className="px-2 py-1 rounded-full text-xs font-bold bg-gray-200 text-gray-600">
+                                            Inactivo
+                                        </span>
+                                    )}
+                                </td>
                                 <td className="px-6 py-4 space-x-2">
                                     <button onClick={() => handleEdit(producto)} className="text-blue-500 hover:text-blue-700 text-sm">
                                         Editar
                                     </button>
-                                    <button onClick={() => handleDeleteClick(producto)} className="text-red-500 hover:text-red-700 text-sm">
-                                        Eliminar
-                                    </button>
+                                    {/* ✅ Ocultar el botón de Eliminar si ya está inactivo */}
+                                    {producto.activo !== false && (
+                                        <button onClick={() => handleDeleteClick(producto)} className="text-red-500 hover:text-red-700 text-sm">
+                                            Eliminar
+                                        </button>
+                                    )}
                                 </td>
                             </tr>
                         ))}
