@@ -5,10 +5,7 @@
 // services/api.js
 import { API_URL } from '../config/apiConfig';
 
-//const BASE_URL = "http://localhost:8080/api";
 
-// local para que funcione en celular
-//const BASE_URL = `http://${window.location.hostname}:8080/api`;
 const BASE_URL = API_URL;
 export const apiService = {
   /**
@@ -16,7 +13,7 @@ export const apiService = {
    */
   post: async (endpoint, data) => {
     try {
-      const token = localStorage.getItem("token");
+      const token = sessionStorage.getItem("token") || localStorage.getItem("token");
       console.log(`🔵 POST ${endpoint}`);
       console.log(`🔵 Token: ${token ? token.substring(0, 50) + "..." : "NO HAY TOKEN"}`);
       console.log(`🔵 Data:`, data);
@@ -64,7 +61,7 @@ export const apiService = {
    */
   get: async (endpoint) => {
     try {
-      const token = localStorage.getItem("token");
+      const token = sessionStorage.getItem("token") || localStorage.getItem("token");
 
       const response = await fetch(`${BASE_URL}${endpoint}`, {
         method: "GET",
@@ -95,7 +92,7 @@ export const apiService = {
    */
   put: async (endpoint, data) => {
     try {
-      const token = localStorage.getItem("token");
+      const token = sessionStorage.getItem("token") || localStorage.getItem("token");
 
       const response = await fetch(`${BASE_URL}${endpoint}`, {
         method: "PUT",
@@ -127,7 +124,7 @@ export const apiService = {
    */
   delete: async (endpoint) => {
     try {
-      const token = localStorage.getItem("token");
+      const token = sessionStorage.getItem("token") || localStorage.getItem("token");
 
       const response = await fetch(`${BASE_URL}${endpoint}`, {
         method: "DELETE",
@@ -152,7 +149,7 @@ export const apiService = {
    */
   patch: async (endpoint, data) => {
     try {
-      const token = localStorage.getItem("token");
+      const token = sessionStorage.getItem("token") || localStorage.getItem("token");
 
       const response = await fetch(`${BASE_URL}${endpoint}`, {
         method: "PATCH",
@@ -181,7 +178,7 @@ export const apiService = {
 
   // para subir archivos (imágenes)
   upload: async (endpoint, formData) => {
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token") || localStorage.getItem("token");
     const response = await fetch(`${BASE_URL}${endpoint}`, {
       method: "POST",
       headers: {
@@ -303,7 +300,7 @@ export const authService = {
   },
 
   isAuthenticated: () => {
-    return localStorage.getItem("token") !== null;
+    return sessionStorage.getItem("token") !== null;
   },
 
   hasRole: (rol) => {
@@ -357,7 +354,7 @@ export const stockService = {
 
   // ✅ Reducir stock después de una compra (endpoint para clientes)
   reducirStockCompra: async (productoId, cantidad) => {
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
 
     const response = await fetch(`${API_URL}/stock/comprar/${productoId}?cantidad=${cantidad}`, {
       method: "PATCH",
@@ -562,7 +559,7 @@ export const usuarioService = {
 
   // ✅ NUEVO: Obtener perfil del usuario autenticado
   getPerfil: async () => {
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
     const response = await fetch(`${API_URL}/usuarios/perfil`, {
       method: "GET",
       headers: {

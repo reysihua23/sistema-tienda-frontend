@@ -233,7 +233,7 @@ export default function DashboardTecnico({ user }) {
             <div className="flex flex-col lg:flex-row lg:items-center gap-2 lg:gap-3 mb-4">
 
                 {/* PANEL 1: Saludo + fecha (ancho natural, no crece) */}
-                <div className="bg-gradient-to-br from-[#5b4eff] to-[#4a3dcc] rounded-2xl shadow-md px-4 sm:px-5 py-3 flex-shrink-0 flex flex-col justify-center relative overflow-hidden">
+                <div className="bg-gradient-to-br from-[#5b4eff] to-[#4a3dcc] rounded-2xl shadow-md px-4 sm:px-12 py-3 flex-shrink-0 flex flex-col justify-center relative overflow-hidden">
                     {/* Decoración circular */}
                     <div className="absolute top-0 right-0 w-24 h-24 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
 
@@ -253,18 +253,18 @@ export default function DashboardTecnico({ user }) {
                 {/* PANEL 2: Stats (contenedor con 2 cajas internas) */}
                 <div className="bg-gradient-to-br from-[#5b4eff] to-[#4a3dcc] rounded-2xl shadow-md p-2 flex items-center gap-2 flex-shrink-0">
                     {/* Caja interna: Servicios */}
-                    <div className="bg-white/15 backdrop-blur-sm rounded-xl px-3 sm:px-4 py-2 flex flex-col justify-center items-center min-w-[80px] sm:min-w-[95px]">
-                        <p className="text-[10px] text-purple-100 uppercase tracking-wider font-semibold">Servicios</p>
+                    <div className="bg-white/15 backdrop-blur-sm rounded-xl px-3 sm:px-8 py-2 flex flex-col justify-center items-center min-w-[80px] sm:min-w-[95px]">
+                        <p className="text-[10px] text-purple-100 uppercase tracking-wider font-semibold">Servicios totales</p>
                         <p className="text-xl sm:text-2xl font-bold text-white leading-tight mt-0.5">{stats.total}</p>
                     </div>
 
-                    {/* Caja interna: Activos */}
+                    {/* Caja interna: Activos 
                     <div className="bg-white/15 backdrop-blur-sm rounded-xl px-3 sm:px-4 py-2 flex flex-col justify-center items-center min-w-[80px] sm:min-w-[95px]">
                         <p className="text-[10px] text-purple-100 uppercase tracking-wider font-semibold">Activos</p>
                         <p className="text-xl sm:text-2xl font-bold text-white leading-tight mt-0.5">
                             {stats.recibidos + stats.enRevision + stats.enProceso}
                         </p>
-                    </div>
+                    </div>*/}
                 </div>
             </div>
 

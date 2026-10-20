@@ -102,6 +102,7 @@ export const useServicios = () => {
         actualizarFiltros,
         limpiarFiltros,
         cargarServicios,
+        recargar: cargarServicios,
         cambiarEstado,
         agregarDiagnostico,
         crearServicio

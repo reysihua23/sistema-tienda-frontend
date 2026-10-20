@@ -4,9 +4,9 @@ import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { authService } from "../../services/api";
 import DashboardTecnico from "./components/DashboardTecnico";
 import ListaServicios from "./components/ListaServicios";
-import NuevoServicio from "./components/NuevoServicio";
-import HistorialServicios from "./components/HistorialServicios";
+
 import NotificationBell from "../../components/NotificationBell";
+import NuevoServicioTecnico from "./components/NuevoServicioTecnico";
 import {
     BarChart3, Wrench, ClipboardList, Plus, LogOut,
     RefreshCw, CheckCircle, AlertCircle, X
@@ -119,8 +119,8 @@ export default function Tecnico({ childrenOverride }) {
     const tabs = [
         { id: "dashboard", label: "Dashboard", icon: <BarChart3 size={16} /> },
         { id: "servicios", label: "Servicios Activos", icon: <Wrench size={16} /> },
-        { id: "historial", label: "Historial", icon: <ClipboardList size={16} /> },
         { id: "nuevo", label: "Nuevo Servicio", icon: <Plus size={16} /> },
+    
     ];
 
     return (
@@ -221,9 +221,9 @@ export default function Tecnico({ childrenOverride }) {
                     <div key={`${activeTab}-${refreshKey}`} className="animate-fade-in">
                         {activeTab === "dashboard" && <DashboardTecnico user={user} />}
                         {activeTab === "servicios" && <ListaServicios />}
-                        {activeTab === "historial" && <HistorialServicios />}
+                        
                         {activeTab === "nuevo" && (
-                            <NuevoServicio onSuccess={() => setActiveTab("servicios")} />
+                            <NuevoServicioTecnico onSuccess={() => setActiveTab("servicios")} />
                         )}
                     </div>
                 )}

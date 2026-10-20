@@ -175,6 +175,8 @@ export default function ListaServicios() {
     // ═════════════════════════════════════════════════════════
     const serviciosFiltrados = useMemo(() => {
         let lista = servicios.filter(s => {
+            const esActivo = s.activo !== false && s.activo !== 0 && s.activo !== "0";
+            if (!esActivo) return false;
             const matchEstado = filtroEstado === "todos" || s.estado === filtroEstado;
             const matchCliente = searchCliente === "" ||
                 (s.clienteNombre && s.clienteNombre.toLowerCase().includes(searchCliente.toLowerCase()));

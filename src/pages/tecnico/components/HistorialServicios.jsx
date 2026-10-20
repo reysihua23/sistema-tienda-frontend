@@ -1,27 +1,17 @@
-// pages/tecnico/components/HistorialServicios.jsx
+// admin/components/HistorialServiciosTecnicos.jsx
 import React, { useState, useMemo } from "react";
-import { useServicios } from "../hooks/useServicios";
-import DetalleServicioHistorial from "./DetalleServicioHistorial";
+import { useServicios } from "../../tecnico/hooks/useServicios";
+import NuevoServicio from "../../tecnico/components/NuevoServicio"; // ✅ Importamos el formulario
+import DetalleServicioHistorial from "../../tecnico/components/DetalleServicioHistorial";
 import {
-    ClipboardList, Search, Wrench, CheckCircle2, PackageCheck,
-    FileText, Coins, TrendingUp, Activity, Eye,
-    ChevronDown, ChevronUp, ArrowRight, Inbox
+    ClipboardList, Wrench, CheckCircle2, PackageCheck,
+    FileText, Coins, Activity, Eye, Plus, X, Search, Inbox,
+    Trash2
 } from "lucide-react";
 
 // =====================================================
-// Helpers de estado (iconos Lucide)
+// Helpers
 // =====================================================
-const getEstadoIcon = (estado, size = 16) => {
-    const icons = {
-        "RECIBIDO": <ClipboardList size={size} />,
-        "EN_REVISION": <Search size={size} />,
-        "EN_PROCESO": <Wrench size={size} />,
-        "FINALIZADO": <CheckCircle2 size={size} />,
-        "ENTREGADO": <PackageCheck size={size} />
-    };
-    return icons[estado] || <FileText size={size} />;
-};
-
 const getEstadoColor = (estado) => {
     const colores = {
         "RECIBIDO": "bg-amber-100 text-amber-700",
@@ -33,52 +23,63 @@ const getEstadoColor = (estado) => {
     return colores[estado] || "bg-gray-100 text-gray-700";
 };
 
-const getEstadoBg = (estado) => {
-    const bg = {
-        "RECIBIDO": "#FEF3C7",
-        "EN_REVISION": "#DBEAFE",
-        "EN_PROCESO": "#F3E8FF",
-        "FINALIZADO": "#D1FAE5",
-        "ENTREGADO": "#D1FAE5"
+const getEstadoIcon = (estado, size = 14) => {
+    const icons = {
+        "RECIBIDO": <ClipboardList size={size} />,
+        "EN_REVISION": <Search size={size} />,
+        "EN_PROCESO": <Wrench size={size} />,
+        "FINALIZADO": <CheckCircle2 size={size} />,
+        "ENTREGADO": <PackageCheck size={size} />
     };
-    return bg[estado] || "#F3F4F6";
+    return icons[estado] || <FileText size={size} />;
 };
 
-// =====================================================
-// Componente principal
-// =====================================================
-export default function HistorialServicios() {
-    const { servicios, loading, error } = useServicios();
+export default function HistorialServiciosTecnicos() {
+    // ✅ Obtenemos 'recargar' del hook para actualizar la tabla
+    const { servicios, loading, error, recargar } = useServicios(); 
     const [servicioSeleccionado, setServicioSeleccionado] = useState(null);
-    const [showModal, setShowModal] = useState(false);
-    const [visibleCount, setVisibleCount] = useState(6);
-
-    const verDetalle = (servicio) => {
-        setServicioSeleccionado(servicio);
-        setShowModal(true);
-    };
-
-    const cargarMas = () => setVisibleCount(prev => prev + 6);
-    const mostrarMenos = () => setVisibleCount(6);
+    const [showModalDetalle, setShowModalDetalle] = useState(false);
+    const [showModalNuevo, setShowModalNuevo] = useState(false); // ✅ Estado para el modal de creación
+    const [busqueda, setBusqueda] = useState("");
 
     const formatDate = (date) => new Date(date).toLocaleDateString('es-PE', {
-        year: 'numeric', month: 'long', day: 'numeric'
+        year: 'numeric', month: 'short', day: 'numeric'
     });
 
     const formatPrice = (price) => new Intl.NumberFormat('es-PE', {
         style: 'currency', currency: 'PEN', minimumFractionDigits: 2
-    }).format(price);
+    }).format(price || 0);
 
-    const serviciosMostrados = servicios.slice(0, visibleCount);
-    const hasMore = visibleCount < servicios.length;
+    const verDetalle = (s) => {
+        setServicioSeleccionado(s);
+        setShowModalDetalle(true);
+    };
 
-    const totalIngresos = useMemo(() => {
-        return servicios.reduce((sum, s) => sum + (s.costo || 0), 0);
-    }, [servicios]);
+    const handleEliminar = async (id) => {
+        if (window.confirm("¿Estás seguro de desactivar este servicio?")) {
+            try {
+                await servicioTecnicoService.eliminar(id);
+                recargar(); // Recargamos la tabla
+            } catch (error) {
+                alert("Error al eliminar el servicio");
+            }
+        }
+    };
 
-    const serviciosCompletados = useMemo(() => {
-        return servicios.filter(s => s.estado === "FINALIZADO" || s.estado === "ENTREGADO").length;
-    }, [servicios]);
+    // Filtrar por búsqueda
+    const serviciosFiltrados = useMemo(() => {
+        if (!busqueda.trim()) return servicios;
+        const term = busqueda.toLowerCase();
+        return servicios.filter(s => 
+            s.equipo?.toLowerCase().includes(term) || 
+            s.clienteNombre?.toLowerCase().includes(term) ||
+            s.id.toString().includes(term)
+        );
+    }, [servicios, busqueda]);
+
+    // Totales para las tarjetas
+    const totalIngresos = servicios.reduce((sum, s) => sum + (s.costo || 0), 0);
+    const completados = servicios.filter(s => s.estado === "FINALIZADO" || s.estado === "ENTREGADO").length;
 
     if (loading) {
         return (
@@ -100,174 +101,136 @@ export default function HistorialServicios() {
 
     return (
         <div className="space-y-6">
-            {/* ─────────── HEADER ─────────── 
-            <div className="bg-white rounded-xl shadow-sm p-5 border border-gray-100">
-                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-                    <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-gradient-to-br from-[#5b4eff] to-[#4a3dcc] rounded-xl flex items-center justify-center shadow-md flex-shrink-0">
-                            <ClipboardList size={22} className="text-white" />
-                        </div>
-                        <div>
-                            <h2 className="text-lg font-bold text-gray-800">Historial de Servicios</h2>
-                            <p className="text-sm text-gray-500 mt-0.5">Todos los servicios técnicos registrados</p>
-                        </div>
-                    </div>
-                    <div className="text-right">
-                        <p className="text-xs text-gray-400 uppercase font-semibold">Total de servicios</p>
-                        <p className="text-2xl font-bold text-[#5b4eff]">{servicios.length}</p>
-                    </div>
+            {/* ─── HEADER CON BOTÓN ─── */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                    <h1 className="text-2xl font-bold text-gray-800">Historial Técnico</h1>
+                    <p className="text-sm text-gray-500">Gestiona los servicios de reparación</p>
                 </div>
-            </div>*/}
-
-            {/* ─────────── TARJETAS DE RESUMEN ─────────── */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {/* Total servicios */}
-                <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl p-5 text-white shadow-md hover:shadow-lg transition-shadow">
-                    <div className="flex items-center justify-between mb-2">
-                        <p className="text-xs uppercase tracking-wide opacity-90 font-semibold">Total Servicios</p>
-                        <div className="w-9 h-9 bg-white/20 rounded-lg flex items-center justify-center">
-                            <ClipboardList size={18} />
-                        </div>
-                    </div>
-                    <p className="text-3xl font-bold">{servicios.length}</p>
-                </div>
-
-                {/* Ingresos */}
-                <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl p-5 text-white shadow-md hover:shadow-lg transition-shadow">
-                    <div className="flex items-center justify-between mb-2">
-                        <p className="text-xs uppercase tracking-wide opacity-90 font-semibold">Ingresos Totales</p>
-                        <div className="w-9 h-9 bg-white/20 rounded-lg flex items-center justify-center">
-                            <Coins size={18} />
-                        </div>
-                    </div>
-                    <p className="text-3xl font-bold truncate">{formatPrice(totalIngresos)}</p>
-                </div>
-
-                {/* Completados */}
-                <div className="bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl p-5 text-white shadow-md hover:shadow-lg transition-shadow">
-                    <div className="flex items-center justify-between mb-2">
-                        <p className="text-xs uppercase tracking-wide opacity-90 font-semibold">Completados</p>
-                        <div className="w-9 h-9 bg-white/20 rounded-lg flex items-center justify-center">
-                            <CheckCircle2 size={18} />
-                        </div>
-                    </div>
-                    <p className="text-3xl font-bold">{serviciosCompletados}</p>
-                </div>
+                <button
+                    onClick={() => setShowModalNuevo(true)}
+                    className="px-5 py-2.5 bg-[#5b4eff] text-white rounded-xl font-bold text-sm hover:bg-[#4a3dcc] transition flex items-center gap-2 shadow-sm"
+                >
+                    <Plus size={18} /> Nuevo Servicio
+                </button>
             </div>
 
-            {/* ─────────── LISTA DE SERVICIOS ─────────── */}
-            {servicios.length === 0 ? (
-                <div className="bg-white rounded-xl p-12 text-center text-gray-400 border border-gray-100">
-                    <Inbox size={56} className="mx-auto mb-4 opacity-40" />
-                    <p className="text-lg font-medium text-gray-600">No hay servicios registrados</p>
-                    <p className="text-sm mt-1">Los servicios aparecerán aquí cuando se registren</p>
-                </div>
-            ) : (
-                <>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {serviciosMostrados.map(servicio => (
-                            <div
-                                key={servicio.id}
-                                onClick={() => verDetalle(servicio)}
-                                className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden cursor-pointer group border border-gray-100 hover:border-[#5b4eff]/30"
-                            >
-                                {/* Header de tarjeta */}
-                                <div className="relative p-4 pb-3 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
-                                    <div className="absolute top-3 right-3">
-                                        <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getEstadoColor(servicio.estado)}`}>
-                                            {getEstadoIcon(servicio.estado, 12)}
-                                            {servicio.estado.replace("_", " ")}
-                                        </span>
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                        <div
-                                            className="w-10 h-10 rounded-xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform text-[#5b4eff]"
-                                            style={{ backgroundColor: getEstadoBg(servicio.estado) }}
-                                        >
-                                            {getEstadoIcon(servicio.estado, 20)}
-                                        </div>
-                                        <div>
-                                            <p className="font-bold text-gray-800">Servicio #{servicio.id}</p>
-                                            <p className="text-xs text-gray-400 mt-0.5">{formatDate(servicio.fecha)}</p>
-                                        </div>
-                                    </div>
-                                </div>
+            
 
-                                {/* Contenido */}
-                                <div className="p-4 space-y-2">
-                                    <div className="flex items-start gap-2">
-                                        <FileText size={14} className="text-gray-400 mt-0.5 flex-shrink-0" />
-                                        <div className="min-w-0 flex-1">
-                                            <p className="text-xs text-gray-400 uppercase font-semibold">Equipo</p>
-                                            <p className="font-medium text-gray-800 text-sm truncate">{servicio.equipo || "—"}</p>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-start gap-2">
-                                        <ClipboardList size={14} className="text-gray-400 mt-0.5 flex-shrink-0" />
-                                        <div className="min-w-0 flex-1">
-                                            <p className="text-xs text-gray-400 uppercase font-semibold">Cliente</p>
-                                            <p className="text-sm text-gray-600 truncate">{servicio.clienteNombre || `Cliente #${servicio.clienteId}`}</p>
-                                        </div>
-                                    </div>
-                                    {servicio.diagnostico && (
-                                        <div className="mt-2 pt-2 border-t border-gray-100 flex items-start gap-2">
-                                            <Wrench size={14} className="text-gray-400 mt-0.5 flex-shrink-0" />
-                                            <div className="min-w-0 flex-1">
-                                                <p className="text-xs text-gray-400 font-semibold">Diagnóstico</p>
-                                                <p className="text-xs text-gray-500 line-clamp-1">{servicio.diagnostico}</p>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Footer */}
-                                <div className="px-4 py-3 bg-gray-50 border-t border-gray-100 flex justify-between items-center">
-                                    <span className="inline-flex items-center gap-1.5 font-bold text-[#5b4eff] text-sm">
-                                        <Coins size={14} />
-                                        {formatPrice(servicio.costo || 0)}
-                                    </span>
-                                    <span className="inline-flex items-center gap-1 text-[#5b4eff] text-sm font-medium group-hover:underline">
-                                        <Eye size={14} />
-                                        Ver detalles
-                                        <ArrowRight size={14} />
-                                    </span>
-                                </div>
-                            </div>
-                        ))}
+            {/* ─── BUSCADOR Y TABLA ─── */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                {/* Buscador */}
+                <div className="p-4 border-b border-gray-100">
+                    <div className="relative max-w-md">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                        <input
+                            type="text"
+                            placeholder="Buscar por equipo, cliente o ID..."
+                            value={busqueda}
+                            onChange={(e) => setBusqueda(e.target.value)}
+                            className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-[#5b4eff] focus:ring-1 focus:ring-[#5b4eff] text-sm"
+                        />
                     </div>
+                </div>
 
-                    {/* Botones Ver más / Ver menos */}
-                    {servicios.length > 6 && (
-                        <div className="flex justify-center mt-8">
-                            {hasMore ? (
-                                <button
-                                    onClick={cargarMas}
-                                    className="px-6 py-3 bg-white border-2 border-[#5b4eff] text-[#5b4eff] rounded-xl font-bold text-sm hover:bg-[#5b4eff] hover:text-white transition-all duration-300 flex items-center gap-2"
-                                >
-                                    <ChevronDown size={16} />
-                                    Ver más servicios
-                                    <span className="text-xs opacity-75">({visibleCount} de {servicios.length})</span>
-                                </button>
-                            ) : (
-                                <button
-                                    onClick={mostrarMenos}
-                                    className="px-6 py-3 bg-gray-100 text-gray-600 rounded-xl font-bold text-sm hover:bg-gray-200 transition-all duration-300 flex items-center gap-2"
-                                >
-                                    <ChevronUp size={16} />
-                                    Mostrar menos
-                                </button>
-                            )}
+                {/* Tabla */}
+                {serviciosFiltrados.length === 0 ? (
+                    <div className="p-12 text-center text-gray-400">
+                        <Inbox size={48} className="mx-auto mb-4 opacity-40" />
+                        <p className="text-lg font-medium text-gray-600">No hay servicios registrados</p>
+                        <p className="text-sm">Haz clic en "Nuevo Servicio" para comenzar</p>
+                    </div>
+                ) : (
+                    <div className="overflow-x-auto">
+                        <table className="w-full min-w-[800px]">
+                            <thead className="bg-gray-50 border-b border-gray-100">
+                                <tr>
+                                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">ID</th>
+                                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Equipo</th>
+                                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Cliente</th>
+                                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Técnico</th>
+                                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Estado</th>
+                                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Costo</th>
+                                    <th className="px-4 py-3 text-right text-xs font-bold text-gray-500 uppercase">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                                {serviciosFiltrados.map((s) => (
+                                    <tr key={s.id} className="hover:bg-gray-50 transition">
+                                        <td className="px-4 py-3 text-sm font-medium text-gray-600">#{s.id}</td>
+                                        <td className="px-4 py-3">
+                                            <div className="max-w-[150px]">
+                                                <p className="font-semibold text-gray-800 text-sm truncate">{s.equipo}</p>
+                                                <p className="text-xs text-gray-400">{formatDate(s.fecha)}</p>
+                                            </div>
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            <p className="text-sm text-gray-700 truncate max-w-[150px]">{s.clienteNombre}</p>
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            <p className="text-sm text-gray-700 truncate max-w-[120px]">{s.tecnicoNombre || "Sin asignar"}</p>
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase ${getEstadoColor(s.estado)}`}>
+                                                {getEstadoIcon(s.estado, 10)}
+                                                {s.estado.replace("_", " ")}
+                                            </span>
+                                        </td>
+                                        <td className="px-4 py-3 text-sm font-bold text-gray-700">
+                                            {formatPrice(s.costo)}
+                                        </td>
+                                        <td className="px-4 py-3 text-right space-x-2">
+                                            <button
+                                                onClick={() => verDetalle(s)}
+                                                className="text-[#5b4eff] hover:text-[#4a3dcc] text-sm font-medium"
+                                                title="Ver detalles"
+                                            >
+                                                <Eye size={16} />
+                                            </button>
+                                            <button
+                                                onClick={() => handleEliminar(s.id)}
+                                                className="text-red-500 hover:text-red-700 text-sm font-medium"
+                                                title="Desactivar"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </div>
+
+            {/* ✅ MODAL PARA CREAR NUEVO SERVICIO */}
+            {showModalNuevo && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto relative animate-in fade-in zoom-in duration-200">
+                        <button
+                            onClick={() => setShowModalNuevo(false)}
+                            className="absolute top-4 right-4 z-10 w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition"
+                        >
+                            <X size={18} />
+                        </button>
+                        <div className="p-6">
+                            <NuevoServicio 
+                                onSuccess={() => {
+                                    setShowModalNuevo(false);
+                                    recargar(); // Recargamos la tabla al crear
+                                }} 
+                            />
                         </div>
-                    )}
-                </>
+                    </div>
+                </div>
             )}
 
-            {/* Modal de detalle SOLO LECTURA */}
-            {showModal && servicioSeleccionado && (
+            {/* MODAL DE DETALLE */}
+            {showModalDetalle && servicioSeleccionado && (
                 <DetalleServicioHistorial
                     servicio={servicioSeleccionado}
                     onClose={() => {
-                        setShowModal(false);
+                        setShowModalDetalle(false);
                         setServicioSeleccionado(null);
                     }}
                 />
