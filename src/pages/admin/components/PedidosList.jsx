@@ -233,9 +233,14 @@ const DetallePedidoModal = ({ pedido, isOpen, onClose }) => {
                                 {getEstadoIcon(pedido.estado)} {pedido.estado}
                             </span>
                         </div>
-                        <div className="bg-gray-50 rounded-lg p-3">
-                            <p className="text-xs text-gray-500 uppercase flex items-center gap-1"><CreditCard size={12} /> Método de pago</p>
-                            <p className="font-medium">{pedido.metodoPago || "No especificado"}</p>
+                        <div className="flex items-start gap-2">
+                            <CreditCard size={16} className="text-purple-400 mt-0.5" />
+                            <div>
+                                <p className="text-xs text-purple-600 uppercase">Método de pago</p>
+                                <p className="font-medium text-purple-900">
+                                    {pedido.pago?.metodo || pedido.metodoPago || "Efectivo"}
+                                </p>
+                            </div>
                         </div>
                         <div className="bg-gray-50 rounded-lg p-3">
                             <p className="text-xs text-gray-500 uppercase flex items-center gap-1"><Package size={12} /> Productos</p>
