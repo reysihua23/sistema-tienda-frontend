@@ -24,13 +24,13 @@ const getEstadoIcon = (estado, size = 16) => {
 
 const getEstadoColor = (estado) => {
     const colores = {
-        "RECIBIDO": "bg-amber-100 text-amber-700",
-        "EN_REVISION": "bg-blue-100 text-blue-700",
-        "EN_PROCESO": "bg-purple-100 text-purple-700",
-        "FINALIZADO": "bg-green-100 text-green-700",
-        "ENTREGADO": "bg-emerald-100 text-emerald-700"
+        "RECIBIDO": "bg-amber-100 text-amber-800 border-amber-200",
+        "EN_REVISION": "bg-blue-100 text-blue-800 border-blue-200",
+        "EN_PROCESO": "bg-purple-100 text-purple-800 border-purple-200",
+        "FINALIZADO": "bg-green-100 text-green-800 border-green-200",
+        "ENTREGADO": "bg-emerald-100 text-emerald-800 border-emerald-200"
     };
-    return colores[estado] || "bg-gray-100 text-gray-700";
+    return colores[estado] || "bg-gray-100 text-gray-700 border-gray-200";
 };
 
 const formatEstadoLabel = (estado) => {
@@ -134,20 +134,17 @@ export default function DetalleServicio({ servicio, onClose, onUpdate }) {
         { value: "ENTREGADO", label: "Entregado", icon: <PackageCheck size={14} /> }
     ];
 
-    // 🎯 Detectar cambios reales
     const hayCambios = 
         diagnostico !== (servicio.diagnostico || "") || 
         costo !== (servicio.costo || 0) || 
         nuevoEstado !== servicio.estado;
 
-    // 🎯 Guardar TODO en un solo botón
     const handleGuardarCambios = async () => {
         if (!hayCambios) {
             showToast("No hay cambios para guardar", "info");
             return;
         }
 
-        // Si hay cambios en el diagnóstico, debe estar lleno
         const cambioDiagnostico = 
             diagnostico !== (servicio.diagnostico || "") || 
             costo !== (servicio.costo || 0);
@@ -159,27 +156,22 @@ export default function DetalleServicio({ servicio, onClose, onUpdate }) {
 
         setLoading(true);
         try {
-            // 1️⃣ Guardar diagnóstico + costo (si hay cambios)
             if (cambioDiagnostico) {
                 await servicioTecnicoService.agregarDiagnostico(servicio.id, diagnostico, costo);
             }
 
-            // 2️⃣ Cambiar estado (si hay cambios)
             if (nuevoEstado !== servicio.estado) {
                 await servicioTecnicoService.cambiarEstado(servicio.id, nuevoEstado);
             }
 
             showToast("Cambios guardados correctamente", "success");
 
-            // Actualizar objeto local
             servicio.diagnostico = diagnostico;
             servicio.costo = costo;
             servicio.estado = nuevoEstado;
 
-            // Refrescar lista del padre
             if (onUpdate) await onUpdate();
 
-            // 🎯 Cerrar el modal después de un pequeño delay
             setTimeout(() => {
                 onClose();
             }, 900);
@@ -193,11 +185,11 @@ export default function DetalleServicio({ servicio, onClose, onUpdate }) {
 
     return (
         <div
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100001] p-4"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-[100001] p-0 sm:p-4 animate-in fade-in duration-200"
             onClick={onClose}
         >
             <div
-                className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl"
+                className="bg-white rounded-t-3xl sm:rounded-2xl max-w-2xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-y-auto shadow-2xl animate-in slide-in-from-bottom sm:zoom-in-95"
                 onClick={(e) => e.stopPropagation()}
             >
                 <Toast toast={toast} onClose={() => setToast({ show: false, message: "", type: "" })} />
@@ -210,13 +202,13 @@ export default function DetalleServicio({ servicio, onClose, onUpdate }) {
                                 <Wrench size={22} className="text-white" />
                             </div>
                             <div className="min-w-0">
-                                <h3 className="text-xl font-bold text-gray-800 truncate">Servicio #{servicio.id}</h3>
-                                <p className="text-sm text-gray-500 mt-0.5 truncate">{formatDate(servicio.fecha)}</p>
+                                <h3 className="text-xl font-black text-gray-900 truncate">Servicio Nº {servicio.id}</h3>
+                                <p className="text-xs font-medium text-gray-500 mt-0.5 truncate">{formatDate(servicio.fecha)}</p>
                             </div>
                         </div>
                         <button
                             onClick={onClose}
-                            className="w-9 h-9 flex items-center justify-center rounded-lg bg-gray-100 hover:bg-gray-200 transition text-gray-500 hover:text-gray-700 flex-shrink-0"
+                            className="w-9 h-9 flex items-center justify-center rounded-xl bg-gray-100 hover:bg-gray-200 transition text-gray-500 hover:text-gray-700 flex-shrink-0"
                             aria-label="Cerrar"
                         >
                             <X size={18} />
@@ -224,110 +216,110 @@ export default function DetalleServicio({ servicio, onClose, onUpdate }) {
                     </div>
                 </div>
 
-                <div className="p-6 space-y-5">
+                <div className="p-5 sm:p-6 space-y-4">
                     {/* Estado actual + costo (resumen superior) */}
-                    <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-gray-50 to-white rounded-xl border border-gray-100">
-                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${getEstadoColor(nuevoEstado)}`}>
+                    <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100">
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 border ${getEstadoColor(nuevoEstado)}`}>
                             {getEstadoIcon(nuevoEstado, 20)}
                         </div>
                         <div className="flex-1 min-w-0">
-                            <p className="text-xs text-gray-400 uppercase tracking-wide">Estado {hayCambios && nuevoEstado !== servicio.estado ? "(sin guardar)" : "actual"}</p>
-                            <p className="font-bold text-gray-800">{formatEstadoLabel(nuevoEstado)}</p>
+                            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-0.5">Estado {hayCambios && nuevoEstado !== servicio.estado ? "(sin guardar)" : "actual"}</p>
+                            <p className="font-black text-gray-900 text-sm">{formatEstadoLabel(nuevoEstado)}</p>
                         </div>
                         <div className="text-right flex-shrink-0">
-                            <p className="text-xs text-gray-400 uppercase tracking-wide">Costo</p>
-                            <p className="font-bold text-[#5b4eff] text-lg">{formatPrice(costo || servicio.costo || 0)}</p>
+                            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-0.5">Costo</p>
+                            <p className="font-black text-[#5b4eff] text-lg">{formatPrice(costo || servicio.costo || 0)}</p>
                         </div>
                     </div>
 
                     {/* Cliente */}
-                    <div className="bg-gray-50 rounded-xl p-5 border border-gray-100">
-                        <h4 className="font-semibold text-gray-700 mb-3 flex items-center gap-2 text-sm uppercase tracking-wide">
+                    <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
+                        <h4 className="font-black text-gray-800 mb-3 flex items-center gap-2 text-xs uppercase tracking-wider">
                             <User size={16} className="text-[#5b4eff]" /> Información del Cliente
                         </h4>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div className="flex items-start gap-2">
-                                <User size={16} className="text-gray-400 mt-0.5 flex-shrink-0" />
+                                <User size={14} className="text-gray-400 mt-0.5 flex-shrink-0" />
                                 <div className="min-w-0">
-                                    <p className="text-xs text-gray-400">Nombre</p>
-                                    <p className="font-medium text-gray-800 text-sm mt-0.5 truncate">{servicio.clienteNombre || `Cliente #${servicio.clienteId}`}</p>
+                                    <p className="text-[10px] font-bold text-gray-500">Nombre</p>
+                                    <p className="font-bold text-gray-800 text-sm mt-0.5 truncate">{servicio.clienteNombre || `Cliente #${servicio.clienteId}`}</p>
                                 </div>
                             </div>
                             <div className="flex items-start gap-2">
-                                <Phone size={16} className="text-gray-400 mt-0.5 flex-shrink-0" />
+                                <Phone size={14} className="text-gray-400 mt-0.5 flex-shrink-0" />
                                 <div className="min-w-0">
-                                    <p className="text-xs text-gray-400">Teléfono</p>
-                                    <p className="font-medium text-gray-800 text-sm mt-0.5 truncate">{servicio.clienteTelefono || "—"}</p>
+                                    <p className="text-[10px] font-bold text-gray-500">Teléfono</p>
+                                    <p className="font-bold text-gray-800 text-sm mt-0.5 truncate">{servicio.clienteTelefono || "—"}</p>
                                 </div>
                             </div>
                             <div className="flex items-start gap-2">
-                                <Mail size={16} className="text-gray-400 mt-0.5 flex-shrink-0" />
+                                <Mail size={14} className="text-gray-400 mt-0.5 flex-shrink-0" />
                                 <div className="min-w-0">
-                                    <p className="text-xs text-gray-400">Email</p>
-                                    <p className="font-medium text-gray-800 text-sm mt-0.5 truncate">{servicio.clienteEmail || "—"}</p>
+                                    <p className="text-[10px] font-bold text-gray-500">Email</p>
+                                    <p className="font-bold text-gray-800 text-sm mt-0.5 truncate">{servicio.clienteEmail || "—"}</p>
                                 </div>
                             </div>
                             <div className="flex items-start gap-2">
-                                <FileText size={16} className="text-gray-400 mt-0.5 flex-shrink-0" />
+                                <FileText size={14} className="text-gray-400 mt-0.5 flex-shrink-0" />
                                 <div className="min-w-0">
-                                    <p className="text-xs text-gray-400">Documento</p>
-                                    <p className="font-medium text-gray-800 text-sm mt-0.5 truncate">{servicio.clienteDocumento || "—"}</p>
+                                    <p className="text-[10px] font-bold text-gray-500">Documento</p>
+                                    <p className="font-bold text-gray-800 text-sm mt-0.5 truncate">{servicio.clienteDocumento || "—"}</p>
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     {/* Equipo */}
-                    <div className="bg-gray-50 rounded-xl p-5 border border-gray-100">
-                        <h4 className="font-semibold text-gray-700 mb-3 flex items-center gap-2 text-sm uppercase tracking-wide">
+                    <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
+                        <h4 className="font-black text-gray-800 mb-3 flex items-center gap-2 text-xs uppercase tracking-wider">
                             <Laptop size={16} className="text-[#5b4eff]" /> Información del Equipo
                         </h4>
                         <div className="space-y-3">
                             <div className="flex items-start gap-2">
-                                <Laptop size={16} className="text-gray-400 mt-0.5 flex-shrink-0" />
+                                <Laptop size={14} className="text-gray-400 mt-0.5 flex-shrink-0" />
                                 <div className="min-w-0 flex-1">
-                                    <p className="text-xs text-gray-400">Equipo</p>
-                                    <p className="font-medium text-gray-800 text-sm mt-0.5">{servicio.equipo || "—"}</p>
+                                    <p className="text-[10px] font-bold text-gray-500">Equipo</p>
+                                    <p className="font-bold text-gray-800 text-sm mt-0.5">{servicio.equipo || "—"}</p>
                                 </div>
                             </div>
                             <div className="flex items-start gap-2">
-                                <AlertCircle size={16} className="text-gray-400 mt-0.5 flex-shrink-0" />
+                                <AlertCircle size={14} className="text-gray-400 mt-0.5 flex-shrink-0" />
                                 <div className="min-w-0 flex-1">
-                                    <p className="text-xs text-gray-400">Problema reportado</p>
-                                    <p className="text-gray-600 text-sm mt-0.5">{servicio.problema || "—"}</p>
+                                    <p className="text-[10px] font-bold text-gray-500">Problema reportado</p>
+                                    <p className="text-gray-700 font-medium text-sm mt-0.5">{servicio.problema || "—"}</p>
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     {/* Diagnóstico + costo (editable) */}
-                    <div className="bg-gray-50 rounded-xl p-5 border border-gray-100">
-                        <h4 className="font-semibold text-gray-700 mb-3 flex items-center gap-2 text-sm uppercase tracking-wide">
+                    <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
+                        <h4 className="font-black text-gray-800 mb-3 flex items-center gap-2 text-xs uppercase tracking-wider">
                             <Wrench size={16} className="text-[#5b4eff]" /> Diagnóstico y Costo
                         </h4>
                         <textarea
                             value={diagnostico}
                             onChange={(e) => setDiagnostico(e.target.value)}
                             rows="3"
-                            className="w-full p-3 bg-white border border-gray-200 rounded-xl focus:border-[#5b4eff] focus:outline-none focus:ring-2 focus:ring-[#5b4eff]/20 transition text-sm resize-none"
+                            className="w-full p-3 bg-white border border-gray-200 rounded-xl focus:border-[#5b4eff] focus:ring-2 focus:ring-[#5b4eff]/20 outline-none transition text-sm font-medium resize-none"
                             placeholder="Ingrese el diagnóstico del equipo..."
                         />
                         <div className="relative mt-3">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">S/</span>
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-bold">S/</span>
                             <input
                                 type="number"
                                 step="0.01"
                                 value={costo}
                                 onChange={(e) => setCosto(parseFloat(e.target.value) || 0)}
-                                className="w-full pl-9 pr-3 p-2.5 bg-white border border-gray-200 rounded-xl focus:border-[#5b4eff] focus:outline-none focus:ring-2 focus:ring-[#5b4eff]/20 transition text-sm"
+                                className="w-full pl-9 pr-3 p-3 bg-white border border-gray-200 rounded-xl focus:border-[#5b4eff] focus:ring-2 focus:ring-[#5b4eff]/20 outline-none transition text-sm font-bold"
                                 placeholder="0.00"
                             />
                         </div>
                     </div>
 
                     {/* Estado (solo selección) */}
-                    <div className="bg-gray-50 rounded-xl p-5 border border-gray-100">
-                        <h4 className="font-semibold text-gray-700 mb-3 flex items-center gap-2 text-sm uppercase tracking-wide">
+                    <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
+                        <h4 className="font-black text-gray-800 mb-3 flex items-center gap-2 text-xs uppercase tracking-wider">
                             <Activity size={16} className="text-[#5b4eff]" /> Estado del Servicio
                         </h4>
 
@@ -336,10 +328,10 @@ export default function DetalleServicio({ servicio, onClose, onUpdate }) {
                                 <button
                                     key={estado.value}
                                     onClick={() => setNuevoEstado(estado.value)}
-                                    className={`px-3 py-2 rounded-xl text-xs font-medium transition-all flex flex-col items-center justify-center gap-1 ${
+                                    className={`px-3 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wide transition-all flex flex-col items-center justify-center gap-1.5 border-2 ${
                                         nuevoEstado === estado.value
-                                            ? "bg-[#5b4eff] text-white shadow-md scale-105"
-                                            : "bg-white border border-gray-200 text-gray-600 hover:border-[#5b4eff] hover:text-[#5b4eff]"
+                                            ? "bg-[#5b4eff] border-[#5b4eff] text-white shadow-md scale-105"
+                                            : "bg-white border-gray-200 text-gray-600 hover:border-[#5b4eff] hover:text-[#5b4eff]"
                                     }`}
                                 >
                                     {estado.icon}
@@ -354,11 +346,11 @@ export default function DetalleServicio({ servicio, onClose, onUpdate }) {
                         <button
                             onClick={handleGuardarCambios}
                             disabled={loading || !hayCambios}
-                            className="flex-1 py-3 bg-gradient-to-r from-[#5b4eff] to-[#4a3dcc] text-white rounded-xl font-bold hover:shadow-lg transition disabled:opacity-50 flex items-center justify-center gap-2"
+                            className="flex-1 py-3.5 bg-gradient-to-r from-[#5b4eff] to-[#4a3dcc] text-white rounded-xl font-black hover:shadow-lg transition disabled:opacity-50 flex items-center justify-center gap-2 active:scale-95"
                         >
                             {loading ? (
                                 <>
-                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
                                     Guardando...
                                 </>
                             ) : (
@@ -371,17 +363,17 @@ export default function DetalleServicio({ servicio, onClose, onUpdate }) {
                         <button
                             type="button"
                             onClick={onClose}
-                            className="px-6 py-3 bg-gray-100 text-gray-600 rounded-xl font-bold hover:bg-gray-200 transition"
+                            className="px-6 py-3.5 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition active:scale-95"
                         >
                             Cancelar
                         </button>
                     </div>
 
                     {/* Resumen final */}
-                    <div className={`rounded-xl p-5 text-white ${
+                    <div className={`rounded-xl p-5 text-white shadow-md ${
                         nuevoEstado === "ENTREGADO"
-                            ? "bg-gradient-to-r from-emerald-500 to-teal-600"
-                            : "bg-gradient-to-r from-[#5b4eff] to-[#4a3dcc]"
+                            ? "bg-gradient-to-r from-emerald-500 to-teal-600 shadow-emerald-500/20"
+                            : "bg-gradient-to-r from-[#5b4eff] to-[#4a3dcc] shadow-[#5b4eff]/20"
                     }`}>
                         <div className="flex justify-between items-center gap-4">
                             <div className="flex items-center gap-3">
@@ -389,15 +381,15 @@ export default function DetalleServicio({ servicio, onClose, onUpdate }) {
                                     <Coins size={20} />
                                 </div>
                                 <div>
-                                    <p className="text-sm opacity-80">Costo Total</p>
-                                    <p className="text-2xl font-bold">{formatPrice(costo || servicio.costo || 0)}</p>
+                                    <p className="text-[10px] font-bold uppercase tracking-wider opacity-80">Costo Total</p>
+                                    <p className="text-2xl font-black">{formatPrice(costo || servicio.costo || 0)}</p>
                                 </div>
                             </div>
                             <div className="text-right">
-                                <p className="text-sm opacity-80">Estado</p>
-                                <div className="flex items-center gap-1.5 mt-0.5 justify-end">
+                                <p className="text-[10px] font-bold uppercase tracking-wider opacity-80">Estado</p>
+                                <div className="flex items-center gap-1.5 mt-0.5 justify-end font-black">
                                     {getEstadoIcon(nuevoEstado, 16)}
-                                    <span className="font-medium">{formatEstadoLabel(nuevoEstado)}</span>
+                                    <span>{formatEstadoLabel(nuevoEstado)}</span>
                                 </div>
                             </div>
                         </div>
@@ -405,7 +397,8 @@ export default function DetalleServicio({ servicio, onClose, onUpdate }) {
                 </div>
             </div>
 
-            <style jsx>{`
+            {/* ✅ CORRECCIÓN: Se quitó el "jsx" para evitar el error en Vite */}
+            <style>{`
                 @keyframes slideDown {
                     from { transform: translateY(-20px); opacity: 0; }
                     to { transform: translateY(0); opacity: 1; }

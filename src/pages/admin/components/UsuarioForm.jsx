@@ -1,9 +1,9 @@
 // pages/admin/components/UsuarioForm.jsx
 import React, { useState } from "react";
-import { Eye, EyeOff, Mail, Lock, User, Phone, FileText, MapPin, Shield, AlertCircle } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, User, Phone, FileText, MapPin, Shield, AlertCircle, CheckCircle, XCircle } from "lucide-react";
 import { usuarioService } from "../../../services/api";
 
-export default function UsuarioForm({ editingUser, roles, onClose, onRefresh, showMessage }) {
+export default function UsuarioForm({ editingUser, roles, onClose, onRefresh, showMessage, onBeforeUpdate }) {
     const [showPassword, setShowPassword] = useState(false);
     const [fieldErrors, setFieldErrors] = useState({
         correo: "",
@@ -16,11 +16,11 @@ export default function UsuarioForm({ editingUser, roles, onClose, onRefresh, sh
     const [userForm, setUserForm] = useState({
         correo: editingUser?.correo || "",
         password: "",
-        nombre: editingUser?.nombre || editingUser?.cliente?.nombre || "",
-        telefono: editingUser?.cliente?.telefono || "",
-        documento: editingUser?.cliente?.documento || "",
-        direccion: editingUser?.cliente?.direccion || "",
-        rolId: editingUser?.rol?.id || "",
+        nombre: editingUser?.nombre || editingUser?.clienteNombre || editingUser?.cliente?.nombre || "",
+        telefono: editingUser?.clienteTelefono || editingUser?.cliente?.telefono || "",
+        documento: editingUser?.clienteDocumento || editingUser?.cliente?.documento || "",
+        direccion: editingUser?.clienteDireccion || editingUser?.cliente?.direccion || "",
+        rolId: editingUser?.rolId || (roles.find(r => r.nombre === editingUser?.rol)?.id) || "",
         activo: editingUser?.activo !== undefined ? editingUser.activo : true
     });
     const [loading, setLoading] = useState(false);
@@ -62,13 +62,33 @@ export default function UsuarioForm({ editingUser, roles, onClose, onRefresh, sh
         return "";
     };
 
-    // Validación de contraseña
+    // 🎯 VALIDACIÓN DE CONTRASEÑA MEJORADA (ahora exige mayúscula, número y símbolo)
     const validatePassword = (password) => {
         if (!password && !editingUser) return "La contraseña es obligatoria";
-        if (password && password.length < 6) return "La contraseña debe tener al menos 6 caracteres";
-        if (password && password.length > 30) return "La contraseña no puede tener más de 30 caracteres";
+        if (password && password.length < 8) return "La contraseña debe tener al menos 8 caracteres";
+        if (password && !/[A-Z]/.test(password)) return "Debe incluir al menos una letra mayúscula";
+        if (password && !/[0-9]/.test(password)) return "Debe incluir al menos un número";
+        if (password && !/[^a-zA-Z0-9]/.test(password)) return "Debe incluir al menos un carácter especial (@, #, $, etc.)";
         return "";
     };
+
+    // 🎯 Calcular la fuerza de la contraseña para la barra visual
+    const getPasswordStrength = (password) => {
+        if (!password) return { score: 0, label: "", color: "" };
+        
+        let score = 0;
+        if (password.length >= 8) score++;
+        if (/[A-Z]/.test(password)) score++;
+        if (/[0-9]/.test(password)) score++;
+        if (/[^a-zA-Z0-9]/.test(password)) score++;
+
+        if (score <= 1) return { score, label: "Muy débil", color: "bg-red-500", textColor: "text-red-600" };
+        if (score === 2) return { score, label: "Débil", color: "bg-orange-500", textColor: "text-orange-600" };
+        if (score === 3) return { score, label: "Buena", color: "bg-yellow-500", textColor: "text-yellow-600" };
+        return { score, label: "Fuerte", color: "bg-emerald-500", textColor: "text-emerald-600" };
+    };
+
+    const passwordStrength = getPasswordStrength(userForm.password);
 
     const handleBlur = (field) => {
         let error = "";
@@ -119,25 +139,23 @@ export default function UsuarioForm({ editingUser, roles, onClose, onRefresh, sh
         const docError = validateDocument(userForm.documento);
         const passwordError = !editingUser ? validatePassword(userForm.password) : "";
         
-        if (emailError) {
-            showMessage("error", emailError);
-            return;
-        }
-        if (nameError) {
-            showMessage("error", nameError);
-            return;
-        }
-        if (phoneError) {
-            showMessage("error", phoneError);
-            return;
-        }
-        if (docError) {
-            showMessage("error", docError);
-            return;
-        }
-        if (passwordError) {
-            showMessage("error", passwordError);
-            return;
+        if (emailError) return showMessage("error", emailError);
+        if (nameError) return showMessage("error", nameError);
+        if (phoneError) return showMessage("error", phoneError);
+        if (docError) return showMessage("error", docError);
+        if (passwordError) return showMessage("error", passwordError);
+
+        // ✅ NUEVO: Verificamos si se está editando y si el rol cambió para pedir confirmación
+        if (editingUser) {
+            const rolOriginalId = editingUser.rolId || (roles.find(r => r.nombre === editingUser.rol)?.id);
+            const rolNuevoId = parseInt(userForm.rolId);
+            
+            if (rolOriginalId && rolNuevoId && parseInt(rolOriginalId) !== rolNuevoId) {
+                if (onBeforeUpdate) {
+                    const confirmado = await onBeforeUpdate(rolNuevoId);
+                    if (!confirmado) return; // Si cancela, detenemos el guardado
+                }
+            }
         }
         
         setLoading(true);
@@ -147,12 +165,20 @@ export default function UsuarioForm({ editingUser, roles, onClose, onRefresh, sh
             const esCliente = rolSeleccionado?.nombre === "CLIENTE";
             
             if (editingUser) {
-                await usuarioService.actualizar(editingUser.id, {
+                const updateData = {
                     correo: userForm.correo,
                     nombre: userForm.nombre,
                     rolId: parseInt(userForm.rolId),
                     activo: userForm.activo
-                });
+                };
+                
+                if (esCliente) {
+                    updateData.telefono = userForm.telefono;
+                    updateData.documento = userForm.documento;
+                    updateData.direccion = userForm.direccion;
+                }
+
+                await usuarioService.actualizar(editingUser.id, updateData);
                 showMessage("success", "Usuario actualizado correctamente");
             } else {
                 const usuarioData = {
@@ -192,17 +218,18 @@ export default function UsuarioForm({ editingUser, roles, onClose, onRefresh, sh
     const esCliente = rolSeleccionado?.nombre === "CLIENTE";
 
     return (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl">
-                <div className="flex items-center gap-3 mb-6 pb-3 border-b border-gray-100">
-                    <div className="w-10 h-10 bg-[#5b4eff]/10 rounded-xl flex items-center justify-center">
-                        <Shield size={20} className="text-[#5b4eff]" />
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-in fade-in duration-200">
+            <div className="bg-white rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl animate-in zoom-in-95">
+                
+                <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-100">
+                    <div className="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <Shield size={22} className="text-[#5b4eff]" />
                     </div>
                     <div>
-                        <h3 className="text-lg font-bold text-gray-800">
+                        <h3 className="text-xl font-black text-gray-900">
                             {editingUser ? "Editar Usuario" : "Nuevo Usuario"}
                         </h3>
-                        <p className="text-xs text-gray-500">Complete los datos del usuario</p>
+                        <p className="text-xs font-medium text-gray-500 mt-0.5">Complete los datos del usuario</p>
                     </div>
                 </div>
                 
@@ -210,17 +237,17 @@ export default function UsuarioForm({ editingUser, roles, onClose, onRefresh, sh
                     {/* Correo */}
                     <div>
                         <div className="relative">
-                            <div className={`absolute left-3 top-1/2 -translate-y-1/2 transition-colors ${focusedField === "correo" ? "text-[#5b4eff]" : "text-gray-400"}`}>
+                            <div className={`absolute left-3.5 top-1/2 -translate-y-1/2 transition-colors ${focusedField === "correo" ? "text-[#5b4eff]" : "text-gray-400"}`}>
                                 <Mail size={18} />
                             </div>
                             <input 
                                 name="correo"
                                 type="email" 
                                 placeholder="Correo electrónico"
-                                className={`w-full pl-10 pr-4 py-2.5 bg-gray-50 border rounded-xl focus:outline-none focus:ring-2 transition-all ${
+                                className={`w-full pl-11 pr-4 py-3 bg-gray-50 border-2 rounded-xl focus:outline-none transition-all font-medium text-sm ${
                                     fieldErrors.correo 
-                                        ? "border-red-500 focus:border-red-500 focus:ring-red-200" 
-                                        : "border-gray-200 focus:border-[#5b4eff] focus:ring-[#5b4eff]/20"
+                                        ? "border-red-300 bg-red-50 focus:border-red-500" 
+                                        : "border-transparent focus:bg-white focus:border-[#5b4eff] focus:ring-4 focus:ring-[#5b4eff]/10"
                                 }`}
                                 value={userForm.correo} 
                                 onChange={handleChange}
@@ -230,7 +257,7 @@ export default function UsuarioForm({ editingUser, roles, onClose, onRefresh, sh
                             />
                         </div>
                         {fieldErrors.correo && (
-                            <p className="text-xs text-red-500 mt-1 ml-2">{fieldErrors.correo}</p>
+                            <p className="text-xs text-red-500 mt-1.5 ml-1 font-medium">{fieldErrors.correo}</p>
                         )}
                     </div>
                     
@@ -238,17 +265,17 @@ export default function UsuarioForm({ editingUser, roles, onClose, onRefresh, sh
                     {!editingUser && (
                         <div>
                             <div className="relative">
-                                <div className={`absolute left-3 top-1/2 -translate-y-1/2 transition-colors ${focusedField === "password" ? "text-[#5b4eff]" : "text-gray-400"}`}>
+                                <div className={`absolute left-3.5 top-1/2 -translate-y-1/2 transition-colors ${focusedField === "password" ? "text-[#5b4eff]" : "text-gray-400"}`}>
                                     <Lock size={18} />
                                 </div>
                                 <input 
                                     name="password"
                                     type={showPassword ? "text" : "password"} 
-                                    placeholder="Contraseña (mínimo 6 caracteres)"
-                                    className={`w-full pl-10 pr-10 py-2.5 bg-gray-50 border rounded-xl focus:outline-none focus:ring-2 transition-all ${
+                                    placeholder="Contraseña (mín. 8 caracteres)"
+                                    className={`w-full pl-11 pr-10 py-3 bg-gray-50 border-2 rounded-xl focus:outline-none transition-all font-medium text-sm ${
                                         fieldErrors.password 
-                                            ? "border-red-500 focus:border-red-500 focus:ring-red-200" 
-                                            : "border-gray-200 focus:border-[#5b4eff] focus:ring-[#5b4eff]/20"
+                                            ? "border-red-300 bg-red-50 focus:border-red-500" 
+                                            : "border-transparent focus:bg-white focus:border-[#5b4eff] focus:ring-4 focus:ring-[#5b4eff]/10"
                                     }`}
                                     value={userForm.password} 
                                     onChange={handleChange}
@@ -264,27 +291,50 @@ export default function UsuarioForm({ editingUser, roles, onClose, onRefresh, sh
                                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                 </button>
                             </div>
-                            {fieldErrors.password && (
-                                <p className="text-xs text-red-500 mt-1 ml-2">{fieldErrors.password}</p>
+
+                            {/* ✅ BARRA DE FUERZA DE CONTRASEÑA */}
+                            {userForm.password && (
+                                <div className="mt-2 animate-in fade-in">
+                                    <div className="flex gap-1 mb-1">
+                                        {[1, 2, 3, 4].map((level) => (
+                                            <div 
+                                                key={level} 
+                                                className={`h-1.5 flex-1 rounded-full transition-colors ${
+                                                    passwordStrength.score >= level ? passwordStrength.color : "bg-gray-200"
+                                                }`}
+                                            />
+                                        ))}
+                                    </div>
+                                    <p className={`text-[10px] font-bold uppercase tracking-wider ${passwordStrength.textColor} flex items-center gap-1`}>
+                                        {passwordStrength.score >= 4 ? <CheckCircle size={12} /> : <AlertCircle size={12} />}
+                                        {passwordStrength.label} — Debe tener mayúscula, número y símbolo
+                                    </p>
+                                </div>
                             )}
-                            <p className="text-xs text-gray-400 mt-1 ml-2">Mínimo 6 caracteres</p>
+                            
+                            {fieldErrors.password && (
+                                <p className="text-xs text-red-500 mt-1.5 ml-1 font-medium">{fieldErrors.password}</p>
+                            )}
+                            {!userForm.password && (
+                                <p className="text-xs text-gray-400 mt-1.5 ml-1 font-medium">Mínimo 8 caracteres, 1 mayúscula, 1 número y 1 símbolo</p>
+                            )}
                         </div>
                     )}
                     
                     {/* Nombre */}
                     <div>
                         <div className="relative">
-                            <div className={`absolute left-3 top-1/2 -translate-y-1/2 transition-colors ${focusedField === "nombre" ? "text-[#5b4eff]" : "text-gray-400"}`}>
+                            <div className={`absolute left-3.5 top-1/2 -translate-y-1/2 transition-colors ${focusedField === "nombre" ? "text-[#5b4eff]" : "text-gray-400"}`}>
                                 <User size={18} />
                             </div>
                             <input 
                                 name="nombre"
                                 type="text" 
                                 placeholder="Nombre completo"
-                                className={`w-full pl-10 pr-4 py-2.5 bg-gray-50 border rounded-xl focus:outline-none focus:ring-2 transition-all ${
+                                className={`w-full pl-11 pr-4 py-3 bg-gray-50 border-2 rounded-xl focus:outline-none transition-all font-medium text-sm ${
                                     fieldErrors.nombre 
-                                        ? "border-red-500 focus:border-red-500 focus:ring-red-200" 
-                                        : "border-gray-200 focus:border-[#5b4eff] focus:ring-[#5b4eff]/20"
+                                        ? "border-red-300 bg-red-50 focus:border-red-500" 
+                                        : "border-transparent focus:bg-white focus:border-[#5b4eff] focus:ring-4 focus:ring-[#5b4eff]/10"
                                 }`}
                                 value={userForm.nombre} 
                                 onChange={handleChange}
@@ -294,9 +344,9 @@ export default function UsuarioForm({ editingUser, roles, onClose, onRefresh, sh
                             />
                         </div>
                         {fieldErrors.nombre && (
-                            <p className="text-xs text-red-500 mt-1 ml-2">{fieldErrors.nombre}</p>
+                            <p className="text-xs text-red-500 mt-1.5 ml-1 font-medium">{fieldErrors.nombre}</p>
                         )}
-                        <p className="text-xs text-gray-400 mt-1 ml-2">Solo letras, mínimo 3 caracteres</p>
+                        <p className="text-xs text-gray-400 mt-1.5 ml-1 font-medium">Solo letras, mínimo 3 caracteres</p>
                     </div>
                     
                     {/* Campos de cliente (solo si el rol es CLIENTE) */}
@@ -305,17 +355,17 @@ export default function UsuarioForm({ editingUser, roles, onClose, onRefresh, sh
                             {/* Teléfono */}
                             <div>
                                 <div className="relative">
-                                    <div className={`absolute left-3 top-1/2 -translate-y-1/2 transition-colors ${focusedField === "telefono" ? "text-[#5b4eff]" : "text-gray-400"}`}>
+                                    <div className={`absolute left-3.5 top-1/2 -translate-y-1/2 transition-colors ${focusedField === "telefono" ? "text-[#5b4eff]" : "text-gray-400"}`}>
                                         <Phone size={18} />
                                     </div>
                                     <input 
                                         name="telefono"
                                         type="tel" 
                                         placeholder="Teléfono (9 dígitos)"
-                                        className={`w-full pl-10 pr-4 py-2.5 bg-gray-50 border rounded-xl focus:outline-none focus:ring-2 transition-all ${
+                                        className={`w-full pl-11 pr-4 py-3 bg-gray-50 border-2 rounded-xl focus:outline-none transition-all font-medium text-sm ${
                                             fieldErrors.telefono 
-                                                ? "border-red-500 focus:border-red-500 focus:ring-red-200" 
-                                                : "border-gray-200 focus:border-[#5b4eff] focus:ring-[#5b4eff]/20"
+                                                ? "border-red-300 bg-red-50 focus:border-red-500" 
+                                                : "border-transparent focus:bg-white focus:border-[#5b4eff] focus:ring-4 focus:ring-[#5b4eff]/10"
                                         }`}
                                         value={userForm.telefono} 
                                         onChange={handleChange}
@@ -324,25 +374,25 @@ export default function UsuarioForm({ editingUser, roles, onClose, onRefresh, sh
                                     />
                                 </div>
                                 {fieldErrors.telefono && (
-                                    <p className="text-xs text-red-500 mt-1 ml-2">{fieldErrors.telefono}</p>
+                                    <p className="text-xs text-red-500 mt-1.5 ml-1 font-medium">{fieldErrors.telefono}</p>
                                 )}
-                                <p className="text-xs text-gray-400 mt-1 ml-2">Ej: 912345678</p>
+                                <p className="text-xs text-gray-400 mt-1.5 ml-1 font-medium">Ej: 912345678</p>
                             </div>
                             
                             {/* Documento */}
                             <div>
                                 <div className="relative">
-                                    <div className={`absolute left-3 top-1/2 -translate-y-1/2 transition-colors ${focusedField === "documento" ? "text-[#5b4eff]" : "text-gray-400"}`}>
+                                    <div className={`absolute left-3.5 top-1/2 -translate-y-1/2 transition-colors ${focusedField === "documento" ? "text-[#5b4eff]" : "text-gray-400"}`}>
                                         <FileText size={18} />
                                     </div>
                                     <input 
                                         name="documento"
                                         type="text" 
                                         placeholder="Documento (DNI: 8, RUC: 11)"
-                                        className={`w-full pl-10 pr-4 py-2.5 bg-gray-50 border rounded-xl focus:outline-none focus:ring-2 transition-all ${
+                                        className={`w-full pl-11 pr-4 py-3 bg-gray-50 border-2 rounded-xl focus:outline-none transition-all font-medium text-sm ${
                                             fieldErrors.documento 
-                                                ? "border-red-500 focus:border-red-500 focus:ring-red-200" 
-                                                : "border-gray-200 focus:border-[#5b4eff] focus:ring-[#5b4eff]/20"
+                                                ? "border-red-300 bg-red-50 focus:border-red-500" 
+                                                : "border-transparent focus:bg-white focus:border-[#5b4eff] focus:ring-4 focus:ring-[#5b4eff]/10"
                                         }`}
                                         value={userForm.documento} 
                                         onChange={handleChange}
@@ -351,22 +401,22 @@ export default function UsuarioForm({ editingUser, roles, onClose, onRefresh, sh
                                     />
                                 </div>
                                 {fieldErrors.documento && (
-                                    <p className="text-xs text-red-500 mt-1 ml-2">{fieldErrors.documento}</p>
+                                    <p className="text-xs text-red-500 mt-1.5 ml-1 font-medium">{fieldErrors.documento}</p>
                                 )}
-                                <p className="text-xs text-gray-400 mt-1 ml-2">DNI: 8 dígitos | RUC: 11 dígitos</p>
+                                <p className="text-xs text-gray-400 mt-1.5 ml-1 font-medium">DNI: 8 dígitos | RUC: 11 dígitos</p>
                             </div>
                             
                             {/* Dirección */}
                             <div>
                                 <div className="relative">
-                                    <div className={`absolute left-3 top-1/2 -translate-y-1/2 transition-colors ${focusedField === "direccion" ? "text-[#5b4eff]" : "text-gray-400"}`}>
+                                    <div className={`absolute left-3.5 top-1/2 -translate-y-1/2 transition-colors ${focusedField === "direccion" ? "text-[#5b4eff]" : "text-gray-400"}`}>
                                         <MapPin size={18} />
                                     </div>
                                     <input 
                                         name="direccion"
                                         type="text" 
                                         placeholder="Dirección"
-                                        className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:border-[#5b4eff] focus:outline-none focus:ring-2 focus:ring-[#5b4eff]/20 transition-all"
+                                        className="w-full pl-11 pr-4 py-3 bg-gray-50 border-2 border-transparent rounded-xl focus:bg-white focus:border-[#5b4eff] focus:outline-none focus:ring-4 focus:ring-[#5b4eff]/10 transition-all font-medium text-sm"
                                         value={userForm.direccion} 
                                         onChange={handleChange}
                                         onFocus={() => setFocusedField("direccion")}
@@ -380,12 +430,12 @@ export default function UsuarioForm({ editingUser, roles, onClose, onRefresh, sh
                     {/* Rol */}
                     <div>
                         <div className="relative">
-                            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                            <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400">
                                 <Shield size={18} />
                             </div>
                             <select 
                                 required 
-                                className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:border-[#5b4eff] focus:outline-none focus:ring-2 focus:ring-[#5b4eff]/20 appearance-none cursor-pointer"
+                                className="w-full pl-11 pr-4 py-3 bg-gray-50 border-2 border-transparent rounded-xl focus:bg-white focus:border-[#5b4eff] focus:outline-none focus:ring-4 focus:ring-[#5b4eff]/10 appearance-none cursor-pointer font-medium text-sm"
                                 value={userForm.rolId} 
                                 onChange={(e) => setUserForm({...userForm, rolId: e.target.value})}
                             >
@@ -394,14 +444,14 @@ export default function UsuarioForm({ editingUser, roles, onClose, onRefresh, sh
                                     <option key={rol.id} value={rol.id}>{rol.nombre}</option>
                                 ))}
                             </select>
-                            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none text-xs">
                                 ▼
                             </div>
                         </div>
                     </div>
                     
                     {/* Activo */}
-                    <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                    <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
                         <input 
                             type="checkbox" 
                             id="activo"
@@ -409,7 +459,7 @@ export default function UsuarioForm({ editingUser, roles, onClose, onRefresh, sh
                             onChange={(e) => setUserForm({...userForm, activo: e.target.checked})}
                             className="w-5 h-5 text-[#5b4eff] rounded focus:ring-[#5b4eff] cursor-pointer"
                         />
-                        <label htmlFor="activo" className="text-sm font-medium text-gray-700 cursor-pointer">
+                        <label htmlFor="activo" className="text-sm font-bold text-gray-700 cursor-pointer select-none">
                             Usuario activo
                         </label>
                     </div>
@@ -419,14 +469,14 @@ export default function UsuarioForm({ editingUser, roles, onClose, onRefresh, sh
                         <button 
                             type="submit" 
                             disabled={loading} 
-                            className="flex-1 py-2.5 bg-gradient-to-r from-[#5b4eff] to-[#4a3dcc] text-white rounded-xl font-bold hover:shadow-lg transition disabled:opacity-50"
+                            className="flex-1 py-3 bg-[#5b4eff] text-white rounded-xl font-black hover:bg-[#4a3dcc] hover:shadow-lg transition-all disabled:opacity-50 active:scale-95"
                         >
                             {loading ? "Guardando..." : (editingUser ? "Actualizar" : "Crear Usuario")}
                         </button>
                         <button 
                             type="button" 
                             onClick={onClose} 
-                            className="px-6 py-2.5 bg-gray-100 text-gray-600 rounded-xl font-bold hover:bg-gray-200 transition"
+                            className="px-6 py-3 bg-gray-100 text-gray-600 rounded-xl font-bold hover:bg-gray-200 transition-all active:scale-95"
                         >
                             Cancelar
                         </button>

@@ -35,8 +35,8 @@ function Toast({ message, type = "success", onClose }) {
   return (
     <div className={`fixed top-20 right-4 ${colors[type]} text-white px-4 py-3 rounded-xl shadow-lg z-[9999] flex items-center gap-2 animate-in slide-in-from-right`}>
       {icons[type]}
-      <span className="text-sm font-medium">{message}</span>
-      <button onClick={onClose} className="ml-2 hover:opacity-70">
+      <span className="text-sm font-bold">{message}</span>
+      <button onClick={onClose} className="ml-2 hover:bg-white/20 p-1 rounded transition">
         <X size={14} />
       </button>
       <style>{`
@@ -52,20 +52,20 @@ function Toast({ message, type = "success", onClose }) {
 // ✅ Estilos por estado y tipo
 // =========================================================
 const ESTADO_STYLES = {
-  REGISTRADO: { bg: "bg-amber-50", text: "text-amber-700", border: "border-amber-200", icon: Clock },
-  EN_REVISION: { bg: "bg-blue-50", text: "text-blue-700", border: "border-blue-200", icon: RefreshCw },
-  APROBADO: { bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200", icon: CheckCircle },
-  REVISION: { bg: "bg-purple-50", text: "text-purple-700", border: "border-purple-200", icon: AlertCircle },
-  RECHAZADO: { bg: "bg-red-50", text: "text-red-700", border: "border-red-200", icon: XCircle },
-  CERRADO: { bg: "bg-gray-50", text: "text-gray-700", border: "border-gray-200", icon: FileText },
-  CANCELADO: { bg: "bg-gray-100", text: "text-gray-600", border: "border-gray-300", icon: Ban },
+  REGISTRADO: { bg: "bg-amber-100", text: "text-amber-800", border: "border-amber-200", icon: Clock },
+  EN_REVISION: { bg: "bg-blue-100", text: "text-blue-800", border: "border-blue-200", icon: RefreshCw },
+  APROBADO: { bg: "bg-emerald-100", text: "text-emerald-800", border: "border-emerald-200", icon: CheckCircle },
+  REVISION: { bg: "bg-purple-100", text: "text-purple-800", border: "border-purple-200", icon: AlertCircle },
+  RECHAZADO: { bg: "bg-red-100", text: "text-red-800", border: "border-red-200", icon: XCircle },
+  CERRADO: { bg: "bg-gray-100", text: "text-gray-700", border: "border-gray-200", icon: FileText },
+  CANCELADO: { bg: "bg-gray-100", text: "text-gray-600", border: "border-gray-200", icon: Ban },
 };
 
 const TIPO_STYLES = {
-  DEVOLUCION: { label: "Devolución", icon: RefreshCw },
-  DEFECTO: { label: "Producto defectuoso", icon: AlertCircle },
-  GARANTIA: { label: "Garantía", icon: Shield },
-  NO_CONFORMIDAD: { label: "No conformidad", icon: XCircle },
+  DEVOLUCION: { label: "Devolución", icon: RefreshCw, color: "text-indigo-600", bg: "bg-indigo-50" },
+  DEFECTO: { label: "Producto defectuoso", icon: AlertCircle, color: "text-rose-600", bg: "bg-rose-50" },
+  GARANTIA: { label: "Garantía", icon: Shield, color: "text-blue-600", bg: "bg-blue-50" },
+  NO_CONFORMIDAD: { label: "No conformidad", icon: XCircle, color: "text-orange-600", bg: "bg-orange-50" },
 };
 
 const ESTADO_LABEL = {
@@ -85,7 +85,6 @@ const MAX_DESCRIPCION = 500;
 // ✅ COMPONENTE PRINCIPAL
 // =========================================================
 export default function MisReclamos({ embedded = false }) {
-  // Estados
   const [reclamos, setReclamos] = useState([]);
   const [reclamosFiltrados, setReclamosFiltrados] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -95,14 +94,12 @@ export default function MisReclamos({ embedded = false }) {
   const [filtroEstado, setFiltroEstado] = useState("todos");
   const [busqueda, setBusqueda] = useState("");
 
-  // Modales
   const [showFormModal, setShowFormModal] = useState(false);
   const [showDetalleModal, setShowDetalleModal] = useState(false);
   const [showEvidenciasModal, setShowEvidenciasModal] = useState(false);
   const [showConfirmDelete, setShowConfirmDelete] = useState(null);
   const [showConfirmCancel, setShowConfirmCancel] = useState(null);
 
-  // Datos
   const [pedidos, setPedidos] = useState([]);
   const [reclamoSeleccionado, setReclamoSeleccionado] = useState(null);
   const [evidencias, setEvidencias] = useState([]);
@@ -110,7 +107,6 @@ export default function MisReclamos({ embedded = false }) {
   const [evidenciasPendientes, setEvidenciasPendientes] = useState([]);
   const [isDragging, setIsDragging] = useState(false);
 
-  // Formulario
   const [formData, setFormData] = useState({
     pedidoId: "",
     tipo: "",
@@ -118,9 +114,6 @@ export default function MisReclamos({ embedded = false }) {
   });
   const [fieldErrors, setFieldErrors] = useState({});
 
-  // =========================================================
-  // ✅ Helpers
-  // =========================================================
   const showToast = (message, type = "success") => {
     setToast({ message, type });
   };
@@ -152,19 +145,15 @@ export default function MisReclamos({ embedded = false }) {
     return mensaje;
   };
 
-  // ✅ NUEVO: numera los pedidos por cliente (1, 2, 3...) usando fecha ascendente
   const numerarPedidos = (listaPedidos) => {
     return [...listaPedidos]
-      .sort((a, b) => new Date(a.fecha) - new Date(b.fecha)) // más antiguo primero
+      .sort((a, b) => new Date(a.fecha) - new Date(b.fecha))
       .map((p, index) => ({
         ...p,
         numeroRelativo: index + 1,
       }));
   };
 
-  // =========================================================
-  // ✅ Cargar reclamos
-  // =========================================================
   const cargarReclamos = useCallback(async () => {
     setLoading(true);
     try {
@@ -202,9 +191,6 @@ export default function MisReclamos({ embedded = false }) {
     }
   }, []);
 
-  // =========================================================
-  // ✅ Cargar pedidos disponibles (con numeración por cliente)
-  // =========================================================
   const cargarPedidosDisponibles = useCallback(async () => {
     try {
       const usuario = JSON.parse(localStorage.getItem("usuario"));
@@ -225,8 +211,6 @@ export default function MisReclamos({ embedded = false }) {
       );
 
       const disponibles = pedidosValidos.filter(p => !pedidosConReclamo.has(p.id));
-
-      // ✅ Numerar por cliente según fecha ascendente
       setPedidos(numerarPedidos(disponibles));
     } catch (err) {
       console.error("Error cargando pedidos:", err);
@@ -238,9 +222,6 @@ export default function MisReclamos({ embedded = false }) {
     cargarPedidosDisponibles();
   }, [cargarReclamos, cargarPedidosDisponibles]);
 
-  // =========================================================
-  // ✅ Filtrar
-  // =========================================================
   useEffect(() => {
     let filtrados = [...reclamos];
     if (filtroEstado !== "todos") {
@@ -257,9 +238,6 @@ export default function MisReclamos({ embedded = false }) {
     setReclamosFiltrados(filtrados);
   }, [reclamos, filtroEstado, busqueda]);
 
-  // =========================================================
-  // ✅ Evidencias
-  // =========================================================
   const cargarEvidencias = async (reclamoId) => {
     try {
       const data = await reclamoService.listarEvidencias(reclamoId);
@@ -310,9 +288,6 @@ export default function MisReclamos({ embedded = false }) {
     }
   };
 
-  // =========================================================
-  // ✅ Cancelar reclamo
-  // =========================================================
   const handleCancelarReclamo = async (id) => {
     try {
       await reclamoService.cancelar(id);
@@ -329,9 +304,6 @@ export default function MisReclamos({ embedded = false }) {
     }
   };
 
-  // =========================================================
-  // ✅ Crear reclamo
-  // =========================================================
   const validarFormulario = () => {
     const errors = {};
     if (!formData.tipo) errors.tipo = "Selecciona un tipo";
@@ -387,37 +359,29 @@ export default function MisReclamos({ embedded = false }) {
     }
   };
 
-  // =========================================================
-  // ✅ RENDER: Loading
-  // =========================================================
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-3">
         <Loader2 className="w-10 h-10 text-[#5b4eff] animate-spin" />
-        <p className="text-sm text-gray-500">Cargando reclamos...</p>
+        <p className="text-sm font-medium text-gray-500">Cargando tus reclamos...</p>
       </div>
     );
   }
 
-  // =========================================================
-  // ✅ RENDER
-  // =========================================================
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 pt-6 pb-16 px-4">
-      <div className={`${embedded ? "" : "max-w-6xl mx-auto"} px-4 sm:px-6`}>
+    <div className={`${embedded ? "" : "min-h-screen bg-slate-50 pt-6 pb-16"} px-4`}>
+      <div className={`${embedded ? "" : "max-w-4xl mx-auto"} px-4 sm:px-6`}>
         {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
 
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Mis Reclamos</h1>
-            <p className="text-sm text-gray-500 mt-1">
-              Gestiona tus reclamos, devoluciones y garantías
-            </p>
+            <h1 className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">Mis Reclamos</h1>
+            <p className="text-sm text-gray-500 mt-1 font-medium">Gestiona tus reclamos, devoluciones y garantías</p>
           </div>
           <button
             onClick={() => setShowFormModal(true)}
-            className="w-full sm:w-auto px-5 py-2.5 bg-gradient-to-r from-[#5b4eff] to-[#4a3dcc] text-white rounded-xl text-sm font-bold hover:shadow-lg hover:scale-[1.02] transition-all flex items-center justify-center gap-2"
+            className="w-full sm:w-auto px-5 py-3 bg-gradient-to-r from-[#5b4eff] to-[#4a3dcc] text-white rounded-xl text-sm font-bold hover:shadow-lg hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2"
           >
             <Plus size={18} />
             Nuevo Reclamo
@@ -434,17 +398,16 @@ export default function MisReclamos({ embedded = false }) {
                 placeholder="Buscar por número, tipo o descripción..."
                 value={busqueda}
                 onChange={(e) => setBusqueda(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:border-[#5b4eff] focus:ring-2 focus:ring-[#5b4eff]/20 focus:outline-none transition text-sm"
+                className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:border-[#5b4eff] focus:ring-2 focus:ring-[#5b4eff]/20 focus:outline-none transition text-sm font-medium"
               />
             </div>
 
             <div className="flex flex-wrap gap-2">
               <button
                 onClick={() => setFiltroEstado("todos")}
-                className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all ${filtroEstado === "todos"
-                    ? "bg-[#5b4eff] text-white shadow-md"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                  }`}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                  filtroEstado === "todos" ? "bg-[#5b4eff] text-white shadow-md" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                }`}
               >
                 Todos ({reclamos.length})
               </button>
@@ -456,10 +419,9 @@ export default function MisReclamos({ embedded = false }) {
                   <button
                     key={key}
                     onClick={() => setFiltroEstado(key)}
-                    className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 ${filtroEstado === key
-                        ? "bg-[#5b4eff] text-white shadow-md"
-                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                      }`}
+                    className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                      filtroEstado === key ? "bg-[#5b4eff] text-white shadow-md" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    }`}
                   >
                     <Icon size={14} />
                     {ESTADO_LABEL[key]} ({count})
@@ -477,7 +439,7 @@ export default function MisReclamos({ embedded = false }) {
             hasFilters={filtroEstado !== "todos" || busqueda}
           />
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-4">
             {reclamosFiltrados.map(reclamo => (
               <ReclamoCard
                 key={reclamo.id}
@@ -581,22 +543,22 @@ export default function MisReclamos({ embedded = false }) {
 
 function EmptyState({ onNew, hasFilters }) {
   return (
-    <div className="bg-white rounded-2xl p-12 text-center border border-gray-100">
-      <div className="w-16 h-16 bg-[#5b4eff]/10 rounded-full flex items-center justify-center mx-auto mb-4">
-        <FileText size={32} className="text-[#5b4eff]" />
+    <div className="bg-white rounded-2xl p-12 text-center border-2 border-dashed border-gray-200">
+      <div className="w-20 h-20 bg-indigo-50 rounded-full flex items-center justify-center mx-auto mb-4">
+        <FileText size={36} className="text-indigo-400" />
       </div>
-      <h3 className="text-lg font-bold text-gray-800 mb-1">
-        {hasFilters ? "Sin resultados" : "No tienes reclamos registrados"}
+      <h3 className="text-lg font-black text-gray-800 mb-1">
+        {hasFilters ? "No se encontraron resultados" : "No tienes reclamos registrados"}
       </h3>
-      <p className="text-sm text-gray-500 mb-6 max-w-md mx-auto">
+      <p className="text-sm text-gray-500 mb-6 max-w-md mx-auto font-medium">
         {hasFilters
-          ? "Intenta cambiar los filtros o el término de búsqueda"
-          : "Si tienes un problema con un pedido, puedes registrar un reclamo y te ayudaremos"}
+          ? "Intenta cambiar los filtros o el término de búsqueda."
+          : "Si tienes un problema con un pedido, puedes registrar un reclamo y te ayudaremos a resolverlo."}
       </p>
       {!hasFilters && (
         <button
           onClick={onNew}
-          className="px-6 py-3 bg-gradient-to-r from-[#5b4eff] to-[#4a3dcc] text-white rounded-xl text-sm font-bold hover:shadow-lg transition inline-flex items-center gap-2"
+          className="px-6 py-3 bg-[#5b4eff] text-white rounded-xl text-sm font-bold hover:bg-[#4a3dcc] transition inline-flex items-center gap-2 shadow-md shadow-[#5b4eff]/20"
         >
           <Plus size={16} />
           Registrar mi primer reclamo
@@ -608,83 +570,88 @@ function EmptyState({ onNew, hasFilters }) {
 
 function ReclamoCard({ reclamo, onVerDetalle, onVerEvidencias, onCancelar, formatDate }) {
   const estadoStyle = ESTADO_STYLES[reclamo.estado] || ESTADO_STYLES.REGISTRADO;
-  const tipoStyle = TIPO_STYLES[reclamo.tipo] || { label: reclamo.tipo, icon: FileText };
+  const tipoStyle = TIPO_STYLES[reclamo.tipo] || { label: reclamo.tipo, icon: FileText, color: "text-gray-600", bg: "bg-gray-50" };
   const EstadoIcon = estadoStyle.icon;
   const TipoIcon = tipoStyle.icon;
   const puedeCancelar = reclamo.estado === "REGISTRADO";
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden">
-      <div className={`h-1 ${estadoStyle.bg.replace("50", "500").replace("100", "400")}`} />
-
+    <div className="bg-white rounded-2xl border-2 border-indigo-300 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden group">
       <div className="p-5">
+        
+        {/* Header: Icono, ID, Fecha y Estado */}
         <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-4">
           <div className="flex items-start gap-4 flex-1">
-            <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${estadoStyle.bg} ${estadoStyle.text}`}>
+            <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${tipoStyle.bg} ${tipoStyle.color} shadow-sm border border-white`}>
               <TipoIcon size={22} />
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex flex-wrap items-center gap-2 mb-1">
-                <h3 className="font-bold text-gray-900">Reclamo Nº {reclamo.id}</h3>
-                <span className={`px-2.5 py-1 rounded-full text-xs font-semibold flex items-center gap-1 ${estadoStyle.bg} ${estadoStyle.text}`}>
+                <h3 className="font-black text-gray-900 text-lg">Reclamo Nº {reclamo.id}</h3>
+                <span className={`px-2.5 py-1 rounded-md text-[10px] uppercase tracking-wide font-black flex items-center gap-1 border ${estadoStyle.bg} ${estadoStyle.text} ${estadoStyle.border}`}>
                   <EstadoIcon size={12} />
                   {ESTADO_LABEL[reclamo.estado]}
                 </span>
               </div>
-              <p className="text-xs text-gray-400 flex items-center gap-1.5">
+              <p className="text-xs text-gray-500 font-medium flex items-center gap-1.5">
                 <Calendar size={12} />
                 {formatDate(reclamo.fecha)}
               </p>
             </div>
           </div>
 
-          <div className="text-right flex-shrink-0">
-            <p className="text-sm font-semibold text-gray-700">{tipoStyle.label}</p>
+          <div className="text-left sm:text-right flex-shrink-0 bg-gray-50 rounded-lg p-2 sm:bg-transparent sm:p-0">
+            <p className={`text-sm font-bold ${tipoStyle.color}`}>{tipoStyle.label}</p>
             {reclamo.pedidoId && (
-              <p className="text-xs text-gray-400 flex items-center justify-end gap-1 mt-1">
-                <Hash size={10} />
-                Pedido {reclamo.pedidoId}
+              <p className="text-xs text-gray-500 font-medium flex items-center sm:justify-end gap-1 mt-1">
+              
+                Pedido Nº {reclamo.pedidoId}
               </p>
             )}
           </div>
         </div>
 
-        <div className="bg-gray-50 rounded-xl p-3 mb-4">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Descripción</p>
-          <p className="text-sm text-gray-700 line-clamp-2">{reclamo.descripcion}</p>
+        {/* Descripción */}
+        <div className="mb-4">
+          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Motivo del reclamo</p>
+          <p className="text-sm text-gray-700 line-clamp-2 leading-relaxed bg-gray-50/50 p-2 rounded-lg border border-gray-100">
+            {reclamo.descripcion}
+          </p>
         </div>
 
+        {/* Devolución Asociada */}
         {reclamo.devolucion && (
           <div className="mb-4 p-3 bg-emerald-50 rounded-xl border border-emerald-200 flex items-center gap-2">
-            <RefreshCw size={14} className="text-emerald-600 flex-shrink-0" />
-            <p className="text-xs text-emerald-700 font-medium">
-              Devolución asociada - Estado: {reclamo.devolucion.estado}
+            <RefreshCw size={16} className="text-emerald-600 flex-shrink-0" />
+            <p className="text-xs text-emerald-800 font-bold">
+              Devolución asociada — Estado: {reclamo.devolucion.estado}
             </p>
           </div>
         )}
 
-        <div className="flex flex-wrap justify-end gap-2 pt-3 border-t border-gray-100">
+        {/* Acciones */}
+        <div className="flex flex-col sm:flex-row justify-end gap-2 pt-4 border-t border-gray-100">
           {puedeCancelar && (
             <button
               onClick={(e) => { e.stopPropagation(); onCancelar(); }}
-              className="px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-50 rounded-lg transition flex items-center gap-1.5"
+              className="px-4 py-2.5 text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 rounded-xl transition flex items-center justify-center gap-2"
             >
               <Ban size={14} />
-              Cancelar reclamo
+              Cancelar
             </button>
           )}
           <button
             onClick={(e) => { e.stopPropagation(); onVerEvidencias(); }}
-            className="px-3 py-2 text-xs font-semibold text-gray-600 hover:text-[#5b4eff] hover:bg-[#5b4eff]/5 rounded-lg transition flex items-center gap-1.5"
+            className="px-4 py-2.5 text-xs font-bold text-gray-600 bg-gray-50 hover:bg-gray-100 rounded-xl transition flex items-center justify-center gap-2"
           >
             <ImageIcon size={14} />
-            Ver evidencias
+            Evidencias
           </button>
           <button
             onClick={(e) => { e.stopPropagation(); onVerDetalle(); }}
-            className="px-3 py-2 text-xs font-semibold text-[#5b4eff] hover:bg-[#5b4eff]/10 rounded-lg transition flex items-center gap-1.5"
+            className="px-4 py-2.5 text-xs font-bold text-white bg-[#5b4eff] hover:bg-[#4a3dcc] rounded-xl shadow-sm shadow-[#5b4eff]/20 transition flex items-center justify-center gap-2"
           >
-            Ver detalle
+            Ver Detalle
             <ChevronRight size={14} />
           </button>
         </div>
@@ -709,14 +676,14 @@ function NuevoReclamoModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-0 sm:p-4" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-[100] p-0 sm:p-4 animate-in fade-in duration-200" onClick={onClose}>
       <div
         className="bg-white w-full sm:rounded-2xl sm:max-w-2xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto shadow-2xl rounded-t-3xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="sticky top-0 bg-white p-5 sm:p-6 border-b border-gray-100 flex justify-between items-start z-10">
           <div>
-            <h3 className="text-xl font-bold text-gray-900">Nuevo Reclamo</h3>
+            <h3 className="text-xl font-black text-gray-900">Nuevo Reclamo</h3>
             <p className="text-sm text-gray-500 mt-0.5">Registra tu reclamo o solicitud</p>
           </div>
           <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition">
@@ -733,7 +700,7 @@ function NuevoReclamoModal({
             <select
               value={formData.pedidoId}
               onChange={(e) => setFormData(prev => ({ ...prev, pedidoId: e.target.value }))}
-              className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:border-[#5b4eff] focus:ring-2 focus:ring-[#5b4eff]/20 focus:outline-none transition text-sm"
+              className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:border-[#5b4eff] focus:ring-2 focus:ring-[#5b4eff]/20 focus:outline-none transition text-sm font-medium"
             >
               <option value="">Sin pedido asociado</option>
               {pedidos.map(pedido => (
@@ -743,7 +710,7 @@ function NuevoReclamoModal({
               ))}
             </select>
             {pedidos.length === 0 && (
-              <p className="text-xs text-gray-400 mt-2 flex items-center gap-1">
+              <p className="text-xs text-gray-500 mt-2 flex items-center gap-1 font-medium">
                 <Info size={12} />
                 No tienes pedidos disponibles para reclamar
               </p>
@@ -764,10 +731,11 @@ function NuevoReclamoModal({
                     key={value}
                     type="button"
                     onClick={() => setFormData(prev => ({ ...prev, tipo: value }))}
-                    className={`p-3 rounded-xl border-2 text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 justify-center ${selected
-                        ? "border-[#5b4eff] bg-[#5b4eff]/10 text-[#5b4eff] shadow-sm"
-                        : "border-gray-200 text-gray-600 hover:border-gray-300"
-                      }`}
+                    className={`p-3 rounded-xl border-2 text-xs sm:text-sm font-bold transition-all flex items-center gap-2 justify-center ${
+                      selected
+                        ? "border-[#5b4eff] bg-[#5b4eff]/5 text-[#5b4eff] shadow-sm"
+                        : "border-gray-200 text-gray-600 hover:border-gray-300 bg-white"
+                    }`}
                   >
                     <Icon size={16} />
                     <span className="truncate">{style.label}</span>
@@ -776,7 +744,7 @@ function NuevoReclamoModal({
               })}
             </div>
             {fieldErrors.tipo && (
-              <p className="text-xs text-red-500 mt-2 flex items-center gap-1">
+              <p className="text-xs text-red-500 mt-2 flex items-center gap-1 font-medium">
                 <AlertCircle size={12} /> {fieldErrors.tipo}
               </p>
             )}
@@ -788,8 +756,7 @@ function NuevoReclamoModal({
               <label className="block text-sm font-bold text-gray-700">
                 Descripción <span className="text-red-500">*</span>
               </label>
-              <span className={`text-xs ${formData.descripcion.length > MAX_DESCRIPCION ? "text-red-500" : "text-gray-400"
-                }`}>
+              <span className={`text-xs font-bold ${formData.descripcion.length > MAX_DESCRIPCION ? "text-red-500" : "text-gray-400"}`}>
                 {formData.descripcion.length}/{MAX_DESCRIPCION}
               </span>
             </div>
@@ -798,11 +765,11 @@ function NuevoReclamoModal({
               onChange={(e) => setFormData(prev => ({ ...prev, descripcion: e.target.value }))}
               rows="4"
               maxLength={MAX_DESCRIPCION}
-              className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:border-[#5b4eff] focus:ring-2 focus:ring-[#5b4eff]/20 focus:outline-none transition resize-none text-sm"
+              className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:border-[#5b4eff] focus:ring-2 focus:ring-[#5b4eff]/20 focus:outline-none transition resize-none text-sm font-medium"
               placeholder="Describe detalladamente tu reclamo..."
             />
             {fieldErrors.descripcion && (
-              <p className="text-xs text-red-500 mt-2 flex items-center gap-1">
+              <p className="text-xs text-red-500 mt-2 flex items-center gap-1 font-medium">
                 <AlertCircle size={12} /> {fieldErrors.descripcion}
               </p>
             )}
@@ -817,8 +784,7 @@ function NuevoReclamoModal({
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
-              className={`border-2 border-dashed rounded-xl p-6 text-center transition ${isDragging ? "border-[#5b4eff] bg-[#5b4eff]/5" : "border-gray-200 hover:border-[#5b4eff]"
-                }`}
+              className={`border-2 border-dashed rounded-xl p-6 text-center transition ${isDragging ? "border-[#5b4eff] bg-[#5b4eff]/5" : "border-gray-200 hover:border-[#5b4eff]"}`}
             >
               <input
                 type="file"
@@ -832,16 +798,16 @@ function NuevoReclamoModal({
                 <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
                   <Upload size={20} className="text-gray-500" />
                 </div>
-                <span className="text-sm font-semibold text-gray-700">
+                <span className="text-sm font-bold text-gray-700">
                   {isDragging ? "Suelta las imágenes aquí" : "Arrastra o haz clic para subir"}
                 </span>
-                <span className="text-xs text-gray-400">JPEG, PNG, WEBP — máx 5MB cada una</span>
+                <span className="text-xs text-gray-500">JPEG, PNG, WEBP — máx 5MB cada una</span>
               </label>
             </div>
 
             {evidenciasPendientes.length > 0 && (
               <div className="mt-3">
-                <p className="text-xs font-semibold text-gray-600 mb-2">
+                <p className="text-xs font-bold text-gray-600 mb-2">
                   {evidenciasPendientes.length} archivo(s) seleccionado(s)
                 </p>
                 <div className="space-y-2">
@@ -849,7 +815,7 @@ function NuevoReclamoModal({
                     <div key={idx} className="flex items-center justify-between gap-2 bg-gray-50 rounded-lg px-3 py-2">
                       <div className="flex items-center gap-2 min-w-0">
                         <ImageIcon size={16} className="text-gray-500 flex-shrink-0" />
-                        <span className="text-xs text-gray-700 truncate">{file.name}</span>
+                        <span className="text-xs text-gray-700 truncate font-medium">{file.name}</span>
                         <span className="text-xs text-gray-400 flex-shrink-0">
                           ({(file.size / 1024).toFixed(0)} KB)
                         </span>
@@ -872,8 +838,8 @@ function NuevoReclamoModal({
           <div className="bg-blue-50 rounded-xl p-4 border border-blue-100 flex items-start gap-3">
             <Info size={18} className="text-blue-500 flex-shrink-0 mt-0.5" />
             <div>
-              <p className="text-sm font-semibold text-blue-800">Información importante</p>
-              <p className="text-xs text-blue-600 mt-0.5">
+              <p className="text-sm font-bold text-blue-800">Información importante</p>
+              <p className="text-xs text-blue-600 mt-0.5 font-medium">
                 Una vez registrado tu reclamo, nuestro equipo lo revisará y te contactará en 3-5 días hábiles.
               </p>
             </div>
@@ -920,7 +886,7 @@ function DetalleModal({ reclamo, onClose, onCancelar, formatDate, formatPrice })
   const puedeCancelar = reclamo.estado === "REGISTRADO";
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-0 sm:p-4" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-[100] p-0 sm:p-4 animate-in fade-in duration-200" onClick={onClose}>
       <div
         className="bg-white w-full sm:rounded-2xl sm:max-w-2xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto shadow-2xl rounded-t-3xl"
         onClick={(e) => e.stopPropagation()}
@@ -931,8 +897,8 @@ function DetalleModal({ reclamo, onClose, onCancelar, formatDate, formatPrice })
               <TipoIcon size={22} />
             </div>
             <div>
-              <h3 className="text-xl font-bold text-gray-900">Reclamo Nº {reclamo.id}</h3>
-              <span className={`text-xs font-semibold flex items-center gap-1 mt-1 ${estadoStyle.text}`}>
+              <h3 className="text-xl font-black text-gray-900">Reclamo #{reclamo.id}</h3>
+              <span className={`text-xs font-bold flex items-center gap-1 mt-1 ${estadoStyle.text}`}>
                 <EstadoIcon size={12} />
                 {ESTADO_LABEL[reclamo.estado]}
               </span>
@@ -947,22 +913,22 @@ function DetalleModal({ reclamo, onClose, onCancelar, formatDate, formatPrice })
           <InfoBlock title="Información general" icon={FileText}>
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
-                <p className="text-xs text-gray-500 mb-0.5">Tipo</p>
-                <p className="font-semibold text-gray-800">{tipoStyle.label}</p>
+                <p className="text-xs text-gray-500 mb-0.5 font-bold">Tipo</p>
+                <p className="font-bold text-gray-800">{tipoStyle.label}</p>
               </div>
               <div>
-                <p className="text-xs text-gray-500 mb-0.5">Fecha</p>
+                <p className="text-xs text-gray-500 mb-0.5 font-bold">Fecha</p>
                 <p className="font-semibold text-gray-800 text-xs">{formatDate(reclamo.fecha)}</p>
               </div>
               <div>
-                <p className="text-xs text-gray-500 mb-0.5">Pedido</p>
-                <p className="font-semibold text-gray-800">
+                <p className="text-xs text-gray-500 mb-0.5 font-bold">Pedido</p>
+                <p className="font-bold text-gray-800">
                   {reclamo.pedidoId ? `#${reclamo.pedidoId}` : "No asociado"}
                 </p>
               </div>
               <div>
-                <p className="text-xs text-gray-500 mb-0.5">Estado</p>
-                <p className={`font-semibold ${estadoStyle.text}`}>
+                <p className="text-xs text-gray-500 mb-0.5 font-bold">Estado</p>
+                <p className={`font-black ${estadoStyle.text}`}>
                   {ESTADO_LABEL[reclamo.estado]}
                 </p>
               </div>
@@ -970,7 +936,7 @@ function DetalleModal({ reclamo, onClose, onCancelar, formatDate, formatPrice })
           </InfoBlock>
 
           <InfoBlock title="Descripción" icon={FileText}>
-            <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
+            <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap font-medium">
               {reclamo.descripcion}
             </p>
           </InfoBlock>
@@ -979,12 +945,12 @@ function DetalleModal({ reclamo, onClose, onCancelar, formatDate, formatPrice })
             <InfoBlock title="Devolución asociada" icon={RefreshCw}>
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <p className="text-xs text-gray-500 mb-0.5">Estado</p>
-                  <p className="font-semibold text-gray-800">{reclamo.devolucion.estado}</p>
+                  <p className="text-xs text-gray-500 mb-0.5 font-bold">Estado</p>
+                  <p className="font-bold text-gray-800">{reclamo.devolucion.estado}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500 mb-0.5">Monto</p>
-                  <p className="font-bold text-emerald-600">
+                  <p className="text-xs text-gray-500 mb-0.5 font-bold">Monto</p>
+                  <p className="font-black text-emerald-600">
                     {formatPrice(reclamo.devolucion.monto || 0)}
                   </p>
                 </div>
@@ -1004,7 +970,7 @@ function DetalleModal({ reclamo, onClose, onCancelar, formatDate, formatPrice })
 
           <div className="bg-amber-50 rounded-xl p-4 border border-amber-200 flex items-start gap-3">
             <Info size={18} className="text-amber-600 flex-shrink-0 mt-0.5" />
-            <p className="text-xs text-amber-700">
+            <p className="text-xs text-amber-700 font-medium">
               Para cualquier consulta sobre tu reclamo, contáctanos a <b>soporte@tienda.com</b> o al <b>(01) 234-5678</b>
             </p>
           </div>
@@ -1028,15 +994,15 @@ function InfoBlock({ title, icon: Icon, children }) {
 
 function EvidenciasModal({ reclamo, evidencias, evidenciasSubiendo, onSubir, onEliminar, onClose, formatDate }) {
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-0 sm:p-4" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-[100] p-0 sm:p-4 animate-in fade-in duration-200" onClick={onClose}>
       <div
         className="bg-white w-full sm:rounded-2xl sm:max-w-3xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto shadow-2xl rounded-t-3xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="sticky top-0 bg-white p-5 sm:p-6 border-b border-gray-100 flex justify-between items-center z-10">
           <div>
-            <h3 className="text-xl font-bold text-gray-900">Evidencias</h3>
-            <p className="text-sm text-gray-500 mt-0.5">Reclamo Nº {reclamo.id}</p>
+            <h3 className="text-xl font-black text-gray-900">Evidencias</h3>
+            <p className="text-sm text-gray-500 mt-0.5 font-medium">Reclamo #{reclamo.id}</p>
           </div>
           <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition">
             <X size={20} />
@@ -1056,21 +1022,22 @@ function EvidenciasModal({ reclamo, evidencias, evidenciasSubiendo, onSubir, onE
             />
             <label
               htmlFor="subir-evidencia"
-              className={`border-2 border-dashed rounded-xl p-5 text-center cursor-pointer transition flex flex-col items-center gap-2 ${evidenciasSubiendo
+              className={`border-2 border-dashed rounded-xl p-5 text-center cursor-pointer transition flex flex-col items-center gap-2 ${
+                evidenciasSubiendo
                   ? "border-gray-200 bg-gray-50 cursor-not-allowed"
                   : "border-gray-200 hover:border-[#5b4eff] hover:bg-[#5b4eff]/5"
-                }`}
+              }`}
             >
               {evidenciasSubiendo ? (
                 <>
                   <Loader2 size={22} className="text-[#5b4eff] animate-spin" />
-                  <span className="text-sm font-semibold text-gray-600">Subiendo evidencias...</span>
+                  <span className="text-sm font-bold text-gray-600">Subiendo evidencias...</span>
                 </>
               ) : (
                 <>
                   <Upload size={22} className="text-[#5b4eff]" />
-                  <span className="text-sm font-semibold text-gray-700">Subir nuevas evidencias</span>
-                  <span className="text-xs text-gray-400">Puedes seleccionar varias a la vez</span>
+                  <span className="text-sm font-bold text-gray-700">Subir nuevas evidencias</span>
+                  <span className="text-xs text-gray-400 font-medium">Puedes seleccionar varias a la vez</span>
                 </>
               )}
             </label>
@@ -1081,12 +1048,12 @@ function EvidenciasModal({ reclamo, evidencias, evidenciasSubiendo, onSubir, onE
               <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
                 <ImageIcon size={28} className="text-gray-400" />
               </div>
-              <p className="text-sm font-semibold text-gray-600">No hay evidencias</p>
-              <p className="text-xs text-gray-400 mt-1">Sube imágenes para respaldar tu reclamo</p>
+              <p className="text-sm font-bold text-gray-600">No hay evidencias</p>
+              <p className="text-xs text-gray-400 mt-1 font-medium">Sube imágenes para respaldar tu reclamo</p>
             </div>
           ) : (
             <>
-              <p className="text-xs font-semibold text-gray-500 uppercase mb-3">
+              <p className="text-xs font-bold text-gray-500 uppercase mb-3 tracking-wider">
                 {evidencias.length} evidencia(s)
               </p>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -1102,20 +1069,20 @@ function EvidenciasModal({ reclamo, evidencias, evidenciasSubiendo, onSubir, onE
                         href={buildImageUrl(ev.urlImagen)}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="p-2 bg-white text-gray-700 rounded-full hover:bg-gray-100 transition"
+                        className="p-2 bg-white text-gray-700 rounded-full hover:bg-gray-100 transition shadow-lg"
                         title="Ver"
                       >
                         <Eye size={16} />
                       </a>
                       <button
                         onClick={() => onEliminar(ev.id)}
-                        className="p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition"
+                        className="p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition shadow-lg"
                         title="Eliminar"
                       >
                         <Trash2 size={16} />
                       </button>
                     </div>
-                    <p className="absolute bottom-1 left-1 right-1 text-[10px] text-white bg-black/60 px-2 py-0.5 rounded text-center truncate">
+                    <p className="absolute bottom-1 left-1 right-1 text-[10px] font-bold text-white bg-black/60 px-2 py-0.5 rounded text-center truncate">
                       {formatDate(ev.fecha)}
                     </p>
                   </div>
@@ -1138,13 +1105,13 @@ function ConfirmModal({ titulo, descripcion, icono: Icono, colorIcono = "red", t
   const colors = colorClasses[colorIcono] || colorClasses.red;
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4" onClick={onCancel}>
-      <div className="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[200] p-4 animate-in fade-in duration-200" onClick={onCancel}>
+      <div className="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl animate-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()}>
         <div className={`w-14 h-14 ${colors.bg} rounded-full flex items-center justify-center mx-auto mb-4`}>
           <Icono size={24} className={colors.text} />
         </div>
-        <h3 className="text-lg font-bold text-gray-900 text-center mb-2">{titulo}</h3>
-        <p className="text-sm text-gray-500 text-center mb-6">{descripcion}</p>
+        <h3 className="text-lg font-black text-gray-900 text-center mb-2">{titulo}</h3>
+        <p className="text-sm text-gray-500 text-center mb-6 font-medium">{descripcion}</p>
         <div className="flex gap-3">
           <button
             onClick={onCancel}
@@ -1154,7 +1121,7 @@ function ConfirmModal({ titulo, descripcion, icono: Icono, colorIcono = "red", t
           </button>
           <button
             onClick={onConfirm}
-            className={`flex-1 py-2.5 ${colors.btn} text-white rounded-xl font-bold text-sm transition`}
+            className={`flex-1 py-2.5 ${colors.btn} text-white rounded-xl font-bold text-sm transition shadow-sm`}
           >
             {textoConfirmar}
           </button>

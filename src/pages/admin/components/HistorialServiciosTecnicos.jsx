@@ -2,7 +2,7 @@
 import React, { useState, useMemo } from "react";
 import { useServicios } from "../../tecnico/hooks/useServicios";
 import DetalleServicioHistorial from "../../tecnico/components/DetalleServicioHistorial";
-import { servicioTecnicoService } from "../../../services/api"; // ⚠️ Asegúrate de que la ruta sea correcta
+import { servicioTecnicoService } from "../../../services/api";
 import {
     ClipboardList, Wrench, CheckCircle2, PackageCheck,
     FileText, Coins, Activity, Eye, ChevronDown, ChevronUp,
@@ -49,12 +49,11 @@ const getEstadoBg = (estado) => {
 // Componente principal
 // =====================================================
 export default function HistorialServiciosTecnicos() {
-    const { servicios, loading, error, recargar } = useServicios(); // 👈 Agregamos recargar
+    const { servicios, loading, error, recargar } = useServicios();
     const [servicioSeleccionado, setServicioSeleccionado] = useState(null);
     const [showModal, setShowModal] = useState(false);
     const [visibleCount, setVisibleCount] = useState(6);
     
-    // 👇 NUEVOS ESTADOS
     const [mostrarInactivos, setMostrarInactivos] = useState(false);
     const [toast, setToast] = useState({ show: false, message: "", type: "" });
 
@@ -68,9 +67,8 @@ export default function HistorialServiciosTecnicos() {
         setShowModal(true);
     };
 
-    // 👇 FUNCIÓN PARA REACTIVAR
     const handleReactivar = async (e, id) => {
-        e.stopPropagation(); // Evita que se abra el modal de detalle al hacer clic
+        e.stopPropagation();
         try {
             await servicioTecnicoService.actualizar(id, { activo: true });
             showToast(`Servicio #${id} reactivado correctamente`, "success");
@@ -92,7 +90,6 @@ export default function HistorialServiciosTecnicos() {
         style: 'currency', currency: 'PEN', minimumFractionDigits: 2
     }).format(price || 0);
 
-    // 👇 FILTRADO DE ACTIVOS/INACTIVOS
     const serviciosFiltrados = useMemo(() => {
         let result = servicios;
         if (!mostrarInactivos) {
@@ -104,17 +101,9 @@ export default function HistorialServiciosTecnicos() {
     const serviciosMostrados = serviciosFiltrados.slice(0, visibleCount);
     const hasMore = visibleCount < serviciosFiltrados.length;
 
-    const totalIngresos = useMemo(
-        () => servicios.reduce((sum, s) => sum + (s.costo || 0), 0),
-        [servicios]
-    );
+    const totalIngresos = useMemo(() => servicios.reduce((sum, s) => sum + (s.costo || 0), 0), [servicios]);
+    const completados = useMemo(() => servicios.filter(s => s.estado === "FINALIZADO" || s.estado === "ENTREGADO").length, [servicios]);
 
-    const completados = useMemo(
-        () => servicios.filter(s => s.estado === "FINALIZADO" || s.estado === "ENTREGADO").length,
-        [servicios]
-    );
-
-    // ── Estados de carga / error ──
     if (loading) {
         return (
             <div className="flex flex-col items-center justify-center py-20">
@@ -137,7 +126,7 @@ export default function HistorialServiciosTecnicos() {
         <div className="space-y-6 relative">
             {/* ─── TOAST NOTIFICATION ─── */}
             {toast.show && (
-                <div className="fixed top-24 right-6 z-[200] animate-slide-in">
+                <div className="fixed top-24 right-4 sm:right-6 z-[200] animate-slide-in">
                     <div className={`rounded-xl shadow-lg p-4 flex items-center gap-3 ${
                         toast.type === "success" ? "bg-green-500 text-white" : "bg-red-500 text-white"
                     }`}>
@@ -175,24 +164,24 @@ export default function HistorialServiciosTecnicos() {
                 </div>
             </div>
 
-            {/* ─── BARRA DE FILTROS (NUEVO) ─── */}
-            <div className="flex items-center justify-between bg-white p-3 rounded-xl shadow-sm border border-gray-100">
+            {/* ─── BARRA DE FILTROS ─── */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between bg-white p-3 rounded-xl shadow-sm border border-gray-100 gap-3">
                 <div className="flex items-center gap-2 text-sm text-gray-600">
                     <Filter size={16} className="text-gray-400" />
                     <span className="font-medium">Filtros de visualización</span>
                 </div>
                 
-                <label className="flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-100 transition select-none">
+                <label className="flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-100 transition select-none w-full sm:w-auto">
                     <input
                         type="checkbox"
                         checked={mostrarInactivos}
                         onChange={(e) => {
                             setMostrarInactivos(e.target.checked);
-                            setVisibleCount(6); // Resetear paginación
+                            setVisibleCount(6);
                         }}
                         className="w-4 h-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-600"
                     />
-                    <span className="text-sm font-medium text-gray-700 whitespace-nowrap">Mostrar servicios inactivos</span>
+                    <span className="text-sm font-medium text-gray-700 whitespace-nowrap">Mostrar inactivos</span>
                 </label>
             </div>
 
@@ -209,89 +198,90 @@ export default function HistorialServiciosTecnicos() {
                 <>
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                         {serviciosMostrados.map(s => {
-                            // Validación robusta
                             const esActivo = s.activo !== false && s.activo !== 0 && s.activo !== "0";
                             
                             return (
                                 <div
                                     key={s.id}
                                     onClick={() => verDetalle(s)}
-                                    className={`bg-white rounded-xl shadow-sm transition-all overflow-hidden cursor-pointer group border ${
+                                    className={`bg-white rounded-2xl shadow-sm transition-all overflow-hidden cursor-pointer group border-2 ${
                                         esActivo 
-                                            ? "hover:shadow-md hover:border-indigo-300 border-gray-100" 
+                                            ? "hover:shadow-md hover:border-indigo-300 border-indigo-300" 
                                             : "border-gray-200 opacity-70 grayscale-[20%]"
                                     }`}
                                 >
-                                    {/* Header */}
-                                    <div className={`relative p-4 pb-3 border-b border-gray-100 ${esActivo ? 'bg-gradient-to-r from-gray-50 to-white' : 'bg-gray-100'}`}>
+                                    {/* Header de la tarjeta */}
+                                    <div className={`relative p-4 pb-3 border-b border-gray-100 ${esActivo ? 'bg-gradient-to-r from-indigo-50/50 to-white' : 'bg-gray-100'}`}>
                                         
-                                        {/* 👇 BADGE DE INACTIVO */}
                                         {!esActivo && (
                                             <div className="absolute top-3 left-4">
-                                                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-bold uppercase bg-gray-200 text-gray-600">
+                                                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-bold uppercase bg-gray-200 text-gray-600">
                                                     <PowerOff size={10} /> Inactivo
                                                 </span>
                                             </div>
                                         )}
 
                                         <div className="absolute top-3 right-3">
-                                            <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getEstadoColor(s.estado)}`}>
+                                            <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-bold border ${getEstadoColor(s.estado).replace('text-', 'border-').replace('100', '200')} ${getEstadoColor(s.estado)}`}>
                                                 {getEstadoIcon(s.estado, 12)}
                                                 {s.estado.replace("_", " ")}
                                             </span>
                                         </div>
-                                        <div className={`flex items-center gap-3 ${!esActivo ? 'mt-5' : ''}`}>
+                                        <div className={`flex items-center gap-3 ${!esActivo ? 'mt-6' : ''}`}>
                                             <div
-                                                className="w-10 h-10 rounded-xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform text-indigo-600"
+                                                className="w-12 h-12 rounded-xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform text-indigo-600"
                                                 style={{ backgroundColor: getEstadoBg(s.estado) }}
                                             >
-                                                {getEstadoIcon(s.estado, 20)}
+                                                {getEstadoIcon(s.estado, 22)}
                                             </div>
                                             <div>
-                                                <p className={`font-bold ${esActivo ? 'text-gray-800' : 'text-gray-500 line-through'}`}>
+                                                <p className={`font-black text-lg leading-tight ${esActivo ? 'text-gray-900' : 'text-gray-500 line-through'}`}>
                                                     Servicio #{s.id}
                                                 </p>
-                                                <p className="text-xs text-gray-400 mt-0.5">{formatDate(s.fecha)}</p>
+                                                <p className="text-xs text-gray-500 mt-0.5">{formatDate(s.fecha)}</p>
                                             </div>
                                         </div>
                                     </div>
 
                                     {/* Contenido */}
-                                    <div className="p-4 space-y-2">
+                                    <div className="p-4 space-y-3">
                                         <div className="flex items-start gap-2">
-                                            <FileText size={14} className="text-gray-400 mt-0.5 flex-shrink-0" />
+                                            <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center flex-shrink-0">
+                                                <FileText size={14} className="text-gray-400" />
+                                            </div>
                                             <div className="min-w-0 flex-1">
-                                                <p className="text-xs text-gray-400 uppercase font-semibold">Equipo</p>
-                                                <p className="font-medium text-gray-800 text-sm truncate">{s.equipo || "—"}</p>
+                                                <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider mb-0.5">Equipo</p>
+                                                <p className={`font-bold text-sm truncate ${esActivo ? 'text-gray-800' : 'text-gray-500'}`}>{s.equipo || "—"}</p>
                                             </div>
                                         </div>
                                         <div className="flex items-start gap-2">
-                                            <ClipboardList size={14} className="text-gray-400 mt-0.5 flex-shrink-0" />
+                                            <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center flex-shrink-0">
+                                                <ClipboardList size={14} className="text-gray-400" />
+                                            </div>
                                             <div className="min-w-0 flex-1">
-                                                <p className="text-xs text-gray-400 uppercase font-semibold">Cliente</p>
-                                                <p className="text-sm text-gray-600 truncate">
+                                                <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider mb-0.5">Cliente</p>
+                                                <p className={`text-sm truncate ${esActivo ? 'text-gray-700 font-medium' : 'text-gray-500'}`}>
                                                     {s.clienteNombre || `Cliente #${s.clienteId}`}
                                                 </p>
                                             </div>
                                         </div>
                                     </div>
 
-                                    {/* Footer */}
-                                    <div className={`px-4 py-3 border-t border-gray-100 flex justify-between items-center ${esActivo ? 'bg-gray-50' : 'bg-gray-100'}`}>
-                                        <span className="inline-flex items-center gap-1.5 font-bold text-indigo-600 text-sm">
+                                    {/* Footer de la tarjeta */}
+                                    <div className={`px-4 py-3 border-t border-gray-100 flex justify-between items-center ${esActivo ? 'bg-indigo-50/30' : 'bg-gray-100'}`}>
+                                        <span className={`inline-flex items-center gap-1.5 font-black text-sm ${esActivo ? 'text-indigo-600' : 'text-gray-500'}`}>
                                             <Coins size={14} />
                                             {formatPrice(s.costo || 0)}
                                         </span>
                                         
-                                        {/* 👇 ACCIÓN: VER O REACTIVAR */}
                                         {esActivo ? (
-                                            <span className="inline-flex items-center gap-1 text-indigo-600 text-sm font-medium group-hover:underline">
-                                                <Eye size={14} /> Ver <ArrowRight size={14} />
+                                            <span className="inline-flex items-center gap-1 text-indigo-600 text-xs font-bold bg-white px-3 py-2 rounded-lg shadow-sm group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                                                <Eye size={14} /> Ver Detalle
                                             </span>
                                         ) : (
                                             <button
                                                 onClick={(e) => handleReactivar(e, s.id)}
-                                                className="inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-100 text-emerald-700 rounded-lg text-sm font-bold hover:bg-emerald-200 transition"
+                                                className="inline-flex items-center gap-1 px-3 py-2 bg-emerald-500 text-white rounded-lg text-xs font-bold hover:bg-emerald-600 shadow-sm shadow-emerald-500/30 transition"
                                             >
                                                 <Power size={14} /> Reactivar
                                             </button>
@@ -328,7 +318,7 @@ export default function HistorialServiciosTecnicos() {
                 </>
             )}
 
-            {/* Modal de detalle (reutilizado del técnico) */}
+            {/* Modal de detalle */}
             {showModal && servicioSeleccionado && (
                 <DetalleServicioHistorial
                     servicio={servicioSeleccionado}

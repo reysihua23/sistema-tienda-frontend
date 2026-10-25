@@ -59,7 +59,7 @@ function Toast({ message, type = "success", onClose }) {
 // =========================================================
 // ✅ COMPONENTE PRINCIPAL
 // =========================================================
-export default function Reclamos() {
+export default function Reclamos({ esAdmin = true }) { // ✅ Asegúrate de que tenga esto
   const [reclamos, setReclamos] = useState([]);
   const [reclamosFiltrados, setReclamosFiltrados] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -295,6 +295,7 @@ export default function Reclamos() {
         <CambiarEstadoModal
           reclamo={reclamoSeleccionado}
           loading={submitting}
+          esAdmin={esAdmin}
           onClose={() => {
             setShowCambiarEstado(false);
             setReclamoSeleccionado(null);

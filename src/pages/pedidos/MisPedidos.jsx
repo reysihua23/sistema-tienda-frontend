@@ -120,8 +120,8 @@ export default function MisPedidos() {
     const getEstadoConfig = (estado) => {
         const estados = {
             "PENDIENTE": {
-                bg: "bg-amber-50",
-                text: "text-amber-700",
+                bg: "bg-amber-100",
+                text: "text-amber-800",
                 border: "border-l-amber-500",
                 icon: Clock,
                 iconColor: "text-amber-500",
@@ -129,8 +129,8 @@ export default function MisPedidos() {
                 step: 1
             },
             "PAGADO": {
-                bg: "bg-green-50",
-                text: "text-green-700",
+                bg: "bg-green-100",
+                text: "text-green-800",
                 border: "border-l-green-500",
                 icon: CheckCircle,
                 iconColor: "text-green-500",
@@ -138,8 +138,8 @@ export default function MisPedidos() {
                 step: 2
             },
             "ENVIADO": {
-                bg: "bg-blue-50",
-                text: "text-blue-700",
+                bg: "bg-blue-100",
+                text: "text-blue-800",
                 border: "border-l-blue-500",
                 icon: Truck,
                 iconColor: "text-blue-500",
@@ -147,8 +147,8 @@ export default function MisPedidos() {
                 step: 3
             },
             "ENTREGADO": {
-                bg: "bg-emerald-50",
-                text: "text-emerald-700",
+                bg: "bg-emerald-100",
+                text: "text-emerald-800",
                 border: "border-l-emerald-500",
                 icon: Award,
                 iconColor: "text-emerald-500",
@@ -156,8 +156,8 @@ export default function MisPedidos() {
                 step: 4
             },
             "CANCELADO": {
-                bg: "bg-red-50",
-                text: "text-red-700",
+                bg: "bg-red-100",
+                text: "text-red-800",
                 border: "border-l-red-500",
                 icon: XCircle,
                 iconColor: "text-red-500",
@@ -201,62 +201,71 @@ export default function MisPedidos() {
 
     if (loading) {
         return (
-            <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
+            <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50">
                 <Loader size={48} className="animate-spin text-[#5b4eff] mb-4" />
-                <p className="text-slate-500 font-medium">Cargando tus pedidos...</p>
+                <p className="text-slate-500 font-bold">Cargando tus pedidos...</p>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 pt-6 pb-16 px-4">
-            <div className="max-w-6xl mx-auto">
+        <div className="min-h-screen bg-slate-50 pt-6 pb-16 px-4">
+            <div className="max-w-4xl mx-auto">
                 {/* Header */}
                 <div className="mb-8">
+                    <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight mb-6">Mis Pedidos</h1>
                     
                     {/* Estadísticas */}
                     {pedidos.length > 0 && (
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100 hover:shadow-md transition">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+                            <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 hover:shadow-md transition">
                                 <div className="flex items-center justify-between">
                                     <div>
-                                        <p className="text-2xl font-bold text-[#5b4eff]">{pedidos.length}</p>
-                                        <p className="text-xs text-slate-500 uppercase tracking-wide">Total pedidos</p>
+                                        <p className="text-2xl font-black text-[#5b4eff]">{pedidos.length}</p>
+                                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mt-0.5">Total pedidos</p>
                                     </div>
-                                    <Package size={24} className="text-[#5b4eff]/30" />
+                                    <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center">
+                                        <Package size={20} className="text-[#5b4eff]" />
+                                    </div>
                                 </div>
                             </div>
-                            <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100 hover:shadow-md transition">
+                            <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 hover:shadow-md transition">
                                 <div className="flex items-center justify-between">
                                     <div>
-                                        <p className="text-2xl font-bold text-emerald-600">
+                                        <p className="text-2xl font-black text-emerald-600">
                                             {pedidos.filter(p => p.estado === "ENTREGADO").length}
                                         </p>
-                                        <p className="text-xs text-slate-500 uppercase tracking-wide">Entregados</p>
+                                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mt-0.5">Entregados</p>
                                     </div>
-                                    <Award size={24} className="text-emerald-600/30" />
+                                    <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center">
+                                        <Award size={20} className="text-emerald-600" />
+                                    </div>
                                 </div>
                             </div>
-                            <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100 hover:shadow-md transition">
+                            <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 hover:shadow-md transition">
                                 <div className="flex items-center justify-between">
                                     <div>
-                                        <p className="text-2xl font-bold text-blue-600">
+                                        <p className="text-2xl font-black text-blue-600">
                                             {pedidos.filter(p => p.estado === "ENVIADO").length}
                                         </p>
-                                        <p className="text-xs text-slate-500 uppercase tracking-wide">En camino</p>
+                                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mt-0.5">En camino</p>
                                     </div>
-                                    <Truck size={24} className="text-blue-600/30" />
+                                    <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center">
+                                        <Truck size={20} className="text-blue-600" />
+                                    </div>
                                 </div>
                             </div>
-                            <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100 hover:shadow-md transition">
+                            <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 hover:shadow-md transition">
                                 <div className="flex items-center justify-between">
                                     <div>
-                                        <p className="text-xl font-bold text-[#5b4eff]">
+                                        <p className="text-lg sm:text-xl font-black text-[#5b4eff] truncate">
                                             {formatPrice(pedidos.reduce((sum, p) => sum + p.total, 0))}
                                         </p>
-                                        <p className="text-xs text-slate-500 uppercase tracking-wide">Total gastado</p>
+                                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mt-0.5">Total gastado</p>
                                     </div>
-                                    <TrendingUp size={24} className="text-[#5b4eff]/30" />
+                                    <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center">
+                                        <TrendingUp size={20} className="text-[#5b4eff]" />
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -267,9 +276,10 @@ export default function MisPedidos() {
                         <div className="flex flex-wrap gap-2 mt-6">
                             <button
                                 onClick={() => setFilterEstado("todos")}
-                                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${filterEstado === "todos"
-                                    ? "bg-[#5b4eff] text-white shadow-md"
-                                    : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
+                                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                                    filterEstado === "todos"
+                                        ? "bg-[#5b4eff] text-white shadow-md shadow-[#5b4eff]/20"
+                                        : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
                                 }`}
                             >
                                 Todos
@@ -282,9 +292,10 @@ export default function MisPedidos() {
                                     <button
                                         key={estado}
                                         onClick={() => setFilterEstado(estado)}
-                                        className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all flex items-center gap-1 ${filterEstado === estado
-                                            ? `${config.bg} ${config.text} shadow-md`
-                                            : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
+                                        className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                                            filterEstado === estado
+                                                ? `${config.bg} ${config.text} shadow-md border border-transparent`
+                                                : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
                                         }`}
                                     >
                                         <config.icon size={12} />
@@ -298,21 +309,21 @@ export default function MisPedidos() {
 
                 {/* Lista de pedidos */}
                 {pedidosFiltrados.length === 0 ? (
-                    <div className="bg-white rounded-2xl p-12 text-center shadow-sm border border-slate-100">
-                        <div className="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                            <Package size={48} className="text-slate-400" />
+                    <div className="bg-white rounded-2xl p-12 text-center shadow-sm border-2 border-dashed border-slate-200">
+                        <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <Package size={40} className="text-slate-300" />
                         </div>
-                        <h3 className="text-xl font-bold text-slate-800 mb-2">
+                        <h3 className="text-xl font-black text-slate-800 mb-2">
                             {pedidos.length === 0 ? "Aún no tienes pedidos" : "No hay pedidos con este filtro"}
                         </h3>
-                        <p className="text-slate-500 mb-8">
+                        <p className="text-slate-500 font-medium mb-8">
                             {pedidos.length === 0 
                                 ? "¡Explora nuestros productos y realiza tu primera compra!" 
                                 : "Prueba con otro filtro para ver más resultados"}
                         </p>
                         <Link
                             to="/"
-                            className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[#5b4eff] to-[#4a3dcc] text-white rounded-xl font-bold hover:shadow-lg transition-all"
+                            className="inline-flex items-center gap-2 px-6 py-3 bg-[#5b4eff] text-white rounded-xl font-bold hover:bg-[#4a3dcc] shadow-md shadow-[#5b4eff]/20 transition-all active:scale-95"
                         >
                             <ShoppingBag size={18} />
                             Comenzar a comprar
@@ -333,39 +344,38 @@ export default function MisPedidos() {
                                 return (
                                     <div
                                         key={pedido.id}
-                                        className={`bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 border-l-4 ${estadoConfig.border} overflow-hidden`}
+                                        className={`bg-white rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 border-2 border-indigo-300 overflow-hidden`}
                                     >
                                         {/* Header del pedido */}
                                         <div 
                                             className="p-5 cursor-pointer hover:bg-slate-50/50 transition-colors" 
                                             onClick={() => setExpandedPedido(isExpanded ? null : pedido.id)}
                                         >
-                                            <div className="flex flex-wrap justify-between items-center gap-4">
+                                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                                                 <div className="flex items-center gap-4">
-                                                    <div className={`w-12 h-12 rounded-xl ${estadoConfig.bg} flex items-center justify-center`}>
+                                                    <div className={`w-12 h-12 rounded-xl ${estadoConfig.bg} flex items-center justify-center flex-shrink-0 shadow-sm border border-white`}>
                                                         <EstadoIcon size={24} className={estadoConfig.iconColor} />
                                                     </div>
                                                     <div>
                                                         <div className="flex items-center gap-2 flex-wrap">
-                                                            {/* ✅ CAMBIO: "Pedido Nº X" en vez de "Pedido #X" */}
-                                                            <p className="font-bold text-slate-800">Pedido Nº {pedido.numeroRelativo ?? pedido.id}</p>
-                                                            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${estadoConfig.bg} ${estadoConfig.text}`}>
+                                                            <p className="font-black text-slate-900 text-lg">Pedido Nº {pedido.numeroRelativo ?? pedido.id}</p>
+                                                            <span className={`px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-wide border border-transparent ${estadoConfig.bg} ${estadoConfig.text}`}>
                                                                 {estadoConfig.label}
                                                             </span>
                                                         </div>
-                                                        <p className="text-xs text-slate-400 mt-1 flex items-center gap-1">
+                                                        <p className="text-xs font-medium text-slate-500 mt-1 flex items-center gap-1">
                                                             <Calendar size={10} />
                                                             {formatDate(pedido.fecha)}
                                                         </p>
                                                     </div>
                                                 </div>
-                                                <div className="text-right">
-                                                    <p className="text-2xl font-bold text-[#5b4eff]">{formatPrice(pedido.total)}</p>
-                                                    <div className="flex items-center gap-2 text-xs text-slate-400 mt-1">
+                                                <div className="text-left sm:text-right w-full sm:w-auto bg-slate-50 p-3 sm:p-0 rounded-xl sm:bg-transparent">
+                                                    <p className="text-2xl font-black text-[#5b4eff]">{formatPrice(pedido.total)}</p>
+                                                    <div className="flex items-center gap-2 text-xs font-bold text-slate-500 mt-1">
                                                         <span>{pedido.detalles?.length || 0} producto(s)</span>
                                                         <span>•</span>
                                                         <span className="flex items-center gap-1">
-                                                            <MetodoEnvioIcon size={10} />
+                                                            <MetodoEnvioIcon size={12} />
                                                             {metodoEnvio.label}
                                                         </span>
                                                     </div>
@@ -374,8 +384,8 @@ export default function MisPedidos() {
 
                                             {/* Barra de progreso */}
                                             {estadoConfig.step > 0 && estadoConfig.step <= 4 && (
-                                                <div className="mt-4">
-                                                    <div className="relative h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                                <div className="mt-5">
+                                                    <div className="relative h-2 bg-slate-100 rounded-full overflow-hidden">
                                                         <div
                                                             className="absolute inset-y-0 left-0 bg-gradient-to-r from-[#5b4eff] to-[#4a3dcc] rounded-full transition-all duration-700"
                                                             style={{ width: `${(estadoConfig.step / 4) * 100}%` }}
@@ -383,19 +393,19 @@ export default function MisPedidos() {
                                                             <div className="absolute inset-0 bg-white/30 animate-pulse"></div>
                                                         </div>
                                                     </div>
-                                                    <div className="flex justify-between mt-2">
+                                                    <div className="flex justify-between mt-2 px-1">
                                                         {[
                                                             { name: "Pedido", step: 1, icon: Package },
                                                             { name: "Pago", step: 2, icon: CreditCard },
                                                             { name: "Envío", step: 3, icon: Truck },
                                                             { name: "Entrega", step: 4, icon: Award }
                                                         ].map((etapa) => (
-                                                            <div key={etapa.name} className="text-center">
+                                                            <div key={etapa.name} className="text-center flex flex-col items-center gap-1">
                                                                 <etapa.icon 
-                                                                    size={12} 
+                                                                    size={14} 
                                                                     className={estadoConfig.step >= etapa.step ? "text-[#5b4eff]" : "text-slate-300"}
                                                                 />
-                                                                <span className={`text-xs ml-1 ${estadoConfig.step >= etapa.step ? "text-[#5b4eff]" : "text-slate-400"}`}>
+                                                                <span className={`text-[9px] font-bold uppercase tracking-wider ${estadoConfig.step >= etapa.step ? "text-[#5b4eff]" : "text-slate-400"}`}>
                                                                     {etapa.name}
                                                                 </span>
                                                             </div>
@@ -406,40 +416,42 @@ export default function MisPedidos() {
 
                                             {/* Indicador de expansión */}
                                             <div className="flex justify-center mt-3">
-                                                {isExpanded ? (
-                                                    <ChevronUp size={16} className="text-slate-400" />
-                                                ) : (
-                                                    <ChevronDown size={16} className="text-slate-400" />
-                                                )}
+                                                <div className="bg-slate-100 rounded-full p-1">
+                                                    {isExpanded ? (
+                                                        <ChevronUp size={16} className="text-slate-500" />
+                                                    ) : (
+                                                        <ChevronDown size={16} className="text-slate-500" />
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
 
                                         {/* Detalles expandidos */}
                                         {isExpanded && (
                                             <div className="border-t border-slate-100 bg-slate-50/50">
-                                                <div className="p-5 space-y-4">
+                                                <div className="p-5 space-y-5">
                                                     {/* Productos */}
                                                     <div>
-                                                        <h4 className="font-semibold text-slate-800 text-sm mb-3 flex items-center gap-2">
+                                                        <h4 className="font-bold text-slate-800 text-xs uppercase tracking-wider mb-3 flex items-center gap-2">
                                                             <Package size={14} className="text-[#5b4eff]" />
-                                                            Productos
+                                                            Productos comprados
                                                         </h4>
                                                         <div className="space-y-2">
                                                             {pedido.detalles?.map((detalle, idx) => (
-                                                                <div key={idx} className="flex items-center gap-3 p-3 bg-white rounded-xl shadow-sm">
+                                                                <div key={idx} className="flex items-center gap-3 p-3 bg-white rounded-xl shadow-sm border border-slate-100">
                                                                     <img
                                                                         src={getImagenProducto(detalle.productoId)}
                                                                         alt={detalle.productoNombre}
-                                                                        className="w-14 h-14 object-cover rounded-lg bg-slate-50"
+                                                                        className="w-14 h-14 object-contain rounded-lg bg-slate-50 border border-slate-100 p-1"
                                                                         onError={(e) => { e.target.src = "https://placehold.co/60x60?text=Producto"; }}
                                                                     />
-                                                                    <div className="flex-1">
-                                                                        <p className="font-medium text-slate-800 text-sm">{detalle.productoNombre}</p>
-                                                                        <p className="text-xs text-slate-400">Cantidad: {detalle.cantidad}</p>
+                                                                    <div className="flex-1 min-w-0">
+                                                                        <p className="font-bold text-slate-800 text-sm truncate">{detalle.productoNombre}</p>
+                                                                        <p className="text-xs font-medium text-slate-500">Cant: {detalle.cantidad}</p>
                                                                     </div>
-                                                                    <div className="text-right">
-                                                                        <p className="font-bold text-[#5b4eff] text-sm">{formatPrice(detalle.subtotal)}</p>
-                                                                        <p className="text-xs text-slate-400">{formatPrice(detalle.precio)} c/u</p>
+                                                                    <div className="text-right flex-shrink-0">
+                                                                        <p className="font-black text-[#5b4eff] text-sm">{formatPrice(detalle.subtotal)}</p>
+                                                                        <p className="text-[10px] font-medium text-slate-400">{formatPrice(detalle.precio)} c/u</p>
                                                                     </div>
                                                                 </div>
                                                             ))}
@@ -448,36 +460,36 @@ export default function MisPedidos() {
 
                                                     {/* Envío y pago */}
                                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                                        <div className="bg-white rounded-xl p-4 shadow-sm">
-                                                            <h4 className="font-semibold text-slate-700 text-sm mb-3 flex items-center gap-2">
+                                                        <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
+                                                            <h4 className="font-bold text-slate-700 text-xs uppercase tracking-wider mb-3 flex items-center gap-2">
                                                                 <Truck size={14} className="text-[#5b4eff]" />
                                                                 Información de envío
                                                             </h4>
                                                             <div className="space-y-2 text-sm">
                                                                 <div className="flex justify-between">
-                                                                    <span className="text-slate-500">Método:</span>
-                                                                    <span className="font-medium flex items-center gap-1">
+                                                                    <span className="text-slate-500 font-medium">Método:</span>
+                                                                    <span className="font-bold flex items-center gap-1 text-slate-800">
                                                                         <MetodoEnvioIcon size={12} /> {metodoEnvio.label}
                                                                     </span>
                                                                 </div>
                                                                 {pedido.envio?.direccion && (
                                                                     <div className="flex justify-between">
-                                                                        <span className="text-slate-500">Dirección:</span>
-                                                                        <span className="font-medium text-right text-sm">{pedido.envio.direccion}</span>
+                                                                        <span className="text-slate-500 font-medium">Dirección:</span>
+                                                                        <span className="font-bold text-right text-sm text-slate-800">{pedido.envio.direccion}</span>
                                                                     </div>
                                                                 )}
                                                                 {pedido.envio?.costoEnvio > 0 && (
                                                                     <div className="flex justify-between">
-                                                                        <span className="text-slate-500">Costo envío:</span>
-                                                                        <span className="font-medium">{formatPrice(pedido.envio.costoEnvio)}</span>
+                                                                        <span className="text-slate-500 font-medium">Costo envío:</span>
+                                                                        <span className="font-bold text-slate-800">{formatPrice(pedido.envio.costoEnvio)}</span>
                                                                     </div>
                                                                 )}
                                                                 {pedido.envio?.codigoSeguimiento && (
                                                                     <div className="flex justify-between items-center">
-                                                                        <span className="text-slate-500">Seguimiento:</span>
+                                                                        <span className="text-slate-500 font-medium">Seguimiento:</span>
                                                                         <button
                                                                             onClick={() => setTrackingModal(pedido.envio.codigoSeguimiento)}
-                                                                            className="text-[#5b4eff] hover:underline font-mono text-xs flex items-center gap-1"
+                                                                            className="text-[#5b4eff] hover:underline font-mono text-xs font-bold flex items-center gap-1 bg-indigo-50 px-2 py-1 rounded"
                                                                         >
                                                                             {pedido.envio.codigoSeguimiento}
                                                                             <ExternalLink size={10} />
@@ -487,28 +499,28 @@ export default function MisPedidos() {
                                                             </div>
                                                         </div>
 
-                                                        <div className="bg-white rounded-xl p-4 shadow-sm">
-                                                            <h4 className="font-semibold text-slate-700 text-sm mb-3 flex items-center gap-2">
+                                                        <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
+                                                            <h4 className="font-bold text-slate-700 text-xs uppercase tracking-wider mb-3 flex items-center gap-2">
                                                                 <CreditCard size={14} className="text-[#5b4eff]" />
                                                                 Información de pago
                                                             </h4>
                                                             <div className="space-y-2 text-sm">
                                                                 <div className="flex justify-between">
-                                                                    <span className="text-slate-500">Método:</span>
-                                                                    <span className="font-medium flex items-center gap-1">
+                                                                    <span className="text-slate-500 font-medium">Método:</span>
+                                                                    <span className="font-bold flex items-center gap-1 text-slate-800">
                                                                         <MetodoPagoIcon size={12} /> {metodoPago.label}
                                                                     </span>
                                                                 </div>
                                                                 <div className="flex justify-between">
-                                                                    <span className="text-slate-500">Estado:</span>
-                                                                    <span className={`font-medium ${pedido.pago?.estado === "APROBADO" ? "text-green-600" : "text-amber-600"}`}>
+                                                                    <span className="text-slate-500 font-medium">Estado:</span>
+                                                                    <span className={`font-black ${pedido.pago?.estado === "APROBADO" ? "text-emerald-600" : "text-amber-600"}`}>
                                                                         {pedido.pago?.estado === "APROBADO" ? "Aprobado" : "Pendiente"}
                                                                     </span>
                                                                 </div>
                                                                 {pedido.pago?.referenciaPasarela && (
                                                                     <div className="flex justify-between">
-                                                                        <span className="text-slate-500">Referencia:</span>
-                                                                        <span className="font-mono text-xs">{pedido.pago.referenciaPasarela}</span>
+                                                                        <span className="text-slate-500 font-medium">Referencia:</span>
+                                                                        <span className="font-mono text-xs font-bold text-slate-800">{pedido.pago.referenciaPasarela}</span>
                                                                     </div>
                                                                 )}
                                                             </div>
@@ -516,14 +528,14 @@ export default function MisPedidos() {
                                                     </div>
 
                                                     {/* Total y acciones */}
-                                                    <div className="flex flex-wrap justify-between items-center gap-3 pt-2 border-t border-slate-200">
-                                                        <div>
-                                                            <p className="text-xs text-slate-400">Total del pedido</p>
-                                                            <p className="text-2xl font-bold text-[#5b4eff]">{formatPrice(pedido.total)}</p>
+                                                    <div className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-4 border-t border-slate-200">
+                                                        <div className="w-full sm:w-auto text-center sm:text-left bg-white sm:bg-transparent p-3 sm:p-0 rounded-xl sm:rounded-none border sm:border-0 border-slate-100">
+                                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total del pedido</p>
+                                                            <p className="text-2xl font-black text-[#5b4eff]">{formatPrice(pedido.total)}</p>
                                                         </div>
                                                         <Link
                                                             to={`/comprobante/${pedido.id}`}
-                                                            className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#5b4eff] to-[#4a3dcc] text-white rounded-lg font-medium text-sm hover:shadow-lg transition-all"
+                                                            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#5b4eff] text-white rounded-xl font-bold text-sm hover:bg-[#4a3dcc] shadow-md shadow-[#5b4eff]/20 transition-all active:scale-95"
                                                         >
                                                             <Eye size={16} />
                                                             Ver comprobante
@@ -539,16 +551,16 @@ export default function MisPedidos() {
 
                         {/* Botón "Ver más" */}
                         {hasMore && (
-                            <div className="mt-6 text-center">
+                            <div className="mt-8 text-center">
                                 <button
                                     onClick={cargarMasPedidos}
-                                    className="inline-flex items-center gap-2 px-6 py-2.5 bg-white border-2 border-[#5b4eff] text-[#5b4eff] rounded-xl font-bold text-sm hover:bg-[#5b4eff] hover:text-white transition-all shadow-sm"
+                                    className="inline-flex items-center gap-2 px-6 py-3 bg-white border-2 border-[#5b4eff] text-[#5b4eff] rounded-xl font-bold text-sm hover:bg-[#5b4eff] hover:text-white transition-all shadow-sm active:scale-95"
                                 >
                                     <Eye size={16} />
                                     Ver más pedidos
                                     <ChevronDown size={16} />
                                 </button>
-                                <p className="text-xs text-slate-400 mt-2">
+                                <p className="text-xs font-bold text-slate-400 mt-3 uppercase tracking-wider">
                                     Mostrando {visiblePedidos.length} de {pedidosFiltrados.length} pedidos
                                 </p>
                             </div>
@@ -556,10 +568,10 @@ export default function MisPedidos() {
 
                         {/* Mensaje de fin */}
                         {!hasMore && pedidosFiltrados.length > 3 && (
-                            <div className="mt-6 text-center">
-                                <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-50 rounded-full">
+                            <div className="mt-8 text-center">
+                                <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-50 rounded-full border border-emerald-100">
                                     <Award size={14} className="text-emerald-600" />
-                                    <p className="text-sm text-emerald-600 font-medium">
+                                    <p className="text-sm text-emerald-700 font-bold">
                                         Has visto todos tus {pedidosFiltrados.length} pedidos
                                     </p>
                                 </div>
@@ -571,28 +583,28 @@ export default function MisPedidos() {
 
             {/* Modal de seguimiento */}
             {trackingModal && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setTrackingModal(null)}>
-                    <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl animate-in fade-in zoom-in" onClick={(e) => e.stopPropagation()}>
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-in fade-in duration-200" onClick={() => setTrackingModal(null)}>
+                    <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl animate-in zoom-in-95" onClick={(e) => e.stopPropagation()}>
                         <div className="flex justify-between items-center mb-4">
-                            <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                            <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
                                 <Truck size={20} className="text-[#5b4eff]" />
-                                Seguimiento del pedido
+                                Seguimiento
                             </h3>
-                            <button onClick={() => setTrackingModal(null)} className="text-slate-400 hover:text-slate-600">
+                            <button onClick={() => setTrackingModal(null)} className="text-slate-400 hover:text-slate-600 bg-slate-50 p-1.5 rounded-full transition">
                                 <XCircle size={20} />
                             </button>
                         </div>
                         <div className="text-center py-4">
-                            <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <Truck size={32} className="text-blue-600" />
+                            <div className="w-20 h-20 bg-indigo-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <Truck size={32} className="text-[#5b4eff]" />
                             </div>
-                            <p className="text-slate-600 text-sm mb-2">Tu pedido está en camino</p>
-                            <p className="font-mono text-xs text-[#5b4eff] bg-slate-100 p-2 rounded-lg break-all">{trackingModal}</p>
-                            <p className="text-xs text-slate-400 mt-3">Puedes rastrear tu pedido con este código en nuestra página de seguimiento</p>
+                            <p className="text-slate-600 text-sm font-bold mb-3">Tu pedido está en camino</p>
+                            <p className="font-mono text-xs font-bold text-[#5b4eff] bg-indigo-50 p-3 rounded-xl border border-indigo-300 break-all">{trackingModal}</p>
+                            <p className="text-[10px] font-medium text-slate-400 mt-4 leading-relaxed">Puedes rastrear tu pedido con este código en nuestra página de seguimiento</p>
                         </div>
                         <button
                             onClick={() => setTrackingModal(null)}
-                            className="w-full py-2.5 bg-gradient-to-r from-[#5b4eff] to-[#4a3dcc] text-white rounded-xl font-medium text-sm hover:shadow-lg transition"
+                            className="w-full py-3 mt-4 bg-[#5b4eff] text-white rounded-xl font-bold text-sm hover:bg-[#4a3dcc] shadow-md shadow-[#5b4eff]/20 transition active:scale-95"
                         >
                             Cerrar
                         </button>

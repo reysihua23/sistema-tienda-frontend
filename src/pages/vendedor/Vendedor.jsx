@@ -125,7 +125,14 @@ export default function Vendedor({ childrenOverride }) {
     const cargarClientes = async () => {
         try {
             const data = await clienteService.listar();
-            setClientes(Array.isArray(data) ? data : []);
+            const listaClientes = Array.isArray(data) ? data : [];
+            setClientes(listaClientes);
+            
+            // ✅ Seleccionar automáticamente al Cliente Varios (ID 3)
+            const clienteGenerico = listaClientes.find(c => c.id === 3 || c.nombre === 'CLIENTES VARIOS');
+            if (clienteGenerico && !selectedCliente) {
+                setSelectedCliente(clienteGenerico);
+            }
         } catch (error) {
             console.error("Error cargando clientes:", error);
             setClientes([]);
@@ -227,30 +234,31 @@ export default function Vendedor({ childrenOverride }) {
 
     const totalVenta = carrito.reduce((sum, item) => sum + item.subtotal, 0);
 
+    // ✅ NUEVA LÓGICA: Crear cliente SOLO en memoria (no en BD)
     const crearCliente = async () => {
         if (!nuevoCliente.nombre.trim()) throw new Error("El nombre completo es obligatorio");
-        try {
-            const response = await clienteService.crear(nuevoCliente);
-            setClientes(prev => [...prev, response]);
-            setSelectedCliente(response);
-            setShowClienteModal(false);
-            setNuevoCliente({ nombre: "", email: "", telefono: "", documento: "", direccion: "" });
-            setSuccess("Cliente creado exitosamente");
-            setTimeout(() => setSuccess(null), 3000);
-        } catch (error) {
-            let errorMessage = "Error al crear el cliente";
-            if (error.response?.data?.error) errorMessage = error.response.data.error;
-            else if (error.response?.data?.message) errorMessage = error.response.data.message;
-            else if (error.message) errorMessage = error.message;
-            throw new Error(errorMessage);
-        }
+        
+        const clienteTemporal = {
+            ...nuevoCliente,
+            id: `temp-${Date.now()}`, // ID temporal para React
+            esNuevo: true // Bandera para saber que no está en la BD
+        };
+
+        setClientes(prev => [...prev, clienteTemporal]);
+        setSelectedCliente(clienteTemporal);
+        setShowClienteModal(false);
+        setNuevoCliente({ nombre: "", email: "", telefono: "", documento: "", direccion: "" });
+        
+        return clienteTemporal;
     };
 
     const realizarVenta = async () => {
         if (!selectedCliente) { setError("Debes seleccionar o crear un cliente"); return; }
         if (carrito.length === 0) { setError("Agrega productos al carrito"); return; }
+        
         setLoading(true);
         setError(null);
+        
         try {
             for (const item of carrito) {
                 const productoActual = productos.find(p => p.id === item.id);
@@ -259,8 +267,28 @@ export default function Vendedor({ childrenOverride }) {
                 }
             }
 
+            let clienteIdParaVenta = selectedCliente.id;
+
+            // ✅ Si el cliente es nuevo, guardarlo en la BD justo antes de la venta
+            if (selectedCliente.esNuevo) {
+                try {
+                    const { esNuevo, id, ...datosCliente } = selectedCliente;
+                    const clienteGuardado = await clienteService.crear(datosCliente);
+                    
+                    // Reemplazar el cliente temporal por el real en la lista
+                    setClientes(prev => prev.map(c => 
+                        c.id === selectedCliente.id ? clienteGuardado : c
+                    ));
+                    
+                    clienteIdParaVenta = clienteGuardado.id;
+                    
+                } catch (error) {
+                    throw new Error("Error al guardar el cliente en la base de datos. La venta no se completó.");
+                }
+            }
+
             const pedidoData = {
-                clienteId: selectedCliente.id,
+                clienteId: clienteIdParaVenta,
                 total: totalVenta,
                 estado: "PAGADO",
                 metodoPago,
@@ -318,7 +346,10 @@ export default function Vendedor({ childrenOverride }) {
             }
 
             setCarrito([]);
-            setSelectedCliente(null);
+            // Volver a seleccionar al Cliente Varios tras la venta
+            const clienteGenerico = clientes.find(c => c.id === 3 || c.nombre === 'CLIENTES VARIOS');
+            setSelectedCliente(clienteGenerico || null);
+            
             setSuccess("✅ Venta realizada exitosamente");
             await Promise.all([cargarProductos(), cargarEstadisticas()]);
             return { success: true, venta: response };
@@ -507,7 +538,7 @@ export default function Vendedor({ childrenOverride }) {
                                 }`}
                         >
                             <Store size={16} />
-                            <span className="hidden sm:inline">Ventas Presenciales</span>
+                            <span className="hidden sm:inline">Historial Ventas Presenciales</span>
                             <span className="sm:hidden">Historial</span>
                         </button>
                     </div>
@@ -587,6 +618,7 @@ export default function Vendedor({ childrenOverride }) {
                         {activeTab === "reclamos" && (
                             <Reclamos
                                 key={`reclamos-${refreshKey}`}
+                                esAdmin={false} 
                                 onRefresh={cargarEstadisticas}
                             />
                         )}

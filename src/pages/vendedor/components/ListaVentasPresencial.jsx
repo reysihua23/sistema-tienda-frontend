@@ -128,19 +128,13 @@ export default function ListaVentasPresencial({ onRefresh }) {
         return new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' }).format(price);
     };
 
-    // Fecha larga (desktop)
     const formatDateLong = (date) => {
         if (!date) return "Fecha no disponible";
         return new Date(date).toLocaleDateString('es-PE', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
+            year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
         });
     };
 
-    // Fecha corta (móvil)
     const formatDateShort = (date) => {
         if (!date) return "—";
         const d = new Date(date);
@@ -151,12 +145,12 @@ export default function ListaVentasPresencial({ onRefresh }) {
     };
 
     const getEstadoColor = (estado) => ({
-        "PENDIENTE": "bg-amber-100 text-amber-700",
-        "PAGADO": "bg-green-100 text-green-700",
-        "ENVIADO": "bg-blue-100 text-blue-700",
-        "ENTREGADO": "bg-emerald-100 text-emerald-700",
-        "CANCELADO": "bg-red-100 text-red-700"
-    }[estado] || "bg-gray-100 text-gray-700");
+        "PENDIENTE": "bg-amber-100 text-amber-800 border-amber-200",
+        "PAGADO": "bg-green-100 text-green-800 border-green-200",
+        "ENVIADO": "bg-blue-100 text-blue-800 border-blue-200",
+        "ENTREGADO": "bg-emerald-100 text-emerald-800 border-emerald-200",
+        "CANCELADO": "bg-red-100 text-red-800 border-red-200"
+    }[estado] || "bg-gray-100 text-gray-700 border-gray-200");
 
     const getEstadoIcon = (estado) => {
         const icons = {
@@ -188,74 +182,61 @@ export default function ListaVentasPresencial({ onRefresh }) {
     }
 
     return (
-        <div>
+        <div className="w-full">
             {/* Header */}
-            <div className="mb-4 sm:mb-6 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+            <div className="mb-6 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
                 <div>
-                    <h2 className="text-lg sm:text-xl font-bold text-gray-800 flex items-center gap-2">
+                    <h2 className="text-xl font-black text-gray-800 flex items-center gap-2 tracking-tight">
                         <Store size={22} className="text-[#5b4eff]" />
                         Ventas Presenciales
                     </h2>
-                    <p className="text-xs sm:text-sm text-gray-500">Historial de ventas realizadas en tienda física</p>
+                    <p className="text-sm text-gray-500 font-medium mt-1">Historial de ventas realizadas en tienda física</p>
                 </div>
-                {/*<button
-                    onClick={cargarVentas}
-                    className="px-4 py-2 bg-[#5b4eff] text-white rounded-lg text-sm font-medium hover:bg-[#4a3dcc] transition flex items-center gap-2 self-start sm:self-auto"
-                >
-                    <RefreshCw size={16} />
-                    Actualizar
-                </button>*/}
             </div>
 
             {/* Resumen */}
             {ventas.length > 0 && (
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-4">
-                    <div className="bg-white rounded-lg p-4 border border-gray-200">
-                        <div className="flex items-center justify-between">
-                            <div className="min-w-0">
-                                <p className="text-xs text-gray-500">Total Ventas</p>
-                                <p className="text-xl sm:text-2xl font-bold text-[#5b4eff] truncate">{formatPrice(totalVentas)}</p>
-                            </div>
-                            <div className="w-10 h-10 bg-[#5b4eff]/10 rounded-full flex items-center justify-center flex-shrink-0">
-                                <TrendingUp size={20} className="text-[#5b4eff]" />
-                            </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-6">
+                    <div className="bg-white rounded-2xl p-5 border border-gray-200 shadow-sm flex items-center justify-between">
+                        <div className="min-w-0">
+                            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Total Ventas</p>
+                            <p className="text-2xl font-black text-[#5b4eff] truncate">{formatPrice(totalVentas)}</p>
+                        </div>
+                        <div className="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center flex-shrink-0 text-[#5b4eff]">
+                            <TrendingUp size={24} />
                         </div>
                     </div>
-                    <div className="bg-white rounded-lg p-4 border border-gray-200">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-xs text-gray-500">Ventas Completadas</p>
-                                <p className="text-xl sm:text-2xl font-bold text-green-600">{resumenEstados.PAGADO}</p>
-                            </div>
-                            <div className="w-10 h-10 bg-green-500/10 rounded-full flex items-center justify-center flex-shrink-0">
-                                <CheckCircle size={20} className="text-green-500" />
-                            </div>
+                    <div className="bg-white rounded-2xl p-5 border border-gray-200 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Completadas</p>
+                            <p className="text-2xl font-black text-emerald-600">{resumenEstados.PAGADO}</p>
+                        </div>
+                        <div className="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center flex-shrink-0 text-emerald-500">
+                            <CheckCircle size={24} />
                         </div>
                     </div>
-                    <div className="bg-white rounded-lg p-4 border border-gray-200">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-xs text-gray-500">Ventas Canceladas</p>
-                                <p className="text-xl sm:text-2xl font-bold text-red-600">{resumenEstados.CANCELADO}</p>
-                            </div>
-                            <div className="w-10 h-10 bg-red-500/10 rounded-full flex items-center justify-center flex-shrink-0">
-                                <XCircle size={20} className="text-red-500" />
-                            </div>
+                    <div className="bg-white rounded-2xl p-5 border border-gray-200 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Canceladas</p>
+                            <p className="text-2xl font-black text-red-600">{resumenEstados.CANCELADO}</p>
+                        </div>
+                        <div className="w-12 h-12 bg-red-50 rounded-xl flex items-center justify-center flex-shrink-0 text-red-500">
+                            <XCircle size={24} />
                         </div>
                     </div>
                 </div>
             )}
 
             {/* Filtros */}
-            <div className="flex flex-wrap gap-3 mb-4">
-                <div className="relative flex-1 min-w-[200px]">
-                    <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <div className="flex flex-col sm:flex-row gap-3 mb-6">
+                <div className="relative flex-1">
+                    <Search size={18} className="absolute left-3.5 top-1/2 transform -translate-y-1/2 text-gray-400" />
                     <input
                         type="text"
                         placeholder="Buscar por ID o cliente..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:border-[#5b4eff] focus:outline-none"
+                        className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-xl text-sm font-medium focus:border-[#5b4eff] focus:ring-2 focus:ring-[#5b4eff]/20 outline-none transition"
                     />
                 </div>
 
@@ -264,20 +245,20 @@ export default function ListaVentasPresencial({ onRefresh }) {
                     <button
                         type="button"
                         onClick={() => setShowFiltroDropdown(!showFiltroDropdown)}
-                        className="px-4 py-2 border border-gray-200 rounded-lg text-sm focus:border-[#5b4eff] focus:outline-none flex items-center gap-2 bg-white hover:bg-gray-50 transition min-w-[180px] justify-between"
+                        className="w-full sm:w-auto px-4 py-3 border border-gray-200 rounded-xl text-sm font-bold focus:border-[#5b4eff] focus:ring-2 focus:ring-[#5b4eff]/20 outline-none flex items-center gap-2 bg-white hover:bg-gray-50 transition min-w-[200px] justify-between shadow-sm"
                     >
                         <div className="flex items-center gap-2">
-                            <FiltroIcon size={16} className={filtroActual.color} />
+                            <FiltroIcon size={18} className={filtroActual.color} />
                             <span className="text-gray-700">{filtroActual.label}</span>
                         </div>
                         <ChevronDown
-                            size={14}
+                            size={16}
                             className={`text-gray-400 transition-transform ${showFiltroDropdown ? 'rotate-180' : ''}`}
                         />
                     </button>
 
                     {showFiltroDropdown && (
-                        <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-100 z-40 overflow-hidden">
+                        <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-100 z-40 overflow-hidden animate-in fade-in zoom-in-95">
                             {FILTRO_OPCIONES.map(opt => {
                                 const Icon = opt.icon;
                                 const selected = filtroEstado === opt.value;
@@ -288,12 +269,11 @@ export default function ListaVentasPresencial({ onRefresh }) {
                                             setFiltroEstado(opt.value);
                                             setShowFiltroDropdown(false);
                                         }}
-                                        className={`w-full px-4 py-2.5 text-left text-sm flex items-center gap-3 hover:bg-gray-50 transition ${selected ? 'bg-[#5b4eff]/5 text-[#5b4eff] font-medium' : 'text-gray-700'
-                                            }`}
+                                        className={`w-full px-4 py-3 text-left text-sm flex items-center gap-3 hover:bg-gray-50 transition ${selected ? 'bg-[#5b4eff]/5 text-[#5b4eff] font-bold' : 'text-gray-700 font-medium'}`}
                                     >
                                         <Icon size={16} className={opt.color} />
                                         <span className="flex-1">{opt.label}</span>
-                                        {selected && <Check size={14} className="text-[#5b4eff]" />}
+                                        {selected && <Check size={16} className="text-[#5b4eff]" />}
                                     </button>
                                 );
                             })}
@@ -304,73 +284,70 @@ export default function ListaVentasPresencial({ onRefresh }) {
                 {(filtroEstado !== "TODOS" || searchTerm) && (
                     <button
                         onClick={() => { setFiltroEstado("TODOS"); setSearchTerm(""); }}
-                        className="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg text-sm hover:bg-gray-200 transition flex items-center gap-1"
+                        className="px-4 py-3 bg-gray-100 text-gray-600 rounded-xl text-sm font-bold hover:bg-gray-200 transition flex items-center justify-center gap-1"
                     >
-                        <X size={14} /> Limpiar filtros
+                        <X size={16} /> Limpiar
                     </button>
                 )}
             </div>
 
             {/* ==================== VISTA MÓVIL (TARJETAS) ==================== */}
-            <div className="md:hidden space-y-3">
+            <div className="md:hidden space-y-4">
                 {ventasFiltradas.length === 0 ? (
-                    <div className="bg-white rounded-xl shadow-sm p-12 text-center text-gray-400">
-                        <Store size={48} className="mx-auto mb-2 opacity-50" />
-                        <p>
+                    <div className="bg-white rounded-2xl shadow-sm p-12 text-center border-2 border-dashed border-gray-200">
+                        <Store size={48} className="mx-auto mb-2 text-gray-300" />
+                        <p className="font-bold text-gray-500">
                             {ventas.length === 0
                                 ? "No hay ventas presenciales registradas"
-                                : `No hay ventas ${filtroEstado !== "TODOS" ? `con estado "${filtroEstado}"` : "que coincidan con la búsqueda"}`}
+                                : `No hay ventas que coincidan`}
                         </p>
                     </div>
                 ) : (
                     ventasFiltradas.map(venta => (
-                        <div
-                            key={venta.id}
-                            className="bg-white rounded-xl shadow-sm border border-gray-100 p-4"
-                        >
+                        <div key={venta.id} className="bg-white rounded-2xl border-2 border-indigo-300 shadow-sm p-4">
                             {/* Header: VENTA + Nº + Estado */}
                             <div className="flex items-start justify-between gap-2 mb-3">
                                 <div>
-                                    <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">
+                                    <p className="text-[10px] text-gray-400 uppercase font-black tracking-wider mb-0.5">
                                         Venta
                                     </p>
-                                    <p className="text-base font-black text-gray-800">
+                                    <p className="text-lg font-black text-gray-900">
                                         Nº {venta.id}
                                     </p>
                                 </div>
-                                <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold ${getEstadoColor(venta.estado)}`}>
+                                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] uppercase font-black border ${getEstadoColor(venta.estado)}`}>
                                     {getEstadoIcon(venta.estado)}
                                     {venta.estado}
                                 </span>
                             </div>
 
                             {/* Cliente + Fecha */}
-                            <div className="space-y-1.5 mb-3">
-                                <div className="flex items-center gap-2 text-sm text-gray-600">
+                            <div className="space-y-1.5 mb-3 bg-gray-50 p-2.5 rounded-lg border border-gray-100">
+                                <div className="flex items-center gap-2 text-sm text-gray-700 font-medium">
                                     <User size={14} className="text-gray-400 flex-shrink-0" />
                                     <span className="truncate">
                                         {venta.clienteNombre || `Cliente #${venta.clienteId}`}
                                     </span>
                                 </div>
-                                <div className="flex items-center gap-2 text-sm text-gray-600">
+                                <div className="flex items-center gap-2 text-xs text-gray-500 font-medium">
                                     <Calendar size={14} className="text-gray-400 flex-shrink-0" />
                                     <span>{formatDateShort(venta.fecha)}</span>
                                 </div>
                             </div>
 
                             {/* Total + Ver detalles */}
-                            <div className="flex items-center justify-between pt-3 border-t border-gray-100 gap-2">
+                            <div className="flex items-center justify-between pt-1 gap-2">
                                 <div>
-                                    <p className="text-[10px] text-gray-400 uppercase font-bold">Total</p>
-                                    <p className="text-base font-black text-[#5b4eff]">
+                                    <p className="text-[10px] text-gray-400 uppercase font-black">Total</p>
+                                    <p className="text-lg font-black text-[#5b4eff]">
                                         {formatPrice(venta.total)}
                                     </p>
                                 </div>
                                 <button
                                     onClick={() => verDetalles(venta)}
-                                    className="px-3 py-2 text-[#5b4eff] bg-[#5b4eff]/10 rounded-lg hover:bg-[#5b4eff]/20 transition flex items-center gap-1.5 text-xs font-bold"
+                                    className="px-4 py-2.5 text-[#5b4eff] bg-[#5b4eff]/10 rounded-xl hover:bg-[#5b4eff]/20 transition flex items-center gap-1.5 text-xs font-black"
                                 >
-                                    <Eye size={14} />
+                                    <Eye size={16} />
                                     Ver detalles
                                 </button>
                             </div>
@@ -379,62 +356,45 @@ export default function ListaVentasPresencial({ onRefresh }) {
                 )}
             </div>
 
-            {/* ==================== VISTA DESKTOP (TABLA ORIGINAL) ==================== */}
-            <div className="hidden md:block bg-white rounded-xl shadow-sm overflow-hidden">
+            {/* ==================== VISTA DESKTOP (TABLA) ==================== */}
+            <div className="hidden md:block bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100">
                 <div className="overflow-x-auto">
                     <table className="w-full">
-                        <thead className="bg-gray-50">
+                        <thead className="bg-gray-50 border-b border-gray-100">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">ID</th>
-                                <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Cliente</th>
-                                <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Fecha</th>
-                                <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Total</th>
-                                <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Estado</th>
-                                <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Acciones</th>
+                                <th className="px-6 py-4 text-left text-[10px] font-black text-gray-500 uppercase tracking-wider">ID</th>
+                                <th className="px-6 py-4 text-left text-[10px] font-black text-gray-500 uppercase tracking-wider">Cliente</th>
+                                <th className="px-6 py-4 text-left text-[10px] font-black text-gray-500 uppercase tracking-wider">Fecha</th>
+                                <th className="px-6 py-4 text-left text-[10px] font-black text-gray-500 uppercase tracking-wider">Total</th>
+                                <th className="px-6 py-4 text-left text-[10px] font-black text-gray-500 uppercase tracking-wider">Estado</th>
+                                <th className="px-6 py-4 text-right text-[10px] font-black text-gray-500 uppercase tracking-wider">Acciones</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-100">
+                        <tbody className="divide-y divide-gray-50">
                             {ventasFiltradas.map(venta => (
-                                <tr key={venta.id} className="hover:bg-gray-50 transition">
-                                    <td className="px-6 py-4 text-sm font-medium text-gray-800">
-                                        Nº {venta.id}
+                                <tr key={venta.id} className="hover:bg-gray-50 transition-colors">
+                                    <td className="px-6 py-4 text-sm font-black text-gray-400">#{venta.id}</td>
+                                    <td className="px-6 py-4 text-sm font-bold text-gray-800">
+                                        {venta.clienteNombre || `Cliente #${venta.clienteId}`}
                                     </td>
-
-                                    <td className="px-6 py-4 text-sm">
-                                        <div className="flex items-center gap-2">
-                                            {/*<User size={14} className="text-gray-400 flex-shrink-0" />*/}
-                                            <span className="text-gray-700">
-                                                {venta.clienteNombre || `Cliente #${venta.clienteId}`}
-                                            </span>
-                                        </div>
+                                    <td className="px-6 py-4 text-xs font-medium text-gray-500">
+                                        {formatDateLong(venta.fecha)}
                                     </td>
-
-                                    <td className="px-6 py-4 text-sm">
-                                        <div className="flex items-center gap-2">
-                                            {/*<Calendar size={14} className="text-gray-400 flex-shrink-0" />*/}
-                                            <span className="text-gray-600">
-                                                {formatDateLong(venta.fecha)}
-                                            </span>
-                                        </div>
-                                    </td>
-
-                                    <td className="px-6 py-4 text-sm font-bold text-[#5b4eff]">
+                                    <td className="px-6 py-4 text-sm font-black text-[#5b4eff]">
                                         {formatPrice(venta.total)}
                                     </td>
-
                                     <td className="px-6 py-4">
-                                        <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold ${getEstadoColor(venta.estado)}`}>
+                                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] uppercase font-black border ${getEstadoColor(venta.estado)}`}>
                                             {getEstadoIcon(venta.estado)} {venta.estado}
                                         </span>
                                     </td>
-
-                                    <td className="px-6 py-4">
+                                    <td className="px-6 py-4 text-right">
                                         <button
                                             onClick={() => verDetalles(venta)}
-                                            className="text-[#5b4eff] hover:underline text-sm font-medium inline-flex items-center gap-1"
+                                            className="text-[#5b4eff] hover:text-[#4a3dcc] text-sm font-bold inline-flex items-center gap-1 transition-colors"
                                         >
-                                            <Eye size={14} />
-                                            Ver detalles
+                                            <Eye size={16} />
+                                            Ver
                                         </button>
                                     </td>
                                 </tr>
@@ -443,12 +403,12 @@ export default function ListaVentasPresencial({ onRefresh }) {
                     </table>
                 </div>
                 {ventasFiltradas.length === 0 && (
-                    <div className="p-12 text-center text-gray-400">
-                        <Store size={48} className="mx-auto mb-2 opacity-50" />
-                        <p>
+                    <div className="p-12 text-center text-gray-400 border-t border-gray-100">
+                        <Store size={48} className="mx-auto mb-2 text-gray-300" />
+                        <p className="font-bold text-gray-500">
                             {ventas.length === 0
                                 ? "No hay ventas presenciales registradas"
-                                : `No hay ventas ${filtroEstado !== "TODOS" ? `con estado "${filtroEstado}"` : "que coincidan con la búsqueda"}`}
+                                : `No hay ventas que coincidan`}
                         </p>
                     </div>
                 )}
@@ -456,77 +416,79 @@ export default function ListaVentasPresencial({ onRefresh }) {
 
             {/* Modal de detalles */}
             {showDetalleModal && selectedVenta && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowDetalleModal(false)}>
-                    <div className="bg-white rounded-xl max-w-3xl w-full max-h-[85vh] overflow-y-auto shadow-2xl" onClick={(e) => e.stopPropagation()}>
-                        <div className="sticky top-0 bg-white p-6 border-b flex justify-between items-center">
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-in fade-in duration-200" onClick={() => setShowDetalleModal(false)}>
+                    <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl animate-in zoom-in-95" onClick={(e) => e.stopPropagation()}>
+                        
+                        <div className="sticky top-0 bg-white p-5 sm:p-6 border-b border-gray-100 flex justify-between items-center z-10">
                             <div>
-                                <h3 className="text-xl font-bold flex items-center gap-2">
-                                    <ShoppingBag size={20} className="text-[#5b4eff]" />
-                                    Venta Presencial Nº: {selectedVenta.id}
+                                <h3 className="text-xl font-black flex items-center gap-2 text-gray-900">
+                                    <ShoppingBag size={22} className="text-[#5b4eff]" />
+                                    Venta Nº {selectedVenta.id}
                                 </h3>
-                                <p className="text-sm text-gray-500 mt-1 flex items-center gap-1">
+                                <p className="text-sm font-medium text-gray-500 mt-0.5 flex items-center gap-1">
                                     <Calendar size={14} />
                                     {formatDateLong(selectedVenta.fecha)}
                                 </p>
                             </div>
-                            <button onClick={() => setShowDetalleModal(false)} className="text-gray-400 hover:text-gray-600 transition p-2 hover:bg-gray-100 rounded-lg">
+                            <button onClick={() => setShowDetalleModal(false)} className="text-gray-400 hover:text-gray-600 transition p-2 hover:bg-gray-100 rounded-xl">
                                 <X size={20} />
                             </button>
                         </div>
-                        <div className="p-6 space-y-6">
+
+                        <div className="p-5 sm:p-6 space-y-6">
                             {/* Información general */}
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                <div className="bg-gray-50 rounded-lg p-3">
-                                    <p className="text-xs text-gray-500 uppercase flex items-center gap-1">
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">
+                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 flex items-center gap-1">
                                         <User size={12} /> Cliente
                                     </p>
-                                    <p className="font-medium text-gray-800">{selectedVenta.clienteNombre || `Cliente #${selectedVenta.clienteId}`}</p>
+                                    <p className="font-bold text-gray-800 text-sm truncate">{selectedVenta.clienteNombre || `Cliente #${selectedVenta.clienteId}`}</p>
                                 </div>
-                                <div className="bg-gray-50 rounded-lg p-3">
-                                    <p className="text-xs text-gray-500 uppercase flex items-center gap-1">
+                                <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">
+                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 flex items-center gap-1">
                                         <ClipboardList size={12} /> Estado
                                     </p>
-                                    <span className={`inline-block px-2 py-1 rounded-full text-xs font-bold ${getEstadoColor(selectedVenta.estado)}`}>
-                                        {getEstadoIcon(selectedVenta.estado)} {selectedVenta.estado}
+                                    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] uppercase font-black border ${getEstadoColor(selectedVenta.estado)}`}>
+                                        {selectedVenta.estado}
                                     </span>
                                 </div>
-                                <div className="bg-gray-50 rounded-lg p-3">
-                                    <p className="text-xs text-gray-500 uppercase flex items-center gap-1">
-                                        Monto Total
-                                    </p>
-                                    <p className="font-bold text-xl text-[#5b4eff]">{formatPrice(selectedVenta.total)}</p>
+                                <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">
+                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Monto Total</p>
+                                    <p className="font-black text-lg text-[#5b4eff]">{formatPrice(selectedVenta.total)}</p>
                                 </div>
-                                <div className="bg-gray-50 rounded-lg p-3">
-                                    <p className="text-xs text-gray-500 uppercase flex items-center gap-1">
+                                <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">
+                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 flex items-center gap-1">
                                         <ShoppingBag size={12} /> Productos
                                     </p>
-                                    <p className="font-medium">{selectedVenta.detalles?.length || 0} </p>
+                                    <p className="font-black text-gray-800">{selectedVenta.detalles?.length || 0} und.</p>
                                 </div>
                             </div>
 
                             {/* Productos */}
                             <div>
-                                <h4 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
+                                <h4 className="font-bold text-gray-800 text-sm mb-3 flex items-center gap-2">
                                     <Package size={18} className="text-[#5b4eff]" />
-                                    Productos
+                                    Productos de la venta
                                 </h4>
                                 <div className="space-y-3">
                                     {selectedVenta.detalles?.map((detalle, idx) => (
-                                        <div key={idx} className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg hover:shadow-md transition">
-                                            <img
-                                                src={detalle.imagenUrl || "https://placehold.co/60x60?text=Producto"}
-                                                alt={detalle.productoNombre}
-                                                className="w-16 h-16 object-cover rounded-lg bg-white"
-                                                onError={(e) => { e.target.src = "https://placehold.co/60x60?text=Producto"; }}
-                                            />
-                                            <div className="flex-1">
-                                                <p className="font-medium text-gray-800">{detalle.productoNombre}</p>
-                                                <p className="text-xs text-gray-500">Código: {detalle.productoId}</p>
+                                        <div key={idx} className="flex items-center gap-4 p-3 bg-white border border-gray-100 rounded-xl shadow-sm">
+                                            <div className="w-16 h-16 bg-gray-50 rounded-lg p-1 border border-gray-100 flex items-center justify-center flex-shrink-0">
+                                                <img
+                                                    src={detalle.imagenUrl || "https://placehold.co/60x60?text=Producto"}
+                                                    alt={detalle.productoNombre}
+                                                    className="w-full h-full object-contain rounded-md"
+                                                    onError={(e) => { e.target.src = "https://placehold.co/60x60?text=Producto"; }}
+                                                />
                                             </div>
-                                            <div className="text-right">
-                                                <p className="text-sm text-gray-500">{formatPrice(detalle.precio)} c/u</p>
-                                                <p className="font-bold text-[#5b4eff]">{formatPrice(detalle.subtotal)}</p>
-                                                <p className="text-xs text-gray-400">Cantidad: {detalle.cantidad}</p>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="font-bold text-gray-800 text-sm truncate">{detalle.productoNombre}</p>
+                                                <p className="text-xs font-medium text-gray-500">Código: {detalle.productoId}</p>
+                                            </div>
+                                            <div className="text-right flex-shrink-0">
+                                                <p className="text-xs font-medium text-gray-500">{formatPrice(detalle.precio)} c/u</p>
+                                                <p className="font-black text-[#5b4eff]">{formatPrice(detalle.subtotal)}</p>
+                                                <p className="text-[10px] font-bold text-gray-400">Cant: {detalle.cantidad}</p>
                                             </div>
                                         </div>
                                     ))}
@@ -534,10 +496,10 @@ export default function ListaVentasPresencial({ onRefresh }) {
                             </div>
 
                             {/* Acciones */}
-                            <div className="flex gap-3 pt-4 border-t">
+                            <div className="flex gap-3 pt-4 border-t border-gray-100">
                                 <button
                                     onClick={() => setShowDetalleModal(false)}
-                                    className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300 transition flex items-center justify-center gap-2"
+                                    className="w-full px-4 py-3 bg-gray-100 text-gray-700 rounded-xl text-sm font-bold hover:bg-gray-200 transition flex items-center justify-center gap-2"
                                 >
                                     <X size={16} /> Cerrar
                                 </button>

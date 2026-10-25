@@ -1,16 +1,9 @@
 // components/reclamos/CambiarEstadoModal.jsx
 import React, { useState } from "react";
 import {
-  X, Clock, RefreshCw, CheckCircle, XCircle, FileText, Ban,
+  X, RefreshCw, CheckCircle, XCircle, FileText,
   Loader2, Check, AlertCircle
 } from "lucide-react";
-
-const ESTADOS_DISPONIBLES = [
-  { value: "EN_REVISION", label: "En revisión", icon: RefreshCw,      color: "blue" },
-  { value: "APROBADO",    label: "Aprobado",    icon: CheckCircle,    color: "emerald" },
-  { value: "RECHAZADO",   label: "Rechazado",   icon: XCircle,        color: "red" },
-  { value: "CERRADO",     label: "Cerrado",     icon: FileText,       color: "gray" },
-];
 
 const COLOR_CLASSES = {
   blue:    { bg: "bg-blue-50",    text: "text-blue-700",    border: "border-blue-300",    ring: "ring-blue-500" },
@@ -24,10 +17,24 @@ export default function CambiarEstadoModal({
   onClose,
   onConfirm,
   loading = false,
+  esAdmin = true // ✅ Recibe la prop
 }) {
   const [nuevoEstado, setNuevoEstado] = useState("");
   const [comentario, setComentario] = useState("");
   const [error, setError] = useState("");
+
+  // ✅ Filtramos los estados según el rol
+  const estadosDisponibles = esAdmin 
+    ? [
+        { value: "EN_REVISION", label: "En revisión", icon: RefreshCw,      color: "blue" },
+        { value: "APROBADO",    label: "Aprobado",    icon: CheckCircle,    color: "emerald" },
+        { value: "RECHAZADO",   label: "Rechazado",   icon: XCircle,        color: "red" },
+        { value: "CERRADO",     label: "Cerrado",     icon: FileText,       color: "gray" },
+      ]
+    : [
+        // El vendedor solo puede derivar a revisión
+        { value: "EN_REVISION", label: "Derivar a revisión", icon: RefreshCw, color: "blue" },
+      ];
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -51,9 +58,11 @@ export default function CambiarEstadoModal({
         {/* Header */}
         <div className="sticky top-0 bg-white p-5 sm:p-6 border-b border-gray-100 flex justify-between items-start z-10">
           <div>
-            <h3 className="text-xl font-bold text-gray-900">Cambiar estado</h3>
+            <h3 className="text-xl font-bold text-gray-900">
+              {esAdmin ? "Gestionar Reclamo" : "Derivar Reclamo"}
+            </h3>
             <p className="text-sm text-gray-500 mt-0.5">
-              Reclamo Nº {reclamo.id} — Actual: <b>{reclamo.estado}</b>
+              Reclamo Nº {reclamo.id} — Estado actual: <b>{reclamo.estado}</b>
             </p>
           </div>
           <button
@@ -76,10 +85,10 @@ export default function CambiarEstadoModal({
           {/* Nuevo estado */}
           <div>
             <label className="block text-sm font-bold text-gray-700 mb-3">
-              Nuevo estado <span className="text-red-500">*</span>
+              Acción a realizar <span className="text-red-500">*</span>
             </label>
-            <div className="grid grid-cols-2 gap-3">
-              {ESTADOS_DISPONIBLES.map(({ value, label, icon: Icon, color }) => {
+            <div className={`grid gap-3 ${esAdmin ? "grid-cols-2" : "grid-cols-1"}`}>
+              {estadosDisponibles.map(({ value, label, icon: Icon, color }) => {
                 const styles = COLOR_CLASSES[color];
                 const selected = nuevoEstado === value;
                 return (
@@ -87,13 +96,13 @@ export default function CambiarEstadoModal({
                     key={value}
                     type="button"
                     onClick={() => setNuevoEstado(value)}
-                    className={`p-3 rounded-xl border-2 text-sm font-semibold transition-all flex items-center gap-2 justify-center ${
+                    className={`p-3.5 rounded-xl border-2 text-sm font-semibold transition-all flex items-center gap-2 justify-center ${
                       selected
                         ? `${styles.border} ${styles.bg} ${styles.text} shadow-sm ring-2 ${styles.ring}/30`
-                        : "border-gray-200 text-gray-600 hover:border-gray-300"
+                        : "border-gray-200 text-gray-600 hover:border-gray-300 bg-white"
                     }`}
                   >
-                    <Icon size={16} />
+                    <Icon size={18} />
                     {label}
                   </button>
                 );
@@ -101,10 +110,10 @@ export default function CambiarEstadoModal({
             </div>
           </div>
 
-          {/* Comentario opcional */}
+          {/* Comentario */}
           <div>
             <label className="block text-sm font-bold text-gray-700 mb-2">
-              Comentario <span className="text-gray-400 font-normal">(opcional)</span>
+              Comentario / Respuesta al cliente <span className="text-gray-400 font-normal">(opcional)</span>
             </label>
             <textarea
               value={comentario}
@@ -112,7 +121,7 @@ export default function CambiarEstadoModal({
               rows="3"
               maxLength={300}
               className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:border-[#5b4eff] focus:ring-2 focus:ring-[#5b4eff]/20 focus:outline-none transition resize-none text-sm"
-              placeholder="Añade un comentario sobre este cambio..."
+              placeholder="Explica el motivo del cambio de estado..."
             />
             <p className="text-xs text-gray-400 mt-1 text-right">
               {comentario.length}/300
@@ -123,7 +132,7 @@ export default function CambiarEstadoModal({
           <div className="bg-blue-50 rounded-xl p-3 border border-blue-100 flex items-start gap-2">
             <AlertCircle size={16} className="text-blue-500 flex-shrink-0 mt-0.5" />
             <p className="text-xs text-blue-700">
-              El cliente recibirá una notificación en tiempo real cuando cambies el estado.
+              El cliente recibirá una notificación por correo con esta actualización.
             </p>
           </div>
 

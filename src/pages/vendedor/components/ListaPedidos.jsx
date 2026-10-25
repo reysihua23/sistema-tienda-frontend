@@ -89,19 +89,13 @@ export default function ListaPedidos({ onRefresh }) {
         return new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' }).format(price);
     };
 
-    // Fecha larga (desktop)
     const formatDateLong = (date) => {
         if (!date) return "Fecha no disponible";
         return new Date(date).toLocaleDateString('es-PE', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
+            year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
         });
     };
 
-    // Fecha corta (móvil)
     const formatDateShort = (date) => {
         if (!date) return "—";
         const d = new Date(date);
@@ -112,14 +106,13 @@ export default function ListaPedidos({ onRefresh }) {
     };
 
     const getEstadoColor = (estado) => ({
-        "PENDIENTE": "bg-amber-100 text-amber-700",
-        "PAGADO": "bg-green-100 text-green-700",
-        "ENVIADO": "bg-blue-100 text-blue-700",
-        "ENTREGADO": "bg-emerald-100 text-emerald-700",
-        "CANCELADO": "bg-red-100 text-red-700"
-    }[estado] || "bg-gray-100 text-gray-700");
+        "PENDIENTE": "bg-amber-100 text-amber-800 border-amber-200",
+        "PAGADO": "bg-green-100 text-green-800 border-green-200",
+        "ENVIADO": "bg-blue-100 text-blue-800 border-blue-200",
+        "ENTREGADO": "bg-emerald-100 text-emerald-800 border-emerald-200",
+        "CANCELADO": "bg-red-100 text-red-800 border-red-200"
+    }[estado] || "bg-gray-100 text-gray-700 border-gray-200");
 
-    // ✅ Iconos por estado (Lucide)
     const getEstadoIcon = (estado) => {
         const icons = {
             "PENDIENTE": <Clock size={12} />,
@@ -140,130 +133,108 @@ export default function ListaPedidos({ onRefresh }) {
     }
 
     return (
-        <div>
-            <div className="mb-4 sm:mb-6">
-                <h2 className="text-lg sm:text-xl font-bold text-gray-800">Pedidos Online</h2>
-                <p className="text-xs sm:text-sm text-gray-500">Gestiona los pedidos realizados desde la tienda virtual</p>
+        <div className="w-full">
+            <div className="mb-6">
+                <h2 className="text-xl font-black text-gray-800 tracking-tight">Pedidos Online</h2>
+                <p className="text-sm text-gray-500 font-medium mt-1">Gestiona los pedidos realizados desde la tienda virtual</p>
             </div>
 
-            {/* ==================== VISTA MÓVIL (SOLO TABLA CAMBIA AQUÍ) ==================== */}
+            {/* ==================== VISTA MÓVIL ==================== */}
             <div className="md:hidden space-y-3">
                 {pedidos.length === 0 ? (
-                    <div className="bg-white rounded-xl shadow-sm p-12 text-center text-gray-400">
-                        <ShoppingBag size={48} className="mx-auto mb-2 opacity-50" />
-                        <p>No hay pedidos online registrados</p>
+                    <div className="bg-white rounded-2xl shadow-sm p-12 text-center border-2 border-dashed border-gray-200">
+                        <ShoppingBag size={48} className="mx-auto mb-2 text-gray-300" />
+                        <p className="font-bold text-gray-500">No hay pedidos online registrados</p>
                     </div>
                 ) : (
                     pedidos.map(pedido => (
-                        <div
-                            key={pedido.id}
-                            className="bg-white rounded-xl shadow-sm border border-gray-100 p-4"
-                        >
+                        <div key={pedido.id} className="bg-white rounded-2xl border-2 border-indigo-300 shadow-sm p-4">
                             {/* Header: PEDIDO + Nº + Estado (badge arriba derecha) */}
                             <div className="flex items-start justify-between gap-2 mb-3">
                                 <div>
-                                    <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">
+                                    <p className="text-[10px] text-gray-400 uppercase font-black tracking-wider mb-0.5">
                                         Pedido
                                     </p>
-                                    <p className="text-base font-black text-gray-800">
+                                    <p className="text-lg font-black text-gray-900">
                                         Nº {pedido.id}
                                     </p>
                                 </div>
-                                <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold ${getEstadoColor(pedido.estado)}`}>
+                                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] uppercase font-black border ${getEstadoColor(pedido.estado)}`}>
                                     {getEstadoIcon(pedido.estado)}
                                     {pedido.estado}
                                 </span>
                             </div>
 
                             {/* Cliente + Fecha con iconos */}
-                            <div className="space-y-1.5 mb-3">
-                                <div className="flex items-center gap-2 text-sm text-gray-600">
+                            <div className="space-y-1.5 mb-3 bg-gray-50 p-2.5 rounded-lg border border-gray-100">
+                                <div className="flex items-center gap-2 text-sm text-gray-700 font-medium">
                                     <User size={14} className="text-gray-400 flex-shrink-0" />
                                     <span className="truncate">
                                         {pedido.clienteNombre || `Cliente #${pedido.clienteId}`}
                                     </span>
                                 </div>
-                                <div className="flex items-center gap-2 text-sm text-gray-600">
+                                <div className="flex items-center gap-2 text-xs text-gray-500 font-medium">
                                     <Calendar size={14} className="text-gray-400 flex-shrink-0" />
                                     <span>{formatDateShort(pedido.fecha)}</span>
                                 </div>
                             </div>
 
-                            {/* Total + Estado select + Ver */}
-                            <div className="flex items-center justify-between pt-3 border-t border-gray-100 gap-2">
+                            {/* Total + Ver Detalles */}
+                            <div className="flex items-center justify-between pt-1 gap-2">
                                 <div>
-                                    <p className="text-[10px] text-gray-400 uppercase font-bold">Total</p>
-                                    <p className="text-base font-black text-[#5b4eff]">
+                                    <p className="text-[10px] text-gray-400 uppercase font-black">Total</p>
+                                    <p className="text-lg font-black text-[#5b4eff]">
                                         {formatPrice(pedido.total)}
                                     </p>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <select
-                                        value={pedido.estado}
-                                        onChange={(e) => cambiarEstado(pedido.id, e.target.value)}
-                                        className={`px-2 py-1.5 rounded-lg text-xs font-bold ${getEstadoColor(pedido.estado)} border-0 cursor-pointer focus:outline-none`}
-                                    >
-                                        <option value="PENDIENTE">PENDIENTE</option>
-                                        <option value="PAGADO">PAGADO</option>
-                                        <option value="ENVIADO">ENVIADO</option>
-                                        <option value="ENTREGADO">ENTREGADO</option>
-                                        <option value="CANCELADO">CANCELADO</option>
-                                    </select>
-                                    <button
-                                        onClick={() => verDetalles(pedido)}
-                                        className="p-2 text-[#5b4eff] hover:bg-[#5b4eff]/10 rounded-lg transition"
-                                        aria-label="Ver detalles"
-                                    >
-                                        <Eye size={16} />
-                                    </button>
-                                </div>
+                                <button
+                                    onClick={() => verDetalles(pedido)}
+                                    className="px-4 py-2.5 bg-[#5b4eff]/10 text-[#5b4eff] rounded-xl text-xs font-black hover:bg-[#5b4eff]/20 transition flex items-center gap-1.5"
+                                >
+                                    <Eye size={16} />
+                                    Ver Detalles
+                                </button>
                             </div>
                         </div>
                     ))
                 )}
             </div>
 
-            {/* ==================== VISTA DESKTOP (TABLA ORIGINAL, SIN CAMBIOS) ==================== */}
-            <div className="hidden md:block bg-white rounded-xl shadow-sm overflow-hidden">
+            {/* ==================== VISTA DESKTOP ==================== */}
+            <div className="hidden md:block bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100">
                 <div className="overflow-x-auto">
                     <table className="w-full">
-                        <thead className="bg-gray-50">
+                        <thead className="bg-gray-50 border-b border-gray-100">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">ID</th>
-                                <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Cliente</th>
-                                <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Fecha</th>
-                                <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Total</th>
-                                <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Estado</th>
-                                <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Acciones</th>
+                                <th className="px-6 py-4 text-left text-[10px] font-black text-gray-500 uppercase tracking-wider">ID</th>
+                                <th className="px-6 py-4 text-left text-[10px] font-black text-gray-500 uppercase tracking-wider">Cliente</th>
+                                <th className="px-6 py-4 text-left text-[10px] font-black text-gray-500 uppercase tracking-wider">Fecha</th>
+                                <th className="px-6 py-4 text-left text-[10px] font-black text-gray-500 uppercase tracking-wider">Total</th>
+                                <th className="px-6 py-4 text-left text-[10px] font-black text-gray-500 uppercase tracking-wider">Estado</th>
+                                <th className="px-6 py-4 text-right text-[10px] font-black text-gray-500 uppercase tracking-wider">Acciones</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-100">
+                        <tbody className="divide-y divide-gray-50">
                             {pedidos.map(pedido => (
-                                <tr key={pedido.id} className="hover:bg-gray-50">
-                                    <td className="px-6 py-4 text-sm font-medium">Nº {pedido.id}</td>
-                                    <td className="px-6 py-4 text-sm">{pedido.clienteNombre || `Cliente #${pedido.clienteId}`}</td>
-                                    <td className="px-6 py-4 text-sm">{formatDateLong(pedido.fecha)}</td>
-                                    <td className="px-6 py-4 text-sm font-bold text-[#5b4eff]">{formatPrice(pedido.total)}</td>
+                                <tr key={pedido.id} className="hover:bg-gray-50 transition-colors">
+                                    <td className="px-6 py-4 text-sm font-black text-gray-400">#{pedido.id}</td>
+                                    <td className="px-6 py-4 text-sm font-bold text-gray-800">{pedido.clienteNombre || `Cliente #${pedido.clienteId}`}</td>
+                                    <td className="px-6 py-4 text-xs font-medium text-gray-500">{formatDateLong(pedido.fecha)}</td>
+                                    <td className="px-6 py-4 text-sm font-black text-[#5b4eff]">{formatPrice(pedido.total)}</td>
                                     <td className="px-6 py-4">
-                                        <select
-                                            value={pedido.estado}
-                                            onChange={(e) => cambiarEstado(pedido.id, e.target.value)}
-                                            className={`px-3 py-1 rounded-full text-xs font-bold ${getEstadoColor(pedido.estado)} border-0 cursor-pointer`}
-                                        >
-                                            <option value="PENDIENTE">PENDIENTE</option>
-                                            <option value="PAGADO">PAGADO</option>
-                                            <option value="ENVIADO">ENVIADO</option>
-                                            <option value="ENTREGADO">ENTREGADO</option>
-                                            <option value="CANCELADO">CANCELADO</option>
-                                        </select>
+                                        {/* ✅ AHORA ES SOLO UN BADGE, NO UN SELECT */}
+                                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] uppercase font-black border ${getEstadoColor(pedido.estado)}`}>
+                                            {getEstadoIcon(pedido.estado)}
+                                            {pedido.estado}
+                                        </span>
                                     </td>
-                                    <td className="px-6 py-4">
+                                    <td className="px-6 py-4 text-right">
                                         <button
                                             onClick={() => verDetalles(pedido)}
-                                            className="text-[#5b4eff] hover:underline text-sm font-medium inline-flex items-center gap-1"
+                                            className="text-[#5b4eff] hover:text-[#4a3dcc] text-sm font-bold transition-colors inline-flex items-center gap-1"
                                         >
-                                            <Eye size={14} />
-                                            Ver detalles
+                                            <Eye size={16} />
+                                            Ver Detalles
                                         </button>
                                     </td>
                                 </tr>
@@ -272,103 +243,113 @@ export default function ListaPedidos({ onRefresh }) {
                     </table>
                 </div>
                 {pedidos.length === 0 && (
-                    <div className="p-12 text-center text-gray-400">
-                        <ShoppingBag size={48} className="mx-auto mb-2 opacity-50" />
-                        <p>No hay pedidos online registrados</p>
+                    <div className="p-12 text-center text-gray-400 border-t border-gray-100">
+                        <ShoppingBag size={48} className="mx-auto mb-2 text-gray-300" />
+                        <p className="font-bold text-gray-500">No hay pedidos online registrados</p>
                     </div>
                 )}
             </div>
 
             {/* Modal de detalles */}
             {showDetalleModal && selectedPedido && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowDetalleModal(false)}>
-                    <div className="bg-white rounded-xl max-w-3xl w-full max-h-[85vh] overflow-y-auto shadow-2xl" onClick={(e) => e.stopPropagation()}>
-                        <div className="sticky top-0 bg-white p-6 border-b flex justify-between items-center">
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-in fade-in duration-200" onClick={() => setShowDetalleModal(false)}>
+                    <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl animate-in zoom-in-95" onClick={(e) => e.stopPropagation()}>
+                        
+                        <div className="sticky top-0 bg-white p-5 sm:p-6 border-b border-gray-100 flex justify-between items-center z-10">
                             <div>
-                                <h3 className="text-xl font-bold">Pedido {selectedPedido.id}</h3>
-                                <p className="text-sm text-gray-500 mt-1">{formatDateLong(selectedPedido.fecha)}</p>
+                                <h3 className="text-xl font-black text-gray-900">Pedido #{selectedPedido.id}</h3>
+                                <p className="text-sm font-medium text-gray-500 mt-0.5">{formatDateLong(selectedPedido.fecha)}</p>
                             </div>
                             <button
                                 onClick={() => setShowDetalleModal(false)}
-                                className="text-gray-400 hover:text-gray-600 transition p-2 hover:bg-gray-100 rounded-lg"
+                                className="text-gray-400 hover:text-gray-600 transition p-2 hover:bg-gray-100 rounded-xl"
                             >
                                 <X size={20} />
                             </button>
                         </div>
 
-                        <div className="p-6 space-y-6">
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                <div className="bg-gray-50 rounded-lg p-3">
-                                    <p className="text-xs text-gray-500 uppercase">Cliente</p>
-                                    <p className="font-medium text-gray-800">{selectedPedido.clienteNombre || `Cliente #${selectedPedido.clienteId}`}</p>
+                        <div className="p-5 sm:p-6 space-y-6">
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">
+                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Cliente</p>
+                                    <p className="font-bold text-gray-800 text-sm truncate">{selectedPedido.clienteNombre || `Cliente #${selectedPedido.clienteId}`}</p>
                                 </div>
-                                <div className="bg-gray-50 rounded-lg p-3">
-                                    <p className="text-xs text-gray-500 uppercase">Estado</p>
-                                    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold ${getEstadoColor(selectedPedido.estado)}`}>
+                                <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">
+                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Estado</p>
+                                    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] uppercase font-black border ${getEstadoColor(selectedPedido.estado)}`}>
                                         {getEstadoIcon(selectedPedido.estado)} {selectedPedido.estado}
                                     </span>
                                 </div>
-
-                                <div className="bg-gray-50 rounded-lg p-3">
-                                    <p className="text-xs text-gray-500 uppercase">Total</p>
-                                    <p className="font-bold text-xl text-[#5b4eff]">{formatPrice(selectedPedido.total)}</p>
+                                <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">
+                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Total</p>
+                                    <p className="font-black text-lg text-[#5b4eff]">{formatPrice(selectedPedido.total)}</p>
                                 </div>
-                                <div className="bg-gray-50 rounded-lg p-3">
-                                    <p className="text-xs text-gray-500 uppercase">Productos</p>
-                                    <p className="font-medium">{selectedPedido.detalles?.length || 0} </p>
+                                <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">
+                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Productos</p>
+                                    <p className="font-black text-gray-800">{selectedPedido.detalles?.length || 0} und.</p>
                                 </div>
                             </div>
 
                             <div>
-                                <h4 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
+                                <h4 className="font-bold text-gray-800 text-sm mb-3 flex items-center gap-2">
                                     <Package size={18} className="text-[#5b4eff]" />
-                                    Productos
+                                    Productos del Pedido
                                 </h4>
                                 <div className="space-y-3">
                                     {selectedPedido.detalles?.map((detalle, idx) => (
-                                        <div key={idx} className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg hover:shadow-md transition">
-                                            <img
-                                                src={detalle.imagenUrl || "https://placehold.co/60x60?text=Producto"}
-                                                alt={detalle.productoNombre}
-                                                className="w-16 h-16 object-cover rounded-lg bg-white"
-                                                onError={(e) => { e.target.src = "https://placehold.co/60x60?text=Producto"; }}
-                                            />
-                                            <div className="flex-1">
-                                                <p className="font-medium text-gray-800">{detalle.productoNombre}</p>
-                                                <p className="text-xs text-gray-500">Código: #{detalle.productoId}</p>
+                                        <div key={idx} className="flex items-center gap-4 p-3 bg-white border border-gray-100 rounded-xl shadow-sm">
+                                            <div className="w-16 h-16 bg-gray-50 rounded-lg p-1 border border-gray-100 flex items-center justify-center flex-shrink-0">
+                                                <img
+                                                    src={detalle.imagenUrl || "https://placehold.co/60x60?text=Producto"}
+                                                    alt={detalle.productoNombre}
+                                                    className="w-full h-full object-contain rounded-md"
+                                                    onError={(e) => { e.target.src = "https://placehold.co/60x60?text=Producto"; }}
+                                                />
                                             </div>
-                                            <div className="text-right">
-                                                <p className="text-sm text-gray-500">{formatPrice(detalle.precio)} c/u</p>
-                                                <p className="font-bold text-[#5b4eff]">{formatPrice(detalle.subtotal)}</p>
-                                                <p className="text-xs text-gray-400">Cantidad: {detalle.cantidad}</p>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="font-bold text-gray-800 text-sm truncate">{detalle.productoNombre}</p>
+                                                <p className="text-xs font-medium text-gray-500">Código: #{detalle.productoId}</p>
+                                            </div>
+                                            <div className="text-right flex-shrink-0">
+                                                <p className="text-xs font-medium text-gray-500">{formatPrice(detalle.precio)} c/u</p>
+                                                <p className="font-black text-[#5b4eff]">{formatPrice(detalle.subtotal)}</p>
+                                                <p className="text-[10px] font-bold text-gray-400">Cant: {detalle.cantidad}</p>
                                             </div>
                                         </div>
                                     ))}
                                 </div>
                             </div>
 
-                            <div className="flex gap-3 pt-4 border-t">
-                                <select
-                                    value={selectedPedido.estado}
-                                    onChange={(e) => {
-                                        cambiarEstado(selectedPedido.id, e.target.value);
-                                        setSelectedPedido({ ...selectedPedido, estado: e.target.value });
-                                    }}
-                                    className="flex-1 px-4 py-2 border border-gray-200 rounded-lg text-sm focus:border-[#5b4eff] focus:outline-none"
-                                >
-                                    <option value="PENDIENTE">PENDIENTE</option>
-                                    <option value="PAGADO">PAGADO</option>
-                                    <option value="ENVIADO">ENVIADO</option>
-                                    <option value="ENTREGADO">ENTREGADO</option>
-                                    <option value="CANCELADO">CANCELADO</option>
-                                </select>
-                                <button
-                                    onClick={() => setShowDetalleModal(false)}
-                                    className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300 transition"
-                                >
-                                    Cerrar
-                                </button>
+                            {/* ✅ GESTIÓN DEL ESTADO: Solo aquí se puede cambiar */}
+                            <div className="flex flex-col sm:flex-row gap-3 pt-6 border-t border-gray-100 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                                <div className="flex-1">
+                                    <label className="block text-xs font-bold text-gray-700 mb-2">Actualizar estado del pedido:</label>
+                                    <select
+                                        value={selectedPedido.estado}
+                                        onChange={(e) => {
+                                            const nuevoEstado = e.target.value;
+                                            cambiarEstado(selectedPedido.id, nuevoEstado);
+                                            setSelectedPedido({ ...selectedPedido, estado: nuevoEstado });
+                                        }}
+                                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm font-bold focus:border-[#5b4eff] focus:ring-2 focus:ring-[#5b4eff]/20 focus:outline-none cursor-pointer"
+                                    >
+                                        <option value="PENDIENTE">PENDIENTE</option>
+                                        <option value="PAGADO">PAGADO</option>
+                                        <option value="ENVIADO">ENVIADO</option>
+                                        <option value="ENTREGADO">ENTREGADO</option>
+                                        <option value="CANCELADO">CANCELADO</option>
+                                    </select>
+                                </div>
+                                <div className="flex items-end">
+                                    <button
+                                        onClick={() => setShowDetalleModal(false)}
+                                        className="w-full sm:w-auto px-6 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg text-sm font-bold hover:bg-gray-100 transition"
+                                    >
+                                        Cerrar
+                                    </button>
+                                </div>
                             </div>
+
                         </div>
                     </div>
                 </div>

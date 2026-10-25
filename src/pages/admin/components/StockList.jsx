@@ -6,7 +6,7 @@ import {
     Package, AlertTriangle, CheckCircle, XCircle,
     TrendingUp, TrendingDown, Edit3, X,
     Search, Filter, ArrowUpDown, SlidersHorizontal,
-    ArrowUp, ArrowDown, Clock, SortAsc, Layers
+    ArrowUp, ArrowDown, Clock, SortAsc, Layers, PackageSearch
 } from "lucide-react";
 
 // =====================================================
@@ -17,7 +17,6 @@ const CustomDropdown = ({ valor, onChange, opciones, iconoPrincipal, ancho = "w-
     const ref = useRef(null);
     const opcionActual = opciones.find(o => o.value === valor);
 
-    // Cerrar al hacer clic fuera
     useEffect(() => {
         const cerrar = (e) => {
             if (ref.current && !ref.current.contains(e.target)) setAbierto(false);
@@ -26,7 +25,6 @@ const CustomDropdown = ({ valor, onChange, opciones, iconoPrincipal, ancho = "w-
         return () => document.removeEventListener("mousedown", cerrar);
     }, []);
 
-    // Cerrar con Escape
     useEffect(() => {
         const onKey = (e) => {
             if (e.key === "Escape") setAbierto(false);
@@ -36,60 +34,42 @@ const CustomDropdown = ({ valor, onChange, opciones, iconoPrincipal, ancho = "w-
     }, []);
 
     return (
-        <div className="relative flex-1 sm:flex-initial" ref={ref}>
+        <div className="relative flex-1 sm:flex-initial w-full" ref={ref}>
             <button
                 type="button"
                 onClick={() => setAbierto(!abierto)}
-                className={`w-full sm:w-auto flex items-center justify-between gap-2 pl-8 pr-8 py-2.5 text-sm border rounded-lg bg-white transition relative ${abierto
-                    ? "border-[#5b4eff] ring-2 ring-[#5b4eff]/20"
-                    : "border-gray-200 hover:border-gray-300"
-                    }`}
+                className={`w-full flex items-center justify-between gap-2 pl-8 pr-8 py-2.5 text-sm border rounded-lg bg-white transition relative ${
+                    abierto ? "border-[#5b4eff] ring-2 ring-[#5b4eff]/20" : "border-gray-200 hover:border-gray-300"
+                }`}
             >
                 {iconoPrincipal && (
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
                         {iconoPrincipal}
                     </span>
                 )}
-
                 <span className="flex items-center gap-2 min-w-0">
                     <span className={opcionActual?.color || "text-gray-500"}>
                         {opcionActual?.icon}
                     </span>
                     <span className="text-gray-700 truncate">{opcionActual?.label}</span>
                 </span>
-
-                <svg
-                    className={`w-3 h-3 text-gray-400 absolute right-3 transition-transform flex-shrink-0 ${abierto ? "rotate-180" : ""
-                        }`}
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={3}
-                >
+                <svg className={`w-3 h-3 text-gray-400 absolute right-3 transition-transform flex-shrink-0 ${abierto ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                 </svg>
             </button>
 
             {abierto && (
-                <div
-                    className={`absolute z-30 mt-1 ${ancho} bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden max-h-72 overflow-y-auto`}
-                >
+                <div className={`absolute z-30 mt-1 ${ancho} bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden max-h-72 overflow-y-auto`}>
                     {opciones.map((op) => (
                         <button
                             key={op.value}
                             type="button"
-                            onClick={() => {
-                                onChange(op.value);
-                                setAbierto(false);
-                            }}
-                            className={`w-full flex items-center gap-2 px-3 py-2.5 text-sm hover:bg-gray-50 transition text-left ${valor === op.value ? "bg-[#5b4eff]/5 font-medium" : ""
-                                }`}
+                            onClick={() => { onChange(op.value); setAbierto(false); }}
+                            className={`w-full flex items-center gap-2 px-3 py-2.5 text-sm hover:bg-gray-50 transition text-left ${valor === op.value ? "bg-[#5b4eff]/5 font-medium" : ""}`}
                         >
                             <span className={op.color || "text-gray-500"}>{op.icon}</span>
                             <span className="text-gray-700 flex-1">{op.label}</span>
-                            {valor === op.value && (
-                                <CheckCircle size={14} className="text-[#5b4eff] flex-shrink-0" />
-                            )}
+                            {valor === op.value && <CheckCircle size={14} className="text-[#5b4eff] flex-shrink-0" />}
                         </button>
                     ))}
                 </div>
@@ -122,15 +102,13 @@ const StockModal = ({ isOpen, onClose, producto, stockActual, onSave, loading })
     };
 
     const handleIncrement = () => { setNuevoStock(prev => parseInt(prev) + 1); setError(""); };
-    const handleDecrement = () => {
-        if (parseInt(nuevoStock) > 0) { setNuevoStock(prev => parseInt(prev) - 1); setError(""); }
-    };
+    const handleDecrement = () => { if (parseInt(nuevoStock) > 0) { setNuevoStock(prev => parseInt(prev) - 1); setError(""); } };
 
     const formatNumber = (value) => new Intl.NumberFormat('es-PE').format(value);
 
     return (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100001] p-4" onClick={onClose}>
-            <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()}>
                 <div className="bg-gradient-to-r from-blue-500 to-indigo-600 px-6 py-4">
                     <div className="flex justify-between items-center">
                         <div className="flex items-center gap-3">
@@ -139,7 +117,7 @@ const StockModal = ({ isOpen, onClose, producto, stockActual, onSave, loading })
                             </div>
                             <div>
                                 <h3 className="text-xl font-bold text-white">Actualizar Stock</h3>
-                                <p className="text-blue-100 text-sm">{producto?.nombre}</p>
+                                <p className="text-blue-100 text-sm truncate max-w-[200px]">{producto?.nombre}</p>
                             </div>
                         </div>
                         <button onClick={onClose} className="text-white/70 hover:text-white transition">
@@ -194,11 +172,8 @@ const StockModal = ({ isOpen, onClose, producto, stockActual, onSave, loading })
                     <div className="bg-blue-50 rounded-xl p-4">
                         <div className="flex justify-between items-center text-sm">
                             <span className="text-gray-600">Cambio</span>
-                            <span className={`font-bold ${parseInt(nuevoStock) > stockActual ? "text-green-600" :
-                                parseInt(nuevoStock) < stockActual ? "text-red-600" : "text-gray-600"}`}>
-                                {parseInt(nuevoStock) > stockActual ? `+${formatNumber(parseInt(nuevoStock) - stockActual)}` :
-                                    parseInt(nuevoStock) < stockActual ? `-${formatNumber(stockActual - parseInt(nuevoStock))}` :
-                                        "Sin cambios"}
+                            <span className={`font-bold ${parseInt(nuevoStock) > stockActual ? "text-green-600" : parseInt(nuevoStock) < stockActual ? "text-red-600" : "text-gray-600"}`}>
+                                {parseInt(nuevoStock) > stockActual ? `+${formatNumber(parseInt(nuevoStock) - stockActual)}` : parseInt(nuevoStock) < stockActual ? `-${formatNumber(stockActual - parseInt(nuevoStock))}` : "Sin cambios"}
                             </span>
                         </div>
                         <div className="flex justify-between items-center text-sm mt-2 pt-2 border-t border-blue-100">
@@ -210,22 +185,8 @@ const StockModal = ({ isOpen, onClose, producto, stockActual, onSave, loading })
                     </div>
 
                     <div className="flex gap-3 pt-2">
-                        <button
-                            type="submit"
-                            disabled={loading || nuevoStock === "" || parseInt(nuevoStock) === stockActual}
-                            className="flex-1 py-3 bg-gradient-to-r from-[#5b4eff] to-[#4a3dcc] text-white rounded-xl font-bold hover:shadow-lg transition disabled:opacity-50 flex items-center justify-center gap-2"
-                        >
-                            {loading ? (
-                                <>
-                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                                    Actualizando...
-                                </>
-                            ) : (
-                                <>
-                                    <Edit3 size={16} />
-                                    Actualizar Stock
-                                </>
-                            )}
+                        <button type="submit" disabled={loading || nuevoStock === "" || parseInt(nuevoStock) === stockActual} className="flex-1 py-3 bg-gradient-to-r from-[#5b4eff] to-[#4a3dcc] text-white rounded-xl font-bold hover:shadow-lg transition disabled:opacity-50 flex items-center justify-center gap-2">
+                            {loading ? (<><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>Actualizando...</>) : (<><Edit3 size={16} />Actualizar Stock</>)}
                         </button>
                         <button type="button" onClick={onClose} className="px-6 py-3 bg-gray-100 text-gray-600 rounded-xl font-bold hover:bg-gray-200 transition">
                             Cancelar
@@ -246,7 +207,6 @@ export default function StockList({ productos, onRefresh, showMessage }) {
     const [showModal, setShowModal] = useState(false);
     const [loading, setLoading] = useState(false);
 
-    // 🎯 Estados para filtros/orden/búsqueda
     const [busqueda, setBusqueda] = useState("");
     const [filtro, setFiltro] = useState("todos");
     const [orden, setOrden] = useState("id-asc");
@@ -261,7 +221,6 @@ export default function StockList({ productos, onRefresh, showMessage }) {
         setShowModal(true);
     };
 
-    // 🎯 Opciones del dropdown de FILTRO
     const opcionesFiltro = [
         { value: "todos", label: "Todos", icon: <Layers size={14} />, color: "text-gray-500" },
         { value: "agotados", label: "Agotados", icon: <XCircle size={14} />, color: "text-red-500" },
@@ -269,15 +228,13 @@ export default function StockList({ productos, onRefresh, showMessage }) {
         { value: "disponibles", label: "Disponibles", icon: <CheckCircle size={14} />, color: "text-green-500" },
     ];
 
-    // 🎯 Opciones del dropdown de ORDEN
     const opcionesOrden = [
-        { value: "id-asc", label: "Nº", icon: <ArrowUp size={14} />, color: "text-gray-500" },
-        { value: "id-desc", label: "Nº", icon: <ArrowDown size={14} />, color: "text-gray-500" },
+        { value: "id-asc", label: "Nº Ascendente", icon: <ArrowUp size={14} />, color: "text-gray-500" },
+        { value: "id-desc", label: "Nº Descendente", icon: <ArrowDown size={14} />, color: "text-gray-500" },
         { value: "urgencia", label: "Urgencia", icon: <Clock size={14} />, color: "text-[#5b4eff]" },
         { value: "nombre", label: "A-Z", icon: <SortAsc size={14} />, color: "text-gray-500" },
     ];
 
-    // 🎯 Efecto del highlight
     useEffect(() => {
         const { highlightId, openEditModal } = location.state || {};
         if (!highlightId) return;
@@ -344,7 +301,6 @@ export default function StockList({ productos, onRefresh, showMessage }) {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [location.state, productos]);
 
-    // 🎯 Aplicar filtros + orden
     const productosFiltrados = useMemo(() => {
         let lista = [...(productos || [])];
 
@@ -418,15 +374,15 @@ export default function StockList({ productos, onRefresh, showMessage }) {
     };
 
     const getStockStatus = (stockActual, stockMinimo) => {
-        if (stockActual <= 0) return { text: "Agotado", color: "bg-red-100 text-red-700", icon: <XCircle size={14} className="inline mr-1" /> };
-        if (stockActual <= stockMinimo) return { text: "Stock Bajo", color: "bg-amber-100 text-amber-700", icon: <AlertTriangle size={14} className="inline mr-1" /> };
-        return { text: "Disponible", color: "bg-green-100 text-green-700", icon: <CheckCircle size={14} className="inline mr-1" /> };
+        if (stockActual <= 0) return { text: "Agotado", color: "bg-red-100 text-red-700", border: "border-red-200", icon: <XCircle size={14} className="inline mr-1" /> };
+        if (stockActual <= stockMinimo) return { text: "Stock Bajo", color: "bg-amber-100 text-amber-700", border: "border-amber-200", icon: <AlertTriangle size={14} className="inline mr-1" /> };
+        return { text: "Disponible", color: "bg-green-100 text-green-700", border: "border-green-200", icon: <CheckCircle size={14} className="inline mr-1" /> };
     };
 
     const formatNumber = (value) => new Intl.NumberFormat('es-PE').format(value);
 
     return (
-        <div>
+        <div className="w-full">
             <StockModal
                 isOpen={showModal}
                 onClose={() => setShowModal(false)}
@@ -436,61 +392,33 @@ export default function StockList({ productos, onRefresh, showMessage }) {
                 loading={loading}
             />
 
-            {/* ─────────── HEADER CON 3 PANELES SEPARADOS (COMPACTO) ─────────── */}
-            <div className="flex flex-col lg:flex-row lg:items-stretch gap-2 lg:gap-3 mb-4">
-
-                {/* PANEL 1: Título + subtítulo */}
-                <div className="bg-white rounded-lg shadow-sm border border-gray-100 px-4 py-3 flex-shrink-0 flex flex-col justify-center min-h-[64px]">
+            {/* ─────────── HEADER RESPONSIVO ─────────── */}
+            <div className="flex flex-col lg:flex-row lg:items-stretch gap-3 mb-4">
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 px-4 py-3 flex-shrink-0 flex flex-col justify-center min-h-[64px]">
                     <h2 className="text-base font-bold text-gray-800 leading-tight">Gestión de Stock</h2>
                     <p className="text-xs text-gray-500 mt-0.5 leading-tight">Controla el inventario de tus productos</p>
                 </div>
 
-                {/* PANEL 2: Controles */}
-                <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-2 flex flex-col sm:flex-row gap-2 flex-1 lg:flex-initial items-center min-h-[64px]">
-                    <CustomDropdown
-                        valor={filtro}
-                        onChange={setFiltro}
-                        opciones={opcionesFiltro}
-                        iconoPrincipal={<Filter size={13} />}
-                        ancho="w-full sm:w-44"
-                    />
-
-                    <CustomDropdown
-                        valor={orden}
-                        onChange={setOrden}
-                        opciones={opcionesOrden}
-                        iconoPrincipal={<ArrowUpDown size={13} />}
-                        ancho="w-full sm:w-48"
-                    />
-
-                    <div className="flex items-center justify-center px-2.5 py-1.5 text-xs font-medium text-gray-500 bg-gray-50 rounded-md whitespace-nowrap h-[34px]">
-                        <SlidersHorizontal size={11} className="mr-1" />
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-2 flex flex-col sm:flex-row gap-2 flex-1 items-center">
+                    <CustomDropdown valor={filtro} onChange={setFiltro} opciones={opcionesFiltro} iconoPrincipal={<Filter size={13} />} ancho="w-full sm:w-44" />
+                    <CustomDropdown valor={orden} onChange={setOrden} opciones={opcionesOrden} iconoPrincipal={<ArrowUpDown size={13} />} ancho="w-full sm:w-48" />
+                    <div className="flex items-center justify-center px-3 py-1.5 text-xs font-medium text-gray-500 bg-gray-50 rounded-lg whitespace-nowrap h-[38px] w-full sm:w-auto">
+                        <SlidersHorizontal size={12} className="mr-1.5" />
                         {productosFiltrados.length} {productosFiltrados.length === 1 ? "producto" : "productos"}
                     </div>
                 </div>
 
-                <div className="hidden lg:block flex-1" />
-                {/* PANEL 3: Leyenda */}
-                <div className="bg-white rounded-lg shadow-sm border border-gray-100 px-3 flex-shrink-0 flex items-center min-h-[64px]">
+                <div className="hidden lg:flex bg-white rounded-xl shadow-sm border border-gray-100 px-3 items-center min-h-[64px]">
                     <div className="flex items-center gap-3 text-xs">
-                        <div className="flex items-center gap-1">
-                            <div className="w-2.5 h-2.5 bg-green-500 rounded-full"></div>
-                            <span className="text-gray-600">Disponible</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                            <div className="w-2.5 h-2.5 bg-amber-500 rounded-full"></div>
-                            <span className="text-gray-600">Stock bajo</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                            <div className="w-2.5 h-2.5 bg-red-500 rounded-full"></div>
-                            <span className="text-gray-600">Agotado</span>
-                        </div>
+                        <div className="flex items-center gap-1"><div className="w-2.5 h-2.5 bg-green-500 rounded-full"></div><span className="text-gray-600">Disponible</span></div>
+                        <div className="flex items-center gap-1"><div className="w-2.5 h-2.5 bg-amber-500 rounded-full"></div><span className="text-gray-600">Stock bajo</span></div>
+                        <div className="flex items-center gap-1"><div className="w-2.5 h-2.5 bg-red-500 rounded-full"></div><span className="text-gray-600">Agotado</span></div>
                     </div>
                 </div>
             </div>
 
-            {/* ─────────── TABLA ─────────── */}
-            <div className="bg-white rounded-xl shadow overflow-hidden border border-gray-100">
+            {/* ─────────── VISTA ESCRITORIO (Tabla) ─────────── */}
+            <div className="hidden md:block bg-white rounded-xl shadow overflow-hidden border border-gray-100">
                 <div className="overflow-x-auto">
                     <table className="w-full min-w-[700px]">
                         <thead className="bg-gray-50 border-b border-gray-200">
@@ -510,38 +438,26 @@ export default function StockList({ productos, onRefresh, showMessage }) {
                                 const porcentaje = Math.min(100, (stockActual / (stockMinimo * 2)) * 100);
 
                                 return (
-                                    <tr
-                                        key={producto.id}
-                                        ref={el => rowRefs.current[producto.id] = el}
-                                        className="hover:bg-gray-50 transition group"
-                                    >
+                                    <tr key={producto.id} ref={el => rowRefs.current[producto.id] = el} className="hover:bg-gray-50 transition group">
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
                                                 <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center flex-shrink-0">
                                                     <Package size={18} className="text-gray-500" />
                                                 </div>
                                                 <div className="min-w-0">
-                                                    <p className="font-medium text-gray-800 truncate">{producto.nombre}</p>
-                                                    <p className="text-xs text-gray-400">
-                                                        Código: PROD-{String(producto.id).padStart(4, '0')}
-                                                    </p>
+                                                    <p className="font-bold text-gray-800 text-sm truncate">{producto.nombre}</p>
+                                                    <p className="text-xs text-gray-400">Código: PROD-{String(producto.id).padStart(4, '0')}</p>
                                                 </div>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="space-y-1">
                                                 <div className="flex items-center gap-2">
-                                                    <span className={`text-xl font-bold ${stockActual <= stockMinimo ? "text-red-600" : "text-green-600"}`}>
-                                                        {formatNumber(stockActual)}
-                                                    </span>
+                                                    <span className={`text-xl font-bold ${stockActual <= stockMinimo ? "text-red-600" : "text-green-600"}`}>{formatNumber(stockActual)}</span>
                                                     <span className="text-xs text-gray-400">unidades</span>
                                                 </div>
                                                 <div className="w-32 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                                                    <div
-                                                        className={`h-full rounded-full transition-all duration-500 ${stockActual <= 0 ? "bg-red-500" :
-                                                            stockActual <= stockMinimo ? "bg-amber-500" : "bg-green-500"}`}
-                                                        style={{ width: `${porcentaje}%` }}
-                                                    />
+                                                    <div className={`h-full rounded-full transition-all duration-500 ${stockActual <= 0 ? "bg-red-500" : stockActual <= stockMinimo ? "bg-amber-500" : "bg-green-500"}`} style={{ width: `${porcentaje}%` }} />
                                                 </div>
                                             </div>
                                         </td>
@@ -552,27 +468,19 @@ export default function StockList({ productos, onRefresh, showMessage }) {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${status.color}`}>
+                                            <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-bold border ${status.color} ${status.border}`}>
                                                 {status.icon} {status.text}
                                             </span>
                                             {stockActual <= stockMinimo && stockActual > 0 && (
-                                                <p className="text-xs text-amber-600 mt-1">
-                                                    Faltan {formatNumber(stockMinimo - stockActual)} para mínimo
-                                                </p>
+                                                <p className="text-xs text-amber-600 mt-1 font-medium">Faltan {formatNumber(stockMinimo - stockActual)} para mínimo</p>
                                             )}
                                             {stockActual === 0 && (
-                                                <p className="text-xs text-red-600 mt-1">
-                                                    ¡Requiere reposición urgente!
-                                                </p>
+                                                <p className="text-xs text-red-600 mt-1 font-medium">¡Requiere reposición urgente!</p>
                                             )}
                                         </td>
                                         <td className="px-6 py-4">
-                                            <button
-                                                onClick={() => abrirModal(producto, stockActual)}
-                                                className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg text-sm font-medium hover:bg-blue-100 transition-all group-hover:scale-105"
-                                            >
-                                                <Edit3 size={14} />
-                                                Actualizar
+                                            <button onClick={() => abrirModal(producto, stockActual)} className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg text-sm font-bold hover:bg-blue-100 transition-all group-hover:scale-105">
+                                                <Edit3 size={14} /> Actualizar
                                             </button>
                                         </td>
                                     </tr>
@@ -581,26 +489,94 @@ export default function StockList({ productos, onRefresh, showMessage }) {
                         </tbody>
                     </table>
                 </div>
-
-                {productosFiltrados.length === 0 && (
-                    <div className="p-12 text-center text-gray-400">
-                        <Package size={48} className="mx-auto mb-3 opacity-50" />
-                        <p className="font-medium">
-                            {productos.length === 0
-                                ? "No hay productos registrados"
-                                : "No se encontraron productos con estos filtros"}
-                        </p>
-                        {productos.length > 0 && (
-                            <button
-                                onClick={() => { setFiltro("todos"); setOrden("id-asc"); }}
-                                className="mt-3 text-sm text-[#5b4eff] hover:underline font-medium"
-                            >
-                                Limpiar filtros
-                            </button>
-                        )}
-                    </div>
-                )}
             </div>
+
+            {/* ─────────── VISTA MÓVIL (Cards Premium) ─────────── */}
+            <div className="md:hidden space-y-4">
+                {productosFiltrados.map((producto) => {
+                    const stockActual = producto.stock || 0;
+                    const stockMinimo = producto.stockMinimo || 5;
+                    const status = getStockStatus(stockActual, stockMinimo);
+                    const porcentaje = Math.min(100, (stockActual / (stockMinimo * 2)) * 100);
+                    
+                    const borderColor = stockActual === 0 
+                        ? "border-red-300 shadow-red-100/50" 
+                        : stockActual <= stockMinimo 
+                            ? "border-amber-300 shadow-amber-100/50" 
+                            : "border-indigo-300 shadow-indigo-100/50";
+
+                    return (
+                        <div key={producto.id} className={`bg-white rounded-2xl border-2 ${borderColor} shadow-md overflow-hidden transition-all duration-300`}>
+                            <div className="p-4">
+                                <div className="flex gap-3 items-start mb-4">
+                                    <div className="w-12 h-12 rounded-xl border border-gray-100 bg-gray-50 flex items-center justify-center flex-shrink-0">
+                                        <Package size={22} className="text-gray-400" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex justify-between items-start gap-2">
+                                            <div className="min-w-0">
+                                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">
+                                                    PROD-{String(producto.id).padStart(4, '0')}
+                                                </p>
+                                                <h3 className="font-black text-gray-900 text-sm leading-tight truncate">
+                                                    {producto.nombre}
+                                                </h3>
+                                            </div>
+                                            <span className={`inline-flex items-center gap-1 text-[10px] font-black px-2 py-1 rounded-md flex-shrink-0 border ${status.color} ${status.border}`}>
+                                                {stockActual === 0 ? <XCircle size={10} /> : stockActual <= stockMinimo ? <AlertTriangle size={10} /> : <CheckCircle size={10} />}
+                                                {status.text}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="bg-slate-50 rounded-xl p-3 border border-slate-200 mb-4">
+                                    <div className="flex justify-between items-end mb-2">
+                                        <div>
+                                            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Stock Actual</p>
+                                            <p className={`text-xl font-black ${stockActual <= stockMinimo ? "text-red-600" : "text-emerald-600"}`}>
+                                                {formatNumber(stockActual)} <span className="text-xs font-semibold text-gray-500">und.</span>
+                                            </p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Mínimo</p>
+                                            <p className="text-sm font-bold text-gray-700">{formatNumber(stockMinimo)}</p>
+                                        </div>
+                                    </div>
+                                    <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                                        <div className={`h-full rounded-full transition-all duration-500 ${stockActual === 0 ? "bg-red-500" : stockActual <= stockMinimo ? "bg-amber-500" : "bg-emerald-500"}`} style={{ width: `${porcentaje}%` }} />
+                                    </div>
+                                    {stockActual === 0 && (
+                                        <p className="text-[10px] text-red-600 mt-2 font-bold flex items-center gap-1"><AlertTriangle size={10} /> Requiere reposición urgente</p>
+                                    )}
+                                    {stockActual > 0 && stockActual <= stockMinimo && (
+                                        <p className="text-[10px] text-amber-600 mt-2 font-bold flex items-center gap-1"><AlertTriangle size={10} /> Faltan {formatNumber(stockMinimo - stockActual)} para el mínimo</p>
+                                    )}
+                                </div>
+
+                                <button onClick={() => abrirModal(producto, stockActual)} className="w-full py-3 bg-[#5b4eff]/10 text-[#5b4eff] rounded-xl text-xs font-black hover:bg-[#5b4eff]/20 active:scale-95 transition-all flex items-center justify-center gap-2">
+                                    <Edit3 size={16} /> Actualizar Stock
+                                </button>
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+
+            {/* Estado vacío */}
+            {productosFiltrados.length === 0 && (
+                <div className="p-12 text-center text-gray-400 bg-white rounded-2xl border border-dashed border-gray-300 mt-4">
+                    <PackageSearch size={48} className="mx-auto mb-3 opacity-40" />
+                    <p className="font-bold text-gray-600">
+                        {productos.length === 0 ? "No hay productos registrados" : "No se encontraron productos con estos filtros"}
+                    </p>
+                    {productos.length > 0 && (
+                        <button onClick={() => { setFiltro("todos"); setOrden("id-asc"); }} className="mt-3 text-sm text-[#5b4eff] hover:underline font-bold">
+                            Limpiar filtros
+                        </button>
+                    )}
+                </div>
+            )}
         </div>
     );
 }

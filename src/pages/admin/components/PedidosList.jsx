@@ -9,7 +9,7 @@ import {
     Eye, RefreshCw, CheckCircle, Clock, Send,
     XCircle, Gift, Image as ImageIcon, ShoppingBag,
     Filter, ArrowUpDown, SlidersHorizontal,
-    ArrowUp, ArrowDown, Layers, AlertCircle, Circle, Hourglass
+    ArrowUp, ArrowDown, Layers, AlertCircle, Hourglass
 } from "lucide-react";
 
 // =====================================================
@@ -35,36 +35,24 @@ const CustomDropdown = ({ valor, onChange, opciones, iconoPrincipal, ancho = "w-
     }, []);
 
     return (
-        <div className="relative flex-1 sm:flex-initial" ref={ref}>
+        <div className="relative flex-1 sm:flex-initial w-full" ref={ref}>
             <button
                 type="button"
                 onClick={() => setAbierto(!abierto)}
-                className={`w-full sm:w-auto flex items-center justify-between gap-2 pl-8 pr-8 py-1.5 text-sm border rounded-lg bg-white transition relative ${abierto
-                    ? "border-[#5b4eff] ring-2 ring-[#5b4eff]/20"
-                    : "border-gray-200 hover:border-gray-300"
-                    }`}
+                className={`w-full flex items-center justify-between gap-2 pl-8 pr-8 py-2 text-sm border rounded-lg bg-white transition relative ${
+                    abierto ? "border-[#5b4eff] ring-2 ring-[#5b4eff]/20" : "border-gray-200 hover:border-gray-300"
+                }`}
             >
                 {iconoPrincipal && (
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
                         {iconoPrincipal}
                     </span>
                 )}
-
                 <span className="flex items-center gap-2 min-w-0">
-                    <span className={opcionActual?.color || "text-gray-500"}>
-                        {opcionActual?.icon}
-                    </span>
+                    <span className={opcionActual?.color || "text-gray-500"}>{opcionActual?.icon}</span>
                     <span className="text-gray-700 truncate">{opcionActual?.label}</span>
                 </span>
-
-                <svg
-                    className={`w-3 h-3 text-gray-400 absolute right-3 transition-transform flex-shrink-0 ${abierto ? "rotate-180" : ""
-                        }`}
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={3}
-                >
+                <svg className={`w-3 h-3 text-gray-400 absolute right-3 transition-transform flex-shrink-0 ${abierto ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                 </svg>
             </button>
@@ -76,14 +64,11 @@ const CustomDropdown = ({ valor, onChange, opciones, iconoPrincipal, ancho = "w-
                             key={op.value}
                             type="button"
                             onClick={() => { onChange(op.value); setAbierto(false); }}
-                            className={`w-full flex items-center gap-2 px-3 py-2.5 text-sm hover:bg-gray-50 transition text-left ${valor === op.value ? "bg-[#5b4eff]/5 font-medium" : ""
-                                }`}
+                            className={`w-full flex items-center gap-2 px-3 py-2.5 text-sm hover:bg-gray-50 transition text-left ${valor === op.value ? "bg-[#5b4eff]/5 font-medium" : ""}`}
                         >
                             <span className={op.color || "text-gray-500"}>{op.icon}</span>
                             <span className="text-gray-700 flex-1">{op.label}</span>
-                            {valor === op.value && (
-                                <CheckCircle size={14} className="text-[#5b4eff] flex-shrink-0" />
-                            )}
+                            {valor === op.value && <CheckCircle size={14} className="text-[#5b4eff] flex-shrink-0" />}
                         </button>
                     ))}
                 </div>
@@ -177,8 +162,7 @@ const DetallePedidoModal = ({ pedido, isOpen, onClose }) => {
     return (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100001] p-4" onClick={onClose}>
             <div className="bg-white rounded-xl max-w-3xl w-full max-h-[85vh] overflow-y-auto shadow-2xl" onClick={(e) => e.stopPropagation()}>
-                {/* Header */}
-                <div className="sticky top-0 bg-white p-6 border-b flex justify-between items-center">
+                <div className="sticky top-0 bg-white p-6 border-b flex justify-between items-center z-10">
                     <div>
                         <div className="flex items-center gap-2 flex-wrap">
                             <h3 className="text-xl font-bold">Pedido Nº:{pedido.id}</h3>
@@ -196,7 +180,6 @@ const DetallePedidoModal = ({ pedido, isOpen, onClose }) => {
                 </div>
 
                 <div className="p-6 space-y-6">
-                    {/* Cliente */}
                     <div className="bg-gray-50 rounded-lg p-4">
                         <h4 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
                             <User size={18} className="text-[#5b4eff]" /> Información del Cliente
@@ -221,7 +204,6 @@ const DetallePedidoModal = ({ pedido, isOpen, onClose }) => {
                         </div>
                     </div>
 
-                    {/* Resumen */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         <div className="bg-gray-50 rounded-lg p-3">
                             <p className="text-xs text-gray-500 uppercase flex items-center gap-1"><DollarSign size={12} /> Total</p>
@@ -248,7 +230,6 @@ const DetallePedidoModal = ({ pedido, isOpen, onClose }) => {
                         </div>
                     </div>
 
-                    {/* Envío */}
                     {esTiendaVirtual && !esRecogidaTienda && pedido.envio && (
                         <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
                             <h4 className="font-bold text-blue-800 mb-3 flex items-center gap-2"><Truck size={18} /> Información de Envío a Domicilio</h4>
@@ -261,7 +242,6 @@ const DetallePedidoModal = ({ pedido, isOpen, onClose }) => {
                         </div>
                     )}
 
-                    {/* Recogida */}
                     {esTiendaVirtual && esRecogidaTienda && (
                         <div className="bg-green-50 rounded-lg p-4 border border-green-200">
                             <h4 className="font-bold text-green-800 mb-3 flex items-center gap-2"><Store size={18} /> Información de Recogida en Tienda</h4>
@@ -273,7 +253,6 @@ const DetallePedidoModal = ({ pedido, isOpen, onClose }) => {
                         </div>
                     )}
 
-                    {/* Presencial */}
                     {!esTiendaVirtual && (
                         <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
                             <h4 className="font-bold text-purple-800 mb-3 flex items-center gap-2"><Store size={18} /> Información de Venta Presencial</h4>
@@ -284,7 +263,6 @@ const DetallePedidoModal = ({ pedido, isOpen, onClose }) => {
                         </div>
                     )}
 
-                    {/* Productos */}
                     <div>
                         <h4 className="font-bold text-gray-800 mb-3 flex items-center gap-2"><Package size={18} /> Productos</h4>
                         {loading ? (
@@ -336,7 +314,6 @@ export default function PedidosList({ pedidos, onRefresh, showMessage }) {
     const [selectedPedido, setSelectedPedido] = useState(null);
     const [showDetailModal, setShowDetailModal] = useState(false);
 
-    // 🎯 Estados para filtros/orden
     const [filtro, setFiltro] = useState("todos");
     const [orden, setOrden] = useState("id-asc");
 
@@ -344,7 +321,6 @@ export default function PedidosList({ pedidos, onRefresh, showMessage }) {
     const location = useLocation();
     const navigate = useNavigate();
 
-    // 🎯 Opciones del dropdown de FILTRO
     const opcionesFiltro = [
         { value: "todos", label: "Todos", icon: <Layers size={14} />, color: "text-gray-500" },
         { value: "pendiente", label: "Pendientes", icon: <Clock size={14} />, color: "text-amber-500" },
@@ -354,7 +330,6 @@ export default function PedidosList({ pedidos, onRefresh, showMessage }) {
         { value: "cancelado", label: "Cancelados", icon: <XCircle size={14} />, color: "text-red-500" },
     ];
 
-    // 🎯 Opciones del dropdown de ORDEN
     const opcionesOrden = [
         { value: "id-asc", label: "ID ↑", icon: <ArrowUp size={14} />, color: "text-gray-500" },
         { value: "id-desc", label: "ID ↓", icon: <ArrowDown size={14} />, color: "text-gray-500" },
@@ -362,10 +337,6 @@ export default function PedidosList({ pedidos, onRefresh, showMessage }) {
         { value: "monto-desc", label: "Mayor monto", icon: <DollarSign size={14} />, color: "text-emerald-500" },
     ];
 
-    // 🎯 Efecto del highlight al venir desde notif
-    // 🎯 Efecto del highlight al venir desde notif
-    // Si el pedido no está en la lista (race condition con WebSocket),
-    // recarga automáticamente hasta 3 veces antes de mostrar error.
     useEffect(() => {
         const { highlightId, openDetailModal } = location.state || {};
         if (!highlightId) return;
@@ -374,29 +345,23 @@ export default function PedidosList({ pedidos, onRefresh, showMessage }) {
         const pedido = pedidos.find(p => p.id === highlightId);
 
         if (!pedido) {
-            // 🎯 El pedido no está en la lista actual.
-            // Puede ser una race condition: la notificación llegó
-            // antes de que se recargara la lista de pedidos.
-            // Estrategia: recargar la lista y reintentar (máx 3 veces).
             const intentos = (window.__highlightRetries = (window.__highlightRetries || 0) + 1);
 
             if (intentos <= 3) {
                 console.log(`⚠️ Pedido #${highlightId} no está en la lista. Recargando... (intento ${intentos}/3)`);
                 if (onRefresh) {
-                    onRefresh();   // ← recarga la lista desde el padre
+                    onRefresh(); 
                 }
-                return;   // ← NO muestra error, solo recarga
+                return; 
             }
 
-            // Después de 3 intentos, sí mostrar error
             console.warn(`❌ Pedido #${highlightId} no encontrado tras 3 intentos`);
             showMessage?.("warning", "El pedido ya no existe");
             navigate(location.pathname, { replace: true, state: {} });
-            window.__highlightRetries = 0;   // reset
+            window.__highlightRetries = 0; 
             return;
         }
 
-        // ✅ Pedido encontrado: resetear contador de intentos
         window.__highlightRetries = 0;
 
         const row = rowRefs.current[highlightId];
@@ -404,12 +369,10 @@ export default function PedidosList({ pedidos, onRefresh, showMessage }) {
 
         const pedidoCapturado = pedido;
 
-        // Scroll al centro
         const rowTop = row.getBoundingClientRect().top + window.pageYOffset;
         const offset = window.innerHeight / 2 - row.offsetHeight / 2;
         window.scrollTo({ top: rowTop - offset, behavior: "smooth" });
 
-        // Highlight azul con pulso
         const celdas = row.querySelectorAll("td");
         const pintar = (color, sombra) => {
             row.style.transition = "background-color 0.3s ease, box-shadow 0.3s ease";
@@ -455,16 +418,13 @@ export default function PedidosList({ pedidos, onRefresh, showMessage }) {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [location.state, pedidos]);
 
-    // 🎯 Aplicar filtros + orden
     const pedidosFiltrados = useMemo(() => {
         let lista = [...(pedidos || [])];
 
-        // 1. Filtro por estado
         if (filtro !== "todos") {
             lista = lista.filter(p => (p.estado || "").toLowerCase() === filtro);
         }
 
-        // 2. Ordenamiento
         lista.sort((a, b) => {
             if (orden === "id-asc") return a.id - b.id;
             if (orden === "id-desc") return b.id - a.id;
@@ -513,7 +473,7 @@ export default function PedidosList({ pedidos, onRefresh, showMessage }) {
     };
 
     return (
-        <div>
+        <div className="w-full">
             <DetallePedidoModal
                 pedido={selectedPedido}
                 isOpen={showDetailModal}
@@ -523,67 +483,34 @@ export default function PedidosList({ pedidos, onRefresh, showMessage }) {
                 }}
             />
 
-            {/* ─────────── HEADER CON 3 PANELES COMPACTOS ─────────── */}
-            <div className="flex flex-col lg:flex-row lg:items-stretch gap-2 lg:gap-3 mb-4">
-
-                {/* PANEL 1: Título + subtítulo */}
-                <div className="bg-white rounded-lg shadow-sm border border-gray-100 px-4 py-3 flex-shrink-0 flex flex-col justify-center min-h-[64px]">
+            {/* ─────────── HEADER RESPONSIVO ─────────── */}
+            <div className="flex flex-col lg:flex-row lg:items-stretch gap-3 mb-4">
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 px-4 py-3 flex-shrink-0 flex flex-col justify-center min-h-[64px]">
                     <h2 className="text-base font-bold text-gray-800 leading-tight">Gestión de Pedidos</h2>
                     <p className="text-xs text-gray-500 mt-0.5 leading-tight">Administra y gestiona los pedidos</p>
                 </div>
 
-                {/* PANEL 2: Controles */}
-                <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-2 flex flex-col sm:flex-row gap-2 flex-shrink-0 items-center min-h-[64px]">
-                    <CustomDropdown
-                        valor={filtro}
-                        onChange={setFiltro}
-                        opciones={opcionesFiltro}
-                        iconoPrincipal={<Filter size={13} />}
-                        ancho="w-full sm:w-48"
-                    />
-
-                    <CustomDropdown
-                        valor={orden}
-                        onChange={setOrden}
-                        opciones={opcionesOrden}
-                        iconoPrincipal={<ArrowUpDown size={13} />}
-                        ancho="w-full sm:w-52"
-                    />
-
-                    <div className="flex items-center justify-center px-2.5 py-1.5 text-xs font-medium text-gray-500 bg-gray-50 rounded-md whitespace-nowrap h-[34px]">
-                        <SlidersHorizontal size={11} className="mr-1" />
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-2 flex flex-col sm:flex-row gap-2 flex-1 items-center">
+                    <CustomDropdown valor={filtro} onChange={setFiltro} opciones={opcionesFiltro} iconoPrincipal={<Filter size={13} />} ancho="w-full sm:w-48" />
+                    <CustomDropdown valor={orden} onChange={setOrden} opciones={opcionesOrden} iconoPrincipal={<ArrowUpDown size={13} />} ancho="w-full sm:w-52" />
+                    <div className="flex items-center justify-center px-3 py-1.5 text-xs font-medium text-gray-500 bg-gray-50 rounded-lg whitespace-nowrap h-[38px] w-full sm:w-auto">
+                        <SlidersHorizontal size={12} className="mr-1.5" />
                         {pedidosFiltrados.length} {pedidosFiltrados.length === 1 ? "pedido" : "pedidos"}
                     </div>
                 </div>
 
-                {/* ESPACIADOR FLEXIBLE */}
-                <div className="hidden lg:block flex-1" />
-
-                {/* PANEL 3: Leyenda */}
-                <div className="bg-white rounded-lg shadow-sm border border-gray-100 px-3 flex-shrink-0 flex items-center min-h-[64px]">
+                <div className="hidden lg:flex bg-white rounded-xl shadow-sm border border-gray-100 px-3 items-center min-h-[64px]">
                     <div className="flex items-center gap-3 text-xs">
-                        <div className="flex items-center gap-1">
-                            <div className="w-2.5 h-2.5 bg-amber-500 rounded-full"></div>
-                            <span className="text-gray-600">Pendiente</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                            <div className="w-2.5 h-2.5 bg-blue-500 rounded-full"></div>
-                            <span className="text-gray-600">Enviado</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                            <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full"></div>
-                            <span className="text-gray-600">Entregado</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                            <div className="w-2.5 h-2.5 bg-red-500 rounded-full"></div>
-                            <span className="text-gray-600">Cancelado</span>
-                        </div>
+                        <div className="flex items-center gap-1"><div className="w-2.5 h-2.5 bg-amber-500 rounded-full"></div><span className="text-gray-600">Pendiente</span></div>
+                        <div className="flex items-center gap-1"><div className="w-2.5 h-2.5 bg-blue-500 rounded-full"></div><span className="text-gray-600">Enviado</span></div>
+                        <div className="flex items-center gap-1"><div className="w-2.5 h-2.5 bg-emerald-500 rounded-full"></div><span className="text-gray-600">Entregado</span></div>
+                        <div className="flex items-center gap-1"><div className="w-2.5 h-2.5 bg-red-500 rounded-full"></div><span className="text-gray-600">Cancelado</span></div>
                     </div>
                 </div>
             </div>
 
-            {/* ─────────── TABLA ─────────── */}
-            <div className="bg-white rounded-xl shadow overflow-hidden border border-gray-100">
+            {/* ─────────── VISTA ESCRITORIO (Tabla) ─────────── */}
+            <div className="hidden md:block bg-white rounded-xl shadow overflow-hidden border border-gray-100">
                 <div className="overflow-x-auto">
                     <table className="w-full min-w-[800px]">
                         <thead className="bg-gray-50 border-b border-gray-200">
@@ -602,39 +529,32 @@ export default function PedidosList({ pedidos, onRefresh, showMessage }) {
                                 const origenBadge = getOrigenBadge(pedido.origen);
                                 const clienteNombre = pedido.clienteNombre || pedido.cliente?.nombre || `Cliente #${pedido.clienteId}`;
                                 return (
-                                    <tr
-                                        key={pedido.id}
-                                        ref={el => rowRefs.current[pedido.id] = el}
-                                        className="hover:bg-gray-50 transition group"
-                                    >
-                                        <td className="px-6 py-4 text-sm font-medium text-gray-900">{pedido.id}</td>
+                                    <tr key={pedido.id} ref={el => rowRefs.current[pedido.id] = el} className="hover:bg-gray-50 transition group">
+                                        <td className="px-6 py-4 text-sm font-bold text-gray-900">#{pedido.id}</td>
                                         <td className="px-6 py-4">
-                                            <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${origenBadge.bg}`}>
+                                            <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-bold border ${origenBadge.bg.replace('text-', 'border-').replace('100', '200')} ${origenBadge.bg}`}>
                                                 {origenBadge.icon} {origenBadge.label}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4 text-sm text-gray-600">{clienteNombre}</td>
+                                        <td className="px-6 py-4 text-sm text-gray-700 font-medium">{clienteNombre}</td>
                                         <td className="px-6 py-4 text-sm text-gray-500">{formatDate(pedido.fecha)}</td>
                                         <td className="px-6 py-4 text-sm font-bold text-[#5b4eff]">{formatPrice(pedido.total)}</td>
                                         <td className="px-6 py-4">
                                             <select
                                                 value={pedido.estado}
                                                 onChange={(e) => handleUpdateEstado(pedido.id, e.target.value)}
-                                                className={`px-2 py-1 border rounded-lg text-sm font-medium ${getEstadoColor(pedido.estado)} focus:outline-none focus:border-[#5b4eff]`}
+                                                className={`px-2 py-1 border rounded-lg text-xs font-bold cursor-pointer ${getEstadoColor(pedido.estado)} focus:outline-none focus:ring-2 focus:ring-[#5b4eff]/20`}
                                             >
-                                                <option value="PENDIENTE">Pendiente</option>
-                                                <option value="PAGADO">Pagado</option>
-                                                <option value="ENVIADO">Enviado</option>
-                                                <option value="ENTREGADO">Entregado</option>
-                                                <option value="CANCELADO">Cancelado</option>
+                                                <option value="PENDIENTE">PENDIENTE</option>
+                                                <option value="PAGADO">PAGADO</option>
+                                                <option value="ENVIADO">ENVIADO</option>
+                                                <option value="ENTREGADO">ENTREGADO</option>
+                                                <option value="CANCELADO">CANCELADO</option>
                                             </select>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <button
-                                                onClick={() => handleVerDetalle(pedido)}
-                                                className="text-blue-500 hover:text-blue-700 text-sm font-medium transition-colors flex items-center gap-1"
-                                            >
-                                                <Eye size={16} /> Ver Detalle
+                                            <button onClick={() => handleVerDetalle(pedido)} className="text-blue-500 hover:text-blue-700 text-sm font-bold transition-colors flex items-center gap-1">
+                                                <Eye size={16} /> Ver
                                             </button>
                                         </td>
                                     </tr>
@@ -643,26 +563,91 @@ export default function PedidosList({ pedidos, onRefresh, showMessage }) {
                         </tbody>
                     </table>
                 </div>
-
-                {pedidosFiltrados.length === 0 && (
-                    <div className="text-center py-12 text-gray-400">
-                        <ShoppingBag size={48} className="mx-auto mb-2 opacity-50" />
-                        <p className="font-medium">
-                            {pedidos.length === 0
-                                ? "No hay pedidos registrados"
-                                : "No se encontraron pedidos con estos filtros"}
-                        </p>
-                        {pedidos.length > 0 && (
-                            <button
-                                onClick={() => { setFiltro("todos"); setOrden("id-asc"); }}
-                                className="mt-3 text-sm text-[#5b4eff] hover:underline font-medium"
-                            >
-                                Limpiar filtros
-                            </button>
-                        )}
-                    </div>
-                )}
             </div>
+
+            {/* ─────────── VISTA MÓVIL (Cards Premium) ─────────── */}
+            <div className="md:hidden space-y-4">
+                {pedidosFiltrados.map((pedido) => {
+                    const origenBadge = getOrigenBadge(pedido.origen);
+                    const clienteNombre = pedido.clienteNombre || pedido.cliente?.nombre || `Cliente #${pedido.clienteId}`;
+                    const estadoColor = getEstadoColor(pedido.estado);
+
+                    return (
+                        <div key={pedido.id} className="bg-white rounded-2xl border-2 border-indigo-300 shadow-md overflow-hidden">
+                            <div className="p-4">
+                                {/* Fila 1: ID, Fecha y Origen */}
+                                <div className="flex justify-between items-start mb-3">
+                                    <div>
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <h3 className="font-black text-gray-900 text-lg">#{pedido.id}</h3>
+                                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold ${origenBadge.bg}`}>
+                                                {origenBadge.label}
+                                            </span>
+                                        </div>
+                                        <p className="text-xs text-gray-500 font-medium flex items-center gap-1">
+                                            <Calendar size={12} /> {formatDate(pedido.fecha)}
+                                        </p>
+                                    </div>
+                                    <div className={`px-2 py-1 rounded-md text-[10px] font-black border ${estadoColor.replace('text-', 'border-').replace('100', '200')} ${estadoColor}`}>
+                                        {pedido.estado}
+                                    </div>
+                                </div>
+
+                                {/* Fila 2: Cliente */}
+                                <div className="flex items-center gap-2 mb-4 bg-gray-50 rounded-lg p-2.5 border border-gray-100">
+                                    <User size={14} className="text-gray-400" />
+                                    <p className="text-xs font-bold text-gray-700 truncate flex-1">{clienteNombre}</p>
+                                </div>
+
+                                {/* Fila 3: Total y Estado del Pedido */}
+                                <div className="flex items-center gap-3 mb-4">
+                                    <div className="flex-1 bg-slate-50 rounded-xl p-3 border border-slate-200">
+                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-0.5">Total</p>
+                                        <p className="text-lg font-black text-[#5b4eff]">{formatPrice(pedido.total)}</p>
+                                    </div>
+                                    <div className="flex-1 bg-slate-50 rounded-xl p-3 border border-slate-200">
+                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-1">Cambiar Estado</p>
+                                        <select
+                                            value={pedido.estado}
+                                            onChange={(e) => handleUpdateEstado(pedido.id, e.target.value)}
+                                            className={`w-full px-2 py-1.5 rounded-lg text-xs font-bold border-none outline-none cursor-pointer ${estadoColor} focus:ring-2 focus:ring-[#5b4eff]/20`}
+                                        >
+                                            <option value="PENDIENTE">PENDIENTE</option>
+                                            <option value="PAGADO">PAGADO</option>
+                                            <option value="ENVIADO">ENVIADO</option>
+                                            <option value="ENTREGADO">ENTREGADO</option>
+                                            <option value="CANCELADO">CANCELADO</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                {/* Fila 4: Botón Ver Detalle */}
+                                <button
+                                    onClick={() => handleVerDetalle(pedido)}
+                                    className="w-full py-3 bg-[#5b4eff]/10 text-[#5b4eff] rounded-xl text-xs font-black hover:bg-[#5b4eff]/20 active:scale-95 transition-all flex items-center justify-center gap-2"
+                                >
+                                    <Eye size={16} /> Ver Detalle del Pedido
+                                </button>
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+
+            {/* Estado vacío */}
+            {pedidosFiltrados.length === 0 && (
+                <div className="text-center py-12 bg-white rounded-2xl border border-dashed border-gray-300 mt-4">
+                    <ShoppingBag size={48} className="mx-auto mb-3 text-gray-300" />
+                    <p className="font-bold text-gray-600">
+                        {pedidos.length === 0 ? "No hay pedidos registrados" : "No se encontraron pedidos con estos filtros"}
+                    </p>
+                    {pedidos.length > 0 && (
+                        <button onClick={() => { setFiltro("todos"); setOrden("id-asc"); }} className="mt-3 text-sm text-[#5b4eff] hover:underline font-bold">
+                            Limpiar filtros
+                        </button>
+                    )}
+                </div>
+            )}
         </div>
     );
 }
